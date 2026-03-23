@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "./hooks/use-auth";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
+import AuthCallback from "@/pages/auth-callback";
 import Dashboard from "@/pages/dashboard";
 import CreateHabit from "@/pages/create-habit";
 import HabitDetail from "@/pages/habit-detail";
@@ -49,6 +50,7 @@ function Router() {
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      <Route path="/auth/callback" component={AuthCallback} />
       
       <Route path="/" component={() => <ProtectedRoute component={Dashboard} />} />
       <Route path="/habits/new" component={() => <ProtectedRoute component={CreateHabit} />} />
