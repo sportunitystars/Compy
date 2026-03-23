@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { format } from "date-fns";
-import { ShieldCheck, ArrowLeft, Loader2, Check, X, Trash2 } from "lucide-react";
+import { ShieldCheck, ArrowLeft, Loader2, Check, X, Trash2, RefreshCw } from "lucide-react";
 import { useState } from "react";
 
 import { useListUsers, useApproveUser, useRejectUser, useDeleteUser } from "@workspace/api-client-react";
@@ -13,7 +13,9 @@ import { getListUsersQueryKey } from "@workspace/api-client-react";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
-  const { data: users, isLoading } = useListUsers();
+  const { data: users, isLoading, isFetching, refetch } = useListUsers({
+    query: { refetchInterval: 30000, refetchOnWindowFocus: true, staleTime: 0 }
+  });
   const approveMut = useApproveUser();
   const rejectMut = useRejectUser();
   const deleteMut = useDeleteUser();
@@ -125,10 +127,20 @@ export default function AdminDashboard() {
               <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-1">
             <ShieldCheck className="w-6 h-6 text-primary" />
             <span className="font-display font-bold text-xl">Panel de Administración</span>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 text-muted-foreground"
+            onClick={() => refetch()}
+            disabled={isFetching}
+          >
+            <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
+            Actualizar
+          </Button>
         </div>
       </header>
 
@@ -136,8 +148,16 @@ export default function AdminDashboard() {
         
         <Tabs defaultValue="all" onValueChange={setFilter} className="w-full">
           <TabsList className="mb-6 bg-white border border-border h-12 rounded-xl p-1 shadow-sm">
-            <TabsTrigger value="all" className="rounded-lg h-full px-6">Todos</TabsTrigger>
-            <TabsTrigger value="pending" className="rounded-lg h-full px-6">Pendientes</TabsTrigger>
+            <TabsTrigger value="all" className="rounded-lg h-full px-6">
+              Todos {users && users.length > 0 && <span className="ml-1.5 bg-gray-200 text-gray-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{users.length}</span>}
+            </TabsTrigger>
+            <TabsTrigger value="pending" className="rounded-lg h-full px-6">
+              Pendientes {users && users.filter(u => u.status === 'pending').length > 0 && (
+                <span className="ml-1.5 bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                  {users.filter(u => u.status === 'pending').length}
+                </span>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="active" className="rounded-lg h-full px-6">Activos</TabsTrigger>
             <TabsTrigger value="rejected" className="rounded-lg h-full px-6">Rechazados</TabsTrigger>
           </TabsList>

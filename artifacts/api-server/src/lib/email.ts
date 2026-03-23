@@ -51,7 +51,7 @@ export async function sendPendingEmail(userEmail: string, userName: string): Pro
   if (!client) return;
 
   try {
-    await client.emails.send({
+    const { error } = await client.emails.send({
       from: `${APP_NAME} <onboarding@resend.dev>`,
       to: userEmail,
       subject: `Tu solicitud de acceso está en revisión — ${APP_NAME}`,
@@ -75,7 +75,11 @@ export async function sendPendingEmail(userEmail: string, userName: string): Pro
         </div>
       `,
     });
-    logger.info({ userEmail }, "Pending request email sent to user");
+    if (error) {
+      logger.warn({ error, userEmail }, "Pending email not delivered (domain not verified in Resend — only admin email is supported)");
+    } else {
+      logger.info({ userEmail }, "Pending request email sent to user");
+    }
   } catch (err) {
     logger.error({ err }, "Failed to send pending email to user");
   }
@@ -86,7 +90,7 @@ export async function sendRejectionEmail(userEmail: string, userName: string): P
   if (!client) return;
 
   try {
-    await client.emails.send({
+    const { error } = await client.emails.send({
       from: `${APP_NAME} <onboarding@resend.dev>`,
       to: userEmail,
       subject: `Actualización sobre tu solicitud — ${APP_NAME}`,
@@ -111,7 +115,11 @@ export async function sendRejectionEmail(userEmail: string, userName: string): P
         </div>
       `,
     });
-    logger.info({ userEmail }, "Rejection email sent to user");
+    if (error) {
+      logger.warn({ error, userEmail }, "Rejection email not delivered (domain not verified in Resend)");
+    } else {
+      logger.info({ userEmail }, "Rejection email sent to user");
+    }
   } catch (err) {
     logger.error({ err }, "Failed to send rejection email to user");
   }
@@ -122,7 +130,7 @@ export async function sendApprovalEmail(userEmail: string, userName: string): Pr
   if (!client) return;
 
   try {
-    await client.emails.send({
+    const { error } = await client.emails.send({
       from: `${APP_NAME} <onboarding@resend.dev>`,
       to: userEmail,
       subject: `¡Tu cuenta ha sido aprobada! — ${APP_NAME}`,
@@ -145,7 +153,11 @@ export async function sendApprovalEmail(userEmail: string, userName: string): Pr
         </div>
       `,
     });
-    logger.info({ userEmail }, "Approval email sent");
+    if (error) {
+      logger.warn({ error, userEmail }, "Approval email not delivered (domain not verified in Resend)");
+    } else {
+      logger.info({ userEmail }, "Approval email sent");
+    }
   } catch (err) {
     logger.error({ err }, "Failed to send approval email");
   }
