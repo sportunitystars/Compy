@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { supabaseAdmin } from "../lib/supabase";
 import { requireAuth } from "../lib/auth";
-import { sendNewUserNotification } from "../lib/email";
+import { sendNewUserNotification, sendPendingEmail } from "../lib/email";
 
 const router: IRouter = Router();
 const ADMIN_EMAIL = "luisgomezm10@gmail.com";
@@ -67,7 +67,10 @@ router.post("/auth/register", async (req, res): Promise<void> => {
   }
 
   if (!isAdmin) {
-    await sendNewUserNotification(email, name);
+    await Promise.all([
+      sendNewUserNotification(email, name),
+      sendPendingEmail(email, name),
+    ]);
   }
 
   res.status(201).json({ token: sessionData.session.access_token, user: formatProfile(profile) });
@@ -147,7 +150,10 @@ router.get("/auth/me", async (req, res): Promise<void> => {
     profile = newProfile;
 
     if (!isAdmin) {
-      await sendNewUserNotification(userEmail, name);
+      await Promise.all([
+        sendNewUserNotification(userEmail, name),
+        sendPendingEmail(userEmail, name),
+      ]);
     }
   }
 
