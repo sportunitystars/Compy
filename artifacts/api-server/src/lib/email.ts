@@ -81,6 +81,42 @@ export async function sendPendingEmail(userEmail: string, userName: string): Pro
   }
 }
 
+export async function sendRejectionEmail(userEmail: string, userName: string): Promise<void> {
+  const client = getResend();
+  if (!client) return;
+
+  try {
+    await client.emails.send({
+      from: `${APP_NAME} <onboarding@resend.dev>`,
+      to: userEmail,
+      subject: `Actualización sobre tu solicitud — ${APP_NAME}`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 24px; background: #f9fafb; border-radius: 12px;">
+          <div style="text-align: center; margin-bottom: 24px;">
+            <div style="background: #ef4444; width: 56px; height: 56px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center;">
+              <span style="font-size: 28px; color: white;">✕</span>
+            </div>
+          </div>
+          <h2 style="color: #1e1b4b; text-align: center; margin-bottom: 8px;">Hola, ${userName}</h2>
+          <p style="color: #6b7280; text-align: center; margin-bottom: 24px;">Tenemos novedades sobre tu solicitud de acceso.</p>
+          <div style="background: white; border-radius: 8px; padding: 20px; border-left: 4px solid #ef4444; margin-bottom: 24px;">
+            <p style="margin: 0; color: #374151;">
+              Lamentablemente, tu solicitud de acceso a <strong>${APP_NAME}</strong> no fue aprobada en esta ocasión.
+              Si crees que esto es un error, puedes intentar registrarte nuevamente o contactar al administrador.
+            </p>
+          </div>
+          <p style="color: #9ca3af; font-size: 13px; text-align: center; margin: 0;">
+            Puedes volver a solicitar acceso en <a href="${APP_URL}/register" style="color: #4f46e5;">esta página</a>.
+          </p>
+        </div>
+      `,
+    });
+    logger.info({ userEmail }, "Rejection email sent to user");
+  } catch (err) {
+    logger.error({ err }, "Failed to send rejection email to user");
+  }
+}
+
 export async function sendApprovalEmail(userEmail: string, userName: string): Promise<void> {
   const client = getResend();
   if (!client) return;

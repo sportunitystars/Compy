@@ -1,9 +1,9 @@
 import { Link } from "wouter";
 import { format } from "date-fns";
-import { ShieldCheck, ArrowLeft, Loader2, Check, X } from "lucide-react";
+import { ShieldCheck, ArrowLeft, Loader2, Check, X, Trash2 } from "lucide-react";
 import { useState } from "react";
 
-import { useListUsers, useApproveUser, useRejectUser } from "@workspace/api-client-react";
+import { useListUsers, useApproveUser, useRejectUser, useDeleteUser } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,9 +16,11 @@ export default function AdminDashboard() {
   const { data: users, isLoading } = useListUsers();
   const approveMut = useApproveUser();
   const rejectMut = useRejectUser();
+  const deleteMut = useDeleteUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState("all");
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; name: string } | null>(null);
 
   if (user?.role !== "admin") {
     return (
@@ -45,8 +47,30 @@ export default function AdminDashboard() {
       { userId: id },
       {
         onSuccess: () => {
-          toast({ title: "Usuario rechazado" });
+          toast({ title: "Usuario rechazado", description: "Se envió email de notificación al usuario." });
           queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
+        }
+      }
+    );
+  };
+
+  const handleDelete = (id: string, name: string) => {
+    setConfirmDelete({ id, name });
+  };
+
+  const confirmDeleteUser = () => {
+    if (!confirmDelete) return;
+    deleteMut.mutate(
+      { userId: confirmDelete.id },
+      {
+        onSuccess: () => {
+          toast({ title: "Usuario eliminado", description: "El usuario fue eliminado permanentemente." });
+          queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
+          setConfirmDelete(null);
+        },
+        onError: () => {
+          toast({ title: "Error", description: "No se pudo eliminar el usuario.", variant: "destructive" });
+          setConfirmDelete(null);
         }
       }
     );
@@ -56,6 +80,44 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
+
+      {/* Confirm delete modal */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                <Trash2 className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="font-bold text-foreground">Eliminar usuario</h3>
+                <p className="text-sm text-muted-foreground">Esta acción no se puede deshacer</p>
+              </div>
+            </div>
+            <p className="text-sm text-foreground mb-6">
+              ¿Eliminar permanentemente a <strong>{confirmDelete.name}</strong>? El usuario tendrá que registrarse nuevamente desde cero.
+            </p>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setConfirmDelete(null)}
+                disabled={deleteMut.isPending}
+              >
+                Cancelar
+              </Button>
+              <Button
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                onClick={confirmDeleteUser}
+                disabled={deleteMut.isPending}
+              >
+                {deleteMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Eliminar"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="bg-white sticky top-0 z-20 border-b border-border shadow-sm">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center gap-4">
           <Link href="/">
@@ -128,7 +190,7 @@ export default function AdminDashboard() {
                           </td>
                           <td className="px-6 py-4 text-right">
                             <div className="flex justify-end gap-2">
-                              {u.status !== 'active' && (
+                              {u.status !== 'active' && u.status !== 'rejected' && (
                                 <Button 
                                   size="sm" 
                                   variant="outline" 
@@ -148,6 +210,17 @@ export default function AdminDashboard() {
                                   disabled={rejectMut.isPending}
                                 >
                                   <X className="w-4 h-4 mr-1" /> Rechazar
+                                </Button>
+                              )}
+                              {u.status === 'rejected' && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-8 border-red-300 text-red-700 hover:bg-red-50"
+                                  onClick={() => handleDelete(String(u.id), u.name)}
+                                  disabled={deleteMut.isPending}
+                                >
+                                  <Trash2 className="w-4 h-4 mr-1" /> Eliminar
                                 </Button>
                               )}
                             </div>

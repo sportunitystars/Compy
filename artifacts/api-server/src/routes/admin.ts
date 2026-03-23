@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { supabaseAdmin } from "../lib/supabase";
 import { requireAdmin } from "../lib/auth";
-import { sendApprovalEmail } from "../lib/email";
+import { sendApprovalEmail, sendRejectionEmail } from "../lib/email";
 
 const router: IRouter = Router();
 
@@ -69,7 +69,26 @@ router.post("/admin/users/:userId/reject", requireAdmin, async (req, res): Promi
     return;
   }
 
+  await sendRejectionEmail(data.email, data.name);
+
   res.json(formatProfile(data));
+});
+
+// ── Delete user permanently ────────────────────────────────────────────────────
+router.delete("/admin/users/:userId", requireAdmin, async (req, res): Promise<void> => {
+  const userId = req.params.userId as string;
+
+  // Delete from Supabase Auth — cascades to profiles table automatically
+  const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+
+  if (error) {
+    req.log.error({ error }, "Failed to delete user from auth");
+    res.status(500).json({ error: "Error al eliminar usuario" });
+    return;
+  }
+
+  req.log.info({ userId }, "User permanently deleted");
+  res.json({ message: "Usuario eliminado correctamente" });
 });
 
 export default router;
