@@ -2,7 +2,7 @@ import { Resend } from "resend";
 import { logger } from "./logger";
 
 const ADMIN_EMAIL = "luisgomezm10@gmail.com";
-const APP_NAME = "Seguimiento de Hábitos";
+const APP_NAME = "Compy";
 const APP_URL = "https://6e138a67-f07e-49f7-b1e7-a8c7e4934298-00-31iugwg2vncdv.picard.replit.dev";
 
 let resend: Resend | null = null;
