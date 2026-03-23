@@ -1,201 +1,210 @@
 import { Router, type IRouter } from "express";
-import bcrypt from "bcryptjs";
-import { OAuth2Client } from "google-auth-library";
-import { db, usersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
-import { signToken, requireAuth } from "../lib/auth";
+import { supabaseAdmin } from "../lib/supabase";
+import { requireAuth } from "../lib/auth";
 import { sendNewUserNotification } from "../lib/email";
-import { RegisterBody, LoginBody } from "@workspace/api-zod";
 
 const router: IRouter = Router();
-
 const ADMIN_EMAIL = "luisgomezm10@gmail.com";
 
-function formatUser(user: typeof usersTable.$inferSelect) {
+function formatProfile(profile: any) {
   return {
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    status: user.status,
-    role: user.role,
-    createdAt: user.createdAt.toISOString(),
+    id: profile.id,
+    email: profile.email,
+    name: profile.name,
+    status: profile.status,
+    role: profile.role,
+    createdAt: profile.created_at,
   };
 }
 
-function getGoogleClient() {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  if (!clientId || !clientSecret) return null;
-  return new OAuth2Client(clientId, clientSecret);
-}
-
-function getRedirectUri(req: import("express").Request) {
-  const host = req.headers["x-forwarded-host"] || req.headers.host || "localhost";
-  const proto = req.headers["x-forwarded-proto"] || "https";
-  return `${proto}://${host}/api/auth/google/callback`;
-}
-
-// ─── Email / Password ───────────────────────────────────────────────────────
-
+// ── Register with email/password ──────────────────────────────────────────────
 router.post("/auth/register", async (req, res): Promise<void> => {
-  const parsed = RegisterBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
+  const { email, password, name } = req.body;
+  if (!email || !password || !name) {
+    res.status(400).json({ error: "Email, contraseña y nombre son requeridos" });
     return;
   }
 
-  const { email, password, name } = parsed.data;
+  // Create user in Supabase Auth
+  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    email: email.toLowerCase(),
+    password,
+    email_confirm: true, // auto-confirm so user can log in immediately
+  });
 
-  const [existing] = await db.select().from(usersTable).where(eq(usersTable.email, email.toLowerCase()));
-  if (existing) {
-    res.status(409).json({ error: "Este email ya está registrado" });
+  if (authError) {
+    if (authError.message.includes("already registered") || authError.message.includes("already been registered")) {
+      res.status(409).json({ error: "Este email ya está registrado" });
+    } else {
+      res.status(400).json({ error: authError.message });
+    }
     return;
   }
 
-  const passwordHash = await bcrypt.hash(password, 10);
+  const userId = authData.user.id;
   const isAdmin = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
-  const [user] = await db
-    .insert(usersTable)
-    .values({
+  // Upsert profile
+  const { data: profile, error: profileError } = await supabaseAdmin
+    .from("profiles")
+    .upsert({
+      id: userId,
       email: email.toLowerCase(),
-      passwordHash,
       name,
       status: isAdmin ? "active" : "pending",
       role: isAdmin ? "admin" : "user",
     })
-    .returning();
+    .select()
+    .single();
+
+  if (profileError) {
+    req.log.error({ profileError }, "Failed to create profile");
+    res.status(500).json({ error: "Error al crear perfil" });
+    return;
+  }
+
+  // Sign in to get a session token for the client
+  const { data: sessionData, error: signInError } = await supabaseAdmin.auth.signInWithPassword({
+    email: email.toLowerCase(),
+    password,
+  });
+
+  if (signInError || !sessionData.session) {
+    res.status(500).json({ error: "Error al iniciar sesión automáticamente" });
+    return;
+  }
 
   if (!isAdmin) {
     await sendNewUserNotification(email, name);
   }
 
-  const token = signToken({ userId: user.id, email: user.email, role: user.role });
-  res.status(201).json({ token, user: formatUser(user) });
+  res.status(201).json({
+    token: sessionData.session.access_token,
+    user: formatProfile(profile),
+  });
 });
 
+// ── Login with email/password ──────────────────────────────────────────────────
 router.post("/auth/login", async (req, res): Promise<void> => {
-  const parsed = LoginBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
+  const { email, password } = req.body;
+  if (!email || !password) {
+    res.status(400).json({ error: "Email y contraseña son requeridos" });
     return;
   }
 
-  const { email, password } = parsed.data;
+  const { data, error } = await supabaseAdmin.auth.signInWithPassword({
+    email: email.toLowerCase(),
+    password,
+  });
 
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email.toLowerCase()));
-  if (!user || !user.passwordHash) {
+  if (error || !data.session) {
     res.status(401).json({ error: "Email o contraseña incorrectos" });
     return;
   }
 
-  const valid = await bcrypt.compare(password, user.passwordHash);
-  if (!valid) {
-    res.status(401).json({ error: "Email o contraseña incorrectos" });
+  // Get profile
+  const { data: profile, error: profileError } = await supabaseAdmin
+    .from("profiles")
+    .select("*")
+    .eq("id", data.user.id)
+    .single();
+
+  if (profileError || !profile) {
+    res.status(404).json({ error: "Perfil no encontrado" });
     return;
   }
 
-  const token = signToken({ userId: user.id, email: user.email, role: user.role });
-  res.json({ token, user: formatUser(user) });
+  res.json({
+    token: data.session.access_token,
+    user: formatProfile(profile),
+  });
 });
 
-// ─── Google OAuth ────────────────────────────────────────────────────────────
+// ── Google OAuth — initiate ────────────────────────────────────────────────────
+router.get("/auth/google", async (req, res): Promise<void> => {
+  const { data, error } = await supabaseAdmin.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${process.env.APP_URL || ""}/api/auth/google/callback`,
+      queryParams: { access_type: "offline", prompt: "consent" },
+    },
+  });
 
-router.get("/auth/google", (req, res): void => {
-  const client = getGoogleClient();
-  if (!client) {
+  if (error || !data.url) {
     res.status(503).json({ error: "Google OAuth no está configurado" });
     return;
   }
 
-  const redirectUri = getRedirectUri(req);
-  const url = client.generateAuthUrl({
-    access_type: "offline",
-    scope: ["https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"],
-    redirect_uri: redirectUri,
-    prompt: "select_account",
-  });
-
-  res.redirect(url);
+  res.redirect(data.url);
 });
 
+// ── Google OAuth — callback ────────────────────────────────────────────────────
 router.get("/auth/google/callback", async (req, res): Promise<void> => {
-  const client = getGoogleClient();
-  if (!client) {
-    res.redirect("/?error=google_not_configured");
-    return;
-  }
-
+  // The actual code/token exchange is done client-side by Supabase JS.
+  // The server redirects to the frontend which handles the hash/query params.
   const code = req.query.code as string | undefined;
-  const error = req.query.error as string | undefined;
 
-  if (error || !code) {
+  if (!code) {
     res.redirect("/login?error=google_cancelled");
     return;
   }
 
-  try {
-    const redirectUri = getRedirectUri(req);
-    const { tokens } = await client.getToken({ code, redirect_uri: redirectUri });
-    client.setCredentials(tokens);
+  // Exchange code for session using Supabase
+  const { data, error } = await supabaseAdmin.auth.exchangeCodeForSession(code);
 
-    const ticket = await client.verifyIdToken({
-      idToken: tokens.id_token!,
-      audience: process.env.GOOGLE_CLIENT_ID!,
-    });
-
-    const payload = ticket.getPayload();
-    if (!payload || !payload.email) {
-      res.redirect("/login?error=google_no_email");
-      return;
-    }
-
-    const googleEmail = payload.email.toLowerCase();
-    const googleName = payload.name || googleEmail.split("@")[0];
-    const googleId = payload.sub;
-
-    let [user] = await db.select().from(usersTable).where(eq(usersTable.email, googleEmail));
-
-    if (!user) {
-      const isAdmin = googleEmail === ADMIN_EMAIL.toLowerCase();
-      const [created] = await db
-        .insert(usersTable)
-        .values({
-          email: googleEmail,
-          name: googleName,
-          googleId,
-          status: isAdmin ? "active" : "pending",
-          role: isAdmin ? "admin" : "user",
-        })
-        .returning();
-      user = created;
-
-      if (!isAdmin) {
-        await sendNewUserNotification(googleEmail, googleName);
-      }
-    } else if (!user.googleId) {
-      await db.update(usersTable).set({ googleId }).where(eq(usersTable.id, user.id));
-    }
-
-    const token = signToken({ userId: user.id, email: user.email, role: user.role });
-    res.redirect(`/auth/callback?token=${encodeURIComponent(token)}`);
-  } catch (err) {
-    req.log.error({ err }, "Google OAuth callback error");
+  if (error || !data.session) {
+    req.log.error({ error }, "Google OAuth callback failed");
     res.redirect("/login?error=google_failed");
-  }
-});
-
-// ─── Session ─────────────────────────────────────────────────────────────────
-
-router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.user!.id));
-  if (!user) {
-    res.status(401).json({ error: "Usuario no encontrado" });
     return;
   }
-  res.json(formatUser(user));
+
+  const googleEmail = data.user.email!.toLowerCase();
+  const googleName = data.user.user_metadata?.full_name || data.user.user_metadata?.name || googleEmail.split("@")[0];
+  const isAdmin = googleEmail === ADMIN_EMAIL.toLowerCase();
+
+  // Upsert profile
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("*")
+    .eq("id", data.user.id)
+    .single();
+
+  if (!profile) {
+    await supabaseAdmin.from("profiles").insert({
+      id: data.user.id,
+      email: googleEmail,
+      name: googleName,
+      status: isAdmin ? "active" : "pending",
+      role: isAdmin ? "admin" : "user",
+    });
+
+    if (!isAdmin) {
+      await sendNewUserNotification(googleEmail, googleName);
+    }
+  }
+
+  // Redirect to frontend with access token
+  const token = data.session.access_token;
+  res.redirect(`/auth/callback?token=${encodeURIComponent(token)}`);
 });
 
+// ── Get current user ──────────────────────────────────────────────────────────
+router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {
+  const { data: profile, error } = await supabaseAdmin
+    .from("profiles")
+    .select("*")
+    .eq("id", req.user!.id)
+    .single();
+
+  if (error || !profile) {
+    res.status(404).json({ error: "Perfil no encontrado" });
+    return;
+  }
+
+  res.json(formatProfile(profile));
+});
+
+// ── Logout ────────────────────────────────────────────────────────────────────
 router.post("/auth/logout", (_req, res): void => {
   res.json({ message: "Sesión cerrada" });
 });

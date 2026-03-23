@@ -1,71 +1,75 @@
 import { Router, type IRouter } from "express";
-import { db, usersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { supabaseAdmin } from "../lib/supabase";
 import { requireAdmin } from "../lib/auth";
 import { sendApprovalEmail } from "../lib/email";
 
 const router: IRouter = Router();
 
-function formatUser(user: typeof usersTable.$inferSelect) {
+function formatProfile(p: any) {
   return {
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    status: user.status,
-    role: user.role,
-    createdAt: user.createdAt.toISOString(),
+    id: p.id,
+    email: p.email,
+    name: p.name,
+    status: p.status,
+    role: p.role,
+    createdAt: p.created_at,
   };
 }
 
+// ── List all users ────────────────────────────────────────────────────────────
 router.get("/admin/users", requireAdmin, async (_req, res): Promise<void> => {
-  const users = await db.select().from(usersTable).orderBy(usersTable.createdAt);
-  res.json(users.map(formatUser));
+  const { data, error } = await supabaseAdmin
+    .from("profiles")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    res.status(500).json({ error: "Error al obtener usuarios" });
+    return;
+  }
+
+  res.json((data || []).map(formatProfile));
 });
 
+// ── Approve user ──────────────────────────────────────────────────────────────
 router.post("/admin/users/:userId/approve", requireAdmin, async (req, res): Promise<void> => {
-  const rawId = Array.isArray(req.params.userId) ? req.params.userId[0] : req.params.userId;
-  const userId = parseInt(rawId, 10);
-  if (isNaN(userId)) {
-    res.status(400).json({ error: "ID inválido" });
-    return;
-  }
+  const userId = req.params.userId as string;
 
-  const [user] = await db
-    .update(usersTable)
-    .set({ status: "active" })
-    .where(eq(usersTable.id, userId))
-    .returning();
+  const { data, error } = await supabaseAdmin
+    .from("profiles")
+    .update({ status: "active" })
+    .eq("id", userId)
+    .select()
+    .single();
 
-  if (!user) {
+  if (error || !data) {
     res.status(404).json({ error: "Usuario no encontrado" });
     return;
   }
 
-  await sendApprovalEmail(user.email, user.name);
+  // Send approval email
+  await sendApprovalEmail(data.email, data.name);
 
-  res.json(formatUser(user));
+  res.json(formatProfile(data));
 });
 
+// ── Reject user ───────────────────────────────────────────────────────────────
 router.post("/admin/users/:userId/reject", requireAdmin, async (req, res): Promise<void> => {
-  const rawId = Array.isArray(req.params.userId) ? req.params.userId[0] : req.params.userId;
-  const userId = parseInt(rawId, 10);
-  if (isNaN(userId)) {
-    res.status(400).json({ error: "ID inválido" });
-    return;
-  }
+  const userId = req.params.userId as string;
 
-  const [user] = await db
-    .update(usersTable)
-    .set({ status: "rejected" })
-    .where(eq(usersTable.id, userId))
-    .returning();
+  const { data, error } = await supabaseAdmin
+    .from("profiles")
+    .update({ status: "rejected" })
+    .eq("id", userId)
+    .select()
+    .single();
 
-  if (!user) {
+  if (error || !data) {
     res.status(404).json({ error: "Usuario no encontrado" });
     return;
   }
 
-  res.json(formatUser(user));
+  res.json(formatProfile(data));
 });
 
 export default router;

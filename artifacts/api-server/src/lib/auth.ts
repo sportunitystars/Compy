@@ -1,39 +1,19 @@
-import jwt from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
-import { db, usersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { supabaseAdmin } from "./supabase";
 import { logger } from "./logger";
 
-const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-change-in-production";
-
-export interface JwtPayload {
-  userId: number;
+export interface AuthUser {
+  id: string;
   email: string;
   role: string;
-}
-
-export function signToken(payload: JwtPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: "30d" });
-}
-
-export function verifyToken(token: string): JwtPayload | null {
-  try {
-    return jwt.verify(token, JWT_SECRET) as JwtPayload;
-  } catch {
-    return null;
-  }
+  status: string;
+  name: string;
 }
 
 declare global {
   namespace Express {
     interface Request {
-      user?: {
-        id: number;
-        email: string;
-        role: string;
-        status: string;
-        name: string;
-      };
+      user?: AuthUser;
     }
   }
 }
@@ -46,24 +26,32 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   }
 
   const token = authHeader.slice(7);
-  const payload = verifyToken(token);
-  if (!payload) {
+
+  // Verify the Supabase JWT
+  const { data, error } = await supabaseAdmin.auth.getUser(token);
+  if (error || !data.user) {
     res.status(401).json({ error: "Token inválido" });
     return;
   }
 
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, payload.userId));
-  if (!user) {
-    res.status(401).json({ error: "Usuario no encontrado" });
+  // Get our custom profile from the profiles table
+  const { data: profile, error: profileError } = await supabaseAdmin
+    .from("profiles")
+    .select("*")
+    .eq("id", data.user.id)
+    .single();
+
+  if (profileError || !profile) {
+    res.status(401).json({ error: "Perfil no encontrado" });
     return;
   }
 
   req.user = {
-    id: user.id,
-    email: user.email,
-    role: user.role,
-    status: user.status,
-    name: user.name,
+    id: data.user.id,
+    email: data.user.email!,
+    role: profile.role,
+    status: profile.status,
+    name: profile.name,
   };
 
   next();
