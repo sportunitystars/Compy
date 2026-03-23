@@ -5,7 +5,10 @@
  * API specification for Habit Tracker
  * OpenAPI spec version: 0.1.0
  */
+import type { HabitOption } from "./habitOption";
 
-export interface HealthStatus {
-  status: string;
+export interface CreateHabitBody {
+  name: string;
+  emoji: string;
+  options: HabitOption[];
 }

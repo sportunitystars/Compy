@@ -1,0 +1,19 @@
+packages:
+  "framer-motion": "For page transitions, collapsible animations, and fluid interactions"
+  "date-fns": "For comprehensive calendar and date manipulation"
+  "date-fns/locale": "For Spanish month and weekday names"
+  "@hookform/resolvers": "For Zod schema validation in forms"
+  "react-hook-form": "For robust form state management"
+
+images:
+  - path: "artifacts/habit-tracker/public/images/pending-illustration.png"
+    description: "A beautiful, minimalist 3D illustration of a clock or hourglass floating, conveying a sense of waiting or review, in light airy colors (soft blues, purples, and whites)"
+    aspect_ratio: "1:1"
+  - path: "artifacts/habit-tracker/public/images/rejected-illustration.png"
+    description: "A gentle, aesthetic 3D illustration of a closed padlock or a stylized shield in soft red and pastel tones, indicating restricted access"
+    aspect_ratio: "1:1"
+
+notes:
+  - The API requires an Authorization: Bearer <token> header for protected routes.
+  - Orval generated hooks are used from @workspace/api-client-react.
+  - Global fetch is overridden in App.tsx to automatically inject the JWT token from localStorage.
