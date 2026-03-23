@@ -25,15 +25,15 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     return;
   }
 
-  // Create user in Supabase Auth
   const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
     email: email.toLowerCase(),
     password,
-    email_confirm: true, // auto-confirm so user can log in immediately
+    email_confirm: true,
   });
 
   if (authError) {
-    if (authError.message.includes("already registered") || authError.message.includes("already been registered")) {
+    const msg = authError.message.toLowerCase();
+    if (msg.includes("already registered") || msg.includes("already been registered") || msg.includes("already exists")) {
       res.status(409).json({ error: "Este email ya está registrado" });
     } else {
       res.status(400).json({ error: authError.message });
@@ -44,16 +44,9 @@ router.post("/auth/register", async (req, res): Promise<void> => {
   const userId = authData.user.id;
   const isAdmin = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
-  // Upsert profile
   const { data: profile, error: profileError } = await supabaseAdmin
     .from("profiles")
-    .upsert({
-      id: userId,
-      email: email.toLowerCase(),
-      name,
-      status: isAdmin ? "active" : "pending",
-      role: isAdmin ? "admin" : "user",
-    })
+    .upsert({ id: userId, email: email.toLowerCase(), name, status: isAdmin ? "active" : "pending", role: isAdmin ? "admin" : "user" })
     .select()
     .single();
 
@@ -63,7 +56,6 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     return;
   }
 
-  // Sign in to get a session token for the client
   const { data: sessionData, error: signInError } = await supabaseAdmin.auth.signInWithPassword({
     email: email.toLowerCase(),
     password,
@@ -78,10 +70,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     await sendNewUserNotification(email, name);
   }
 
-  res.status(201).json({
-    token: sessionData.session.access_token,
-    user: formatProfile(profile),
-  });
+  res.status(201).json({ token: sessionData.session.access_token, user: formatProfile(profile) });
 });
 
 // ── Login with email/password ──────────────────────────────────────────────────
@@ -102,103 +91,64 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     return;
   }
 
-  // Get profile
   const { data: profile, error: profileError } = await supabaseAdmin
-    .from("profiles")
-    .select("*")
-    .eq("id", data.user.id)
-    .single();
+    .from("profiles").select("*").eq("id", data.user.id).single();
 
   if (profileError || !profile) {
     res.status(404).json({ error: "Perfil no encontrado" });
     return;
   }
 
-  res.json({
-    token: data.session.access_token,
-    user: formatProfile(profile),
-  });
+  res.json({ token: data.session.access_token, user: formatProfile(profile) });
 });
 
-// ── Google OAuth — initiate ────────────────────────────────────────────────────
-router.get("/auth/google", async (req, res): Promise<void> => {
-  const { data, error } = await supabaseAdmin.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: `${process.env.APP_URL || ""}/api/auth/google/callback`,
-      queryParams: { access_type: "offline", prompt: "consent" },
-    },
-  });
-
-  if (error || !data.url) {
-    res.status(503).json({ error: "Google OAuth no está configurado" });
+// ── Get/create current user profile (used after OAuth) ────────────────────────
+router.get("/auth/me", async (req, res): Promise<void> => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith("Bearer ")) {
+    res.status(401).json({ error: "No autorizado" });
     return;
   }
 
-  res.redirect(data.url);
-});
-
-// ── Google OAuth — callback ────────────────────────────────────────────────────
-router.get("/auth/google/callback", async (req, res): Promise<void> => {
-  // The actual code/token exchange is done client-side by Supabase JS.
-  // The server redirects to the frontend which handles the hash/query params.
-  const code = req.query.code as string | undefined;
-
-  if (!code) {
-    res.redirect("/login?error=google_cancelled");
+  const token = authHeader.slice(7);
+  const { data, error } = await supabaseAdmin.auth.getUser(token);
+  if (error || !data.user) {
+    res.status(401).json({ error: "Token inválido" });
     return;
   }
 
-  // Exchange code for session using Supabase
-  const { data, error } = await supabaseAdmin.auth.exchangeCodeForSession(code);
+  const supaUser = data.user;
+  const userEmail = supaUser.email!.toLowerCase();
+  const isAdmin = userEmail === ADMIN_EMAIL.toLowerCase();
 
-  if (error || !data.session) {
-    req.log.error({ error }, "Google OAuth callback failed");
-    res.redirect("/login?error=google_failed");
-    return;
-  }
-
-  const googleEmail = data.user.email!.toLowerCase();
-  const googleName = data.user.user_metadata?.full_name || data.user.user_metadata?.name || googleEmail.split("@")[0];
-  const isAdmin = googleEmail === ADMIN_EMAIL.toLowerCase();
-
-  // Upsert profile
-  const { data: profile } = await supabaseAdmin
-    .from("profiles")
-    .select("*")
-    .eq("id", data.user.id)
-    .single();
+  // Find or create profile (handles both email and Google OAuth signups)
+  let { data: profile } = await supabaseAdmin
+    .from("profiles").select("*").eq("id", supaUser.id).single();
 
   if (!profile) {
-    await supabaseAdmin.from("profiles").insert({
-      id: data.user.id,
-      email: googleEmail,
-      name: googleName,
-      status: isAdmin ? "active" : "pending",
-      role: isAdmin ? "admin" : "user",
-    });
+    const name =
+      supaUser.user_metadata?.full_name ||
+      supaUser.user_metadata?.name ||
+      supaUser.user_metadata?.display_name ||
+      userEmail.split("@")[0];
+
+    const { data: newProfile, error: insertError } = await supabaseAdmin
+      .from("profiles")
+      .insert({ id: supaUser.id, email: userEmail, name, status: isAdmin ? "active" : "pending", role: isAdmin ? "admin" : "user" })
+      .select()
+      .single();
+
+    if (insertError) {
+      req.log.error({ insertError }, "Failed to create profile on /me");
+      res.status(500).json({ error: "Error al crear perfil" });
+      return;
+    }
+
+    profile = newProfile;
 
     if (!isAdmin) {
-      await sendNewUserNotification(googleEmail, googleName);
+      await sendNewUserNotification(userEmail, name);
     }
-  }
-
-  // Redirect to frontend with access token
-  const token = data.session.access_token;
-  res.redirect(`/auth/callback?token=${encodeURIComponent(token)}`);
-});
-
-// ── Get current user ──────────────────────────────────────────────────────────
-router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {
-  const { data: profile, error } = await supabaseAdmin
-    .from("profiles")
-    .select("*")
-    .eq("id", req.user!.id)
-    .single();
-
-  if (error || !profile) {
-    res.status(404).json({ error: "Perfil no encontrado" });
-    return;
   }
 
   res.json(formatProfile(profile));

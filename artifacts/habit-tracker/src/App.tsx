@@ -1,8 +1,10 @@
+import { useEffect } from "react";
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "./hooks/use-auth";
+import { queryClient } from "@/lib/query-client";
 
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
@@ -15,11 +17,15 @@ import AdminDashboard from "@/pages/admin";
 import { PendingScreen, RejectedScreen } from "@/pages/pending";
 import { Loader2 } from "lucide-react";
 
-const queryClient = new QueryClient();
-
 function ProtectedRoute({ component: Component, ...rest }: any) {
   const { user, isLoading } = useAuth();
-  const [location, setLocation] = useLocation();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      setLocation("/login");
+    }
+  }, [isLoading, user, setLocation]);
 
   if (isLoading) {
     return (
@@ -29,18 +35,10 @@ function ProtectedRoute({ component: Component, ...rest }: any) {
     );
   }
 
-  if (!user) {
-    setLocation("/login");
-    return null;
-  }
+  if (!user) return null;
 
-  if (user.status === "pending") {
-    return <PendingScreen />;
-  }
-
-  if (user.status === "rejected") {
-    return <RejectedScreen />;
-  }
+  if (user.status === "pending") return <PendingScreen />;
+  if (user.status === "rejected") return <RejectedScreen />;
 
   return <Component {...rest} />;
 }
@@ -51,7 +49,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/auth/callback" component={AuthCallback} />
-      
+
       <Route path="/" component={() => <ProtectedRoute component={Dashboard} />} />
       <Route path="/habits/new" component={() => <ProtectedRoute component={CreateHabit} />} />
       <Route path="/habits/:id" component={() => <ProtectedRoute component={HabitDetail} />} />
@@ -62,7 +60,7 @@ function Router() {
   );
 }
 
-function App() {
+export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -76,5 +74,3 @@ function App() {
     </QueryClientProvider>
   );
 }
-
-export default App;
