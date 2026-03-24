@@ -1,0 +1,108 @@
+Quiero implementar un sistema de emails con Gmail SMTP usando nodemailer. El flujo es:
+
+1. Cuando un usuario deja su email (waitlist o autenticación), recibe un email de confirmación diciéndole que pronto recibirá acceso.
+2. El admin recibe una notificación por email con el nombre/correo del usuario y un botón para ir al panel.
+3. Cuando el admin aprueba al usuario desde el panel, el usuario recibe un email de bienvenida con un link directo para acceder.
+
+--- DEPENDENCIAS ---
+Instala: nodemailer
+(tipos opcionales para TypeScript: @types/nodemailer)
+
+--- SECRETS REQUERIDOS ---
+Crea estos dos secrets en Replit:
+- GMAIL_USER → tu correo Gmail completo (ej: tuapp@gmail.com)
+- GMAIL_APP_PASSWORD → contraseña de aplicación de Gmail (16 caracteres, sin espacios)
+  Para generarla: myaccount.google.com → Seguridad → Verificación en dos pasos → Contraseñas de aplicación
+
+--- SERVICIO DE EMAIL (src/services/email.ts) ---
+
+import nodemailer from "nodemailer";
+
+const GMAIL_USER = process.env.GMAIL_USER || "";
+const GMAIL_PASS = (process.env.GMAIL_APP_PASSWORD || "").replace(/\s/g, "");
+const APP_URL = process.env.APP_URL || "https://tu-app.replit.app";
+const FROM = `Tu App <${GMAIL_USER}>`;
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: { user: GMAIL_USER, pass: GMAIL_PASS },
+});
+
+// Email 1: Confirmación al usuario cuando deja su email
+export async function sendWaitlistConfirmation(email: string, name?: string | null) {
+  await transporter.sendMail({
+    from: FROM,
+    to: email,
+    subject: "Tu App — Solicitud recibida",
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:40px 20px;">
+        <h2 style="color:#111;">Hola${name ? `, ${name}` : ""} — estás en la lista.</h2>
+        <p style="color:#444;line-height:1.7;">
+          Hemos recibido tu solicitud. Cuando un administrador apruebe tu cuenta,
+          recibirás un correo con instrucciones para acceder.
+        </p>
+        <p style="color:#888;font-size:13px;">Gracias por tu paciencia.</p>
+      </div>
+    `,
+  });
+}
+
+// Email 2: Notificación al admin de nueva solicitud
+export async function sendAdminNewRequest(requesterEmail: string, requesterName?: string | null) {
+  if (!GMAIL_USER) return;
+  const display = requesterName ? `${requesterName} (${requesterEmail})` : requesterEmail;
+  await transporter.sendMail({
+    from: FROM,
+    to: GMAIL_USER, // el admin recibe en el mismo Gmail
+    subject: `Tu App — Nueva solicitud: ${requesterName || requesterEmail}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:40px 20px;">
+        <h2 style="color:#111;">Nueva solicitud de acceso</h2>
+        <p style="color:#444;"><strong>${display}</strong> acaba de solicitar acceso.</p>
+        <a href="${APP_URL}/admin"
+           style="display:inline-block;margin-top:20px;padding:12px 24px;
+                  background:#111;color:#fff;text-decoration:none;font-weight:600;">
+          Revisar en el panel →
+        </a>
+      </div>
+    `,
+  });
+}
+
+// Email 3: Bienvenida al usuario cuando el admin aprueba
+export async function sendWelcomeApproved(email: string, name?: string | null) {
+  const loginUrl = `${APP_URL}/login`;
+  await transporter.sendMail({
+    from: FROM,
+    to: email,
+    subject: "Tu App — Ya tienes acceso",
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:40px 20px;">
+        <h2 style="color:#111;">Hola${name ? `, ${name}` : ""} — ya puedes entrar.</h2>
+        <p style="color:#444;line-height:1.7;">
+          Tu solicitud ha sido aprobada. Haz clic en el botón para acceder:
+        </p>
+        <a href="${loginUrl}"
+           style="display:inline-block;margin-top:20px;padding:12px 24px;
+                  background:#111;color:#fff;text-decoration:none;font-weight:600;">
+          Acceder ahora →
+        </a>
+      </div>
+    `,
+  });
+}
+
+--- CÓMO LLAMAR LOS EMAILS EN TUS RUTAS ---
+
+// En la ruta donde el usuario deja su email:
+sendWaitlistConfirmation(email, name).catch(console.error);
+sendAdminNewRequest(email, name).catch(console.error);
+
+// En la ruta donde el admin aprueba al usuario:
+sendWelcomeApproved(email, name).catch(console.error);
+
+--- IMPORTANTE ---
+- Las funciones de email son non-blocking: usa .catch() para no bloquear la respuesta HTTP.
+- GMAIL_APP_PASSWORD debe ser la contraseña de aplicación de Google (no tu contraseña normal).
+- Si el correo no llega, revisa la carpeta de spam.
+- En producción, set APP_URL al dominio real (ej: https://tu-app.replit.app) como secret.

@@ -1,41 +1,41 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 import { logger } from "./logger";
 
+const GMAIL_USER = process.env.GMAIL_USER || "";
+const GMAIL_PASS = (process.env.GMAIL_APP_PASSWORD || "").replace(/\s/g, "");
 const ADMIN_EMAIL = "luisgomezm10@gmail.com";
 const APP_NAME = "Compy";
-const APP_URL = "https://6e138a67-f07e-49f7-b1e7-a8c7e4934298-00-31iugwg2vncdv.picard.replit.dev";
+const APP_URL = process.env.APP_URL || "https://6e138a67-f07e-49f7-b1e7-a8c7e4934298-00-31iugwg2vncdv.picard.replit.dev";
+const FROM = `${APP_NAME} <${GMAIL_USER}>`;
 
-let resend: Resend | null = null;
-
-function getResend(): Resend | null {
-  if (!process.env.RESEND_API_KEY) {
-    logger.warn("RESEND_API_KEY not set — emails will be skipped");
+function getTransporter() {
+  if (!GMAIL_USER || !GMAIL_PASS) {
+    logger.warn("GMAIL_USER or GMAIL_APP_PASSWORD not set — emails will be skipped");
     return null;
   }
-  if (!resend) {
-    resend = new Resend(process.env.RESEND_API_KEY);
-  }
-  return resend;
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: { user: GMAIL_USER, pass: GMAIL_PASS },
+  });
 }
 
 export async function sendNewUserNotification(userEmail: string, userName: string): Promise<void> {
-  const client = getResend();
-  if (!client) return;
+  const transporter = getTransporter();
+  if (!transporter) return;
 
   try {
-    await client.emails.send({
-      from: `${APP_NAME} <onboarding@resend.dev>`,
+    await transporter.sendMail({
+      from: FROM,
       to: ADMIN_EMAIL,
-      subject: `Nuevo usuario registrado — ${APP_NAME}`,
+      subject: `${APP_NAME} — Nueva solicitud: ${userName || userEmail}`,
       html: `
-        <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 24px;">
-          <h2 style="color: #4f46e5;">Nuevo usuario registrado</h2>
-          <p><strong>Nombre:</strong> ${userName}</p>
-          <p><strong>Email:</strong> ${userEmail}</p>
-          <p style="color: #6b7280;">Este usuario está en estado <strong>pendiente</strong>. Entra al panel de administración para aprobar o rechazar su acceso.</p>
+        <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:40px 20px;">
+          <h2 style="color:#111;">Nueva solicitud de acceso</h2>
+          <p style="color:#444;"><strong>${userName} (${userEmail})</strong> acaba de solicitar acceso.</p>
+          <p style="color:#6b7280;">Este usuario está en estado <strong>pendiente</strong>. Entra al panel para aprobar o rechazar su acceso.</p>
           <a href="${APP_URL}/admin"
-             style="display:inline-block; background:#4f46e5; color:white; padding:12px 24px; border-radius:8px; text-decoration:none; margin-top:16px;">
-            Ir al Panel de Admin
+             style="display:inline-block;margin-top:20px;padding:12px 24px;background:#4f46e5;color:#fff;text-decoration:none;font-weight:600;border-radius:8px;">
+            Ir al Panel de Admin →
           </a>
         </div>
       `,
@@ -47,117 +47,84 @@ export async function sendNewUserNotification(userEmail: string, userName: strin
 }
 
 export async function sendPendingEmail(userEmail: string, userName: string): Promise<void> {
-  const client = getResend();
-  if (!client) return;
+  const transporter = getTransporter();
+  if (!transporter) return;
 
   try {
-    const { error } = await client.emails.send({
-      from: `${APP_NAME} <onboarding@resend.dev>`,
+    await transporter.sendMail({
+      from: FROM,
       to: userEmail,
-      subject: `Tu solicitud de acceso está en revisión — ${APP_NAME}`,
+      subject: `${APP_NAME} — Solicitud recibida`,
       html: `
-        <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 24px; background: #f9fafb; border-radius: 12px;">
-          <div style="text-align: center; margin-bottom: 24px;">
-            <div style="background: #4f46e5; width: 56px; height: 56px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center;">
-              <span style="font-size: 28px;">✓</span>
-            </div>
-          </div>
-          <h2 style="color: #1e1b4b; text-align: center; margin-bottom: 8px;">¡Solicitud recibida, ${userName}!</h2>
-          <p style="color: #6b7280; text-align: center; margin-bottom: 24px;">Tu solicitud de acceso ha sido registrada exitosamente.</p>
-          <div style="background: white; border-radius: 8px; padding: 20px; border-left: 4px solid #4f46e5; margin-bottom: 24px;">
-            <p style="margin: 0; color: #374151;">
-              Tu cuenta está actualmente en <strong>revisión</strong>. Una vez que el administrador apruebe tu acceso, recibirás otro correo con la confirmación y podrás iniciar sesión.
-            </p>
-          </div>
-          <p style="color: #9ca3af; font-size: 13px; text-align: center; margin: 0;">
-            Si tienes alguna duda, responde a este correo.
+        <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:40px 20px;">
+          <h2 style="color:#111;">Hola${userName ? `, ${userName}` : ""} — estás en la lista.</h2>
+          <p style="color:#444;line-height:1.7;">
+            Hemos recibido tu solicitud de acceso a <strong>${APP_NAME}</strong>.
+            Cuando el administrador apruebe tu cuenta, recibirás un correo con instrucciones para acceder.
           </p>
+          <p style="color:#888;font-size:13px;">Gracias por tu paciencia.</p>
         </div>
       `,
     });
-    if (error) {
-      logger.warn({ error, userEmail }, "Pending email not delivered (domain not verified in Resend — only admin email is supported)");
-    } else {
-      logger.info({ userEmail }, "Pending request email sent to user");
-    }
+    logger.info({ userEmail }, "Pending request email sent to user");
   } catch (err) {
     logger.error({ err }, "Failed to send pending email to user");
   }
 }
 
 export async function sendRejectionEmail(userEmail: string, userName: string): Promise<void> {
-  const client = getResend();
-  if (!client) return;
+  const transporter = getTransporter();
+  if (!transporter) return;
 
   try {
-    const { error } = await client.emails.send({
-      from: `${APP_NAME} <onboarding@resend.dev>`,
+    await transporter.sendMail({
+      from: FROM,
       to: userEmail,
-      subject: `Actualización sobre tu solicitud — ${APP_NAME}`,
+      subject: `${APP_NAME} — Actualización sobre tu solicitud`,
       html: `
-        <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 24px; background: #f9fafb; border-radius: 12px;">
-          <div style="text-align: center; margin-bottom: 24px;">
-            <div style="background: #ef4444; width: 56px; height: 56px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center;">
-              <span style="font-size: 28px; color: white;">✕</span>
-            </div>
-          </div>
-          <h2 style="color: #1e1b4b; text-align: center; margin-bottom: 8px;">Hola, ${userName}</h2>
-          <p style="color: #6b7280; text-align: center; margin-bottom: 24px;">Tenemos novedades sobre tu solicitud de acceso.</p>
-          <div style="background: white; border-radius: 8px; padding: 20px; border-left: 4px solid #ef4444; margin-bottom: 24px;">
-            <p style="margin: 0; color: #374151;">
-              Lamentablemente, tu solicitud de acceso a <strong>${APP_NAME}</strong> no fue aprobada en esta ocasión.
-              Si crees que esto es un error, puedes intentar registrarte nuevamente o contactar al administrador.
-            </p>
-          </div>
-          <p style="color: #9ca3af; font-size: 13px; text-align: center; margin: 0;">
-            Puedes volver a solicitar acceso en <a href="${APP_URL}/register" style="color: #4f46e5;">esta página</a>.
+        <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:40px 20px;">
+          <h2 style="color:#111;">Hola${userName ? `, ${userName}` : ""}</h2>
+          <p style="color:#444;line-height:1.7;">
+            Lamentablemente, tu solicitud de acceso a <strong>${APP_NAME}</strong> no fue aprobada en esta ocasión.
+            Si crees que esto es un error, puedes intentar registrarte nuevamente o contactar al administrador.
           </p>
+          <a href="${APP_URL}/register"
+             style="display:inline-block;margin-top:20px;padding:12px 24px;background:#ef4444;color:#fff;text-decoration:none;font-weight:600;border-radius:8px;">
+            Volver a solicitar acceso →
+          </a>
         </div>
       `,
     });
-    if (error) {
-      logger.warn({ error, userEmail }, "Rejection email not delivered (domain not verified in Resend)");
-    } else {
-      logger.info({ userEmail }, "Rejection email sent to user");
-    }
+    logger.info({ userEmail }, "Rejection email sent to user");
   } catch (err) {
     logger.error({ err }, "Failed to send rejection email to user");
   }
 }
 
 export async function sendApprovalEmail(userEmail: string, userName: string): Promise<void> {
-  const client = getResend();
-  if (!client) return;
+  const transporter = getTransporter();
+  if (!transporter) return;
 
   try {
-    const { error } = await client.emails.send({
-      from: `${APP_NAME} <onboarding@resend.dev>`,
+    await transporter.sendMail({
+      from: FROM,
       to: userEmail,
-      subject: `¡Tu cuenta ha sido aprobada! — ${APP_NAME}`,
+      subject: `${APP_NAME} — Ya tienes acceso`,
       html: `
-        <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 24px; background: #f9fafb; border-radius: 12px;">
-          <div style="text-align: center; margin-bottom: 24px;">
-            <div style="background: #10b981; width: 56px; height: 56px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center;">
-              <span style="font-size: 28px;">🎉</span>
-            </div>
-          </div>
-          <h2 style="color: #1e1b4b; text-align: center;">¡Bienvenido, ${userName}!</h2>
-          <p style="color: #6b7280; text-align: center; margin-bottom: 24px;">Tu cuenta ha sido aprobada. Ya puedes iniciar sesión.</p>
-          <div style="text-align: center;">
-            <a href="${APP_URL}/login"
-               style="display:inline-block; background:#4f46e5; color:white; padding:14px 32px; border-radius:8px; text-decoration:none; font-weight:600;">
-              Iniciar Sesión
-            </a>
-          </div>
-          <p style="color: #9ca3af; margin-top: 24px; font-size: 13px; text-align: center;">¡Mucho éxito construyendo tus mejores hábitos!</p>
+        <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:40px 20px;">
+          <h2 style="color:#111;">Hola${userName ? `, ${userName}` : ""} — ya puedes entrar.</h2>
+          <p style="color:#444;line-height:1.7;">
+            Tu solicitud ha sido aprobada. Haz clic en el botón para acceder a <strong>${APP_NAME}</strong>:
+          </p>
+          <a href="${APP_URL}/login"
+             style="display:inline-block;margin-top:20px;padding:12px 24px;background:#10b981;color:#fff;text-decoration:none;font-weight:600;border-radius:8px;">
+            Acceder ahora →
+          </a>
+          <p style="color:#9ca3af;margin-top:24px;font-size:13px;">¡Mucho éxito construyendo tus mejores hábitos!</p>
         </div>
       `,
     });
-    if (error) {
-      logger.warn({ error, userEmail }, "Approval email not delivered (domain not verified in Resend)");
-    } else {
-      logger.info({ userEmail }, "Approval email sent");
-    }
+    logger.info({ userEmail }, "Approval email sent to user");
   } catch (err) {
     logger.error({ err }, "Failed to send approval email");
   }
