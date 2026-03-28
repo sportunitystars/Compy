@@ -311,9 +311,12 @@ export function HabitCard({ habitId, onDeleteClick }: HabitCardProps) {
               {percentages.map((opt) => (
                 <span
                   key={opt.label}
-                  className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full"
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full"
                   style={{ color: opt.color, backgroundColor: `${opt.color}1a` }}
                 >
+                  {opt.isNegative
+                    ? <TriangleAlert className="w-3 h-3 shrink-0" />
+                    : <Flame className="w-3 h-3 shrink-0" />}
                   {opt.label} · {opt.count} días
                 </span>
               ))}
