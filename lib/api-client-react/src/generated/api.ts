@@ -742,12 +742,12 @@ export const useCreateHabit = <
 /**
  * @summary Get a single habit with all logs for current year
  */
-export const getGetHabitUrl = (habitId: number) => {
+export const getGetHabitUrl = (habitId: string) => {
   return `/api/habits/${habitId}`;
 };
 
 export const getHabit = async (
-  habitId: number,
+  habitId: string,
   options?: RequestInit,
 ): Promise<HabitDetail> => {
   return customFetch<HabitDetail>(getGetHabitUrl(habitId), {
@@ -756,7 +756,7 @@ export const getHabit = async (
   });
 };
 
-export const getGetHabitQueryKey = (habitId: number) => {
+export const getGetHabitQueryKey = (habitId: string) => {
   return [`/api/habits/${habitId}`] as const;
 };
 
@@ -764,7 +764,7 @@ export const getGetHabitQueryOptions = <
   TData = Awaited<ReturnType<typeof getHabit>>,
   TError = ErrorType<ErrorResponse>,
 >(
-  habitId: number,
+  habitId: string,
   options?: {
     query?: UseQueryOptions<
       Awaited<ReturnType<typeof getHabit>>,
@@ -805,7 +805,7 @@ export function useGetHabit<
   TData = Awaited<ReturnType<typeof getHabit>>,
   TError = ErrorType<ErrorResponse>,
 >(
-  habitId: number,
+  habitId: string,
   options?: {
     query?: UseQueryOptions<
       Awaited<ReturnType<typeof getHabit>>,
@@ -827,12 +827,12 @@ export function useGetHabit<
 /**
  * @summary Update a habit
  */
-export const getUpdateHabitUrl = (habitId: number) => {
+export const getUpdateHabitUrl = (habitId: string) => {
   return `/api/habits/${habitId}`;
 };
 
 export const updateHabit = async (
-  habitId: number,
+  habitId: string,
   updateHabitBody: UpdateHabitBody,
   options?: RequestInit,
 ): Promise<Habit> => {
@@ -851,14 +851,14 @@ export const getUpdateHabitMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof updateHabit>>,
     TError,
-    { habitId: number; data: BodyType<UpdateHabitBody> },
+    { habitId: string; data: BodyType<UpdateHabitBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof updateHabit>>,
   TError,
-  { habitId: number; data: BodyType<UpdateHabitBody> },
+  { habitId: string; data: BodyType<UpdateHabitBody> },
   TContext
 > => {
   const mutationKey = ["updateHabit"];
@@ -872,7 +872,7 @@ export const getUpdateHabitMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof updateHabit>>,
-    { habitId: number; data: BodyType<UpdateHabitBody> }
+    { habitId: string; data: BodyType<UpdateHabitBody> }
   > = (props) => {
     const { habitId, data } = props ?? {};
 
@@ -898,14 +898,14 @@ export const useUpdateHabit = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof updateHabit>>,
     TError,
-    { habitId: number; data: BodyType<UpdateHabitBody> },
+    { habitId: string; data: BodyType<UpdateHabitBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
   Awaited<ReturnType<typeof updateHabit>>,
   TError,
-  { habitId: number; data: BodyType<UpdateHabitBody> },
+  { habitId: string; data: BodyType<UpdateHabitBody> },
   TContext
 > => {
   return useMutation(getUpdateHabitMutationOptions(options));
@@ -914,12 +914,12 @@ export const useUpdateHabit = <
 /**
  * @summary Delete a habit
  */
-export const getDeleteHabitUrl = (habitId: number) => {
+export const getDeleteHabitUrl = (habitId: string) => {
   return `/api/habits/${habitId}`;
 };
 
 export const deleteHabit = async (
-  habitId: number,
+  habitId: string,
   options?: RequestInit,
 ): Promise<void> => {
   return customFetch<void>(getDeleteHabitUrl(habitId), {
@@ -935,14 +935,14 @@ export const getDeleteHabitMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof deleteHabit>>,
     TError,
-    { habitId: number },
+    { habitId: string },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof deleteHabit>>,
   TError,
-  { habitId: number },
+  { habitId: string },
   TContext
 > => {
   const mutationKey = ["deleteHabit"];
@@ -956,7 +956,7 @@ export const getDeleteHabitMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof deleteHabit>>,
-    { habitId: number }
+    { habitId: string }
   > = (props) => {
     const { habitId } = props ?? {};
 
@@ -982,14 +982,14 @@ export const useDeleteHabit = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof deleteHabit>>,
     TError,
-    { habitId: number },
+    { habitId: string },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
   Awaited<ReturnType<typeof deleteHabit>>,
   TError,
-  { habitId: number },
+  { habitId: string },
   TContext
 > => {
   return useMutation(getDeleteHabitMutationOptions(options));
@@ -998,12 +998,12 @@ export const useDeleteHabit = <
 /**
  * @summary Log or update a day entry (YYYY-MM-DD)
  */
-export const getUpsertLogUrl = (habitId: number, date: string) => {
+export const getUpsertLogUrl = (habitId: string, date: string) => {
   return `/api/habits/${habitId}/logs/${date}`;
 };
 
 export const upsertLog = async (
-  habitId: number,
+  habitId: string,
   date: string,
   upsertLogBody: UpsertLogBody,
   options?: RequestInit,
@@ -1023,14 +1023,14 @@ export const getUpsertLogMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof upsertLog>>,
     TError,
-    { habitId: number; date: string; data: BodyType<UpsertLogBody> },
+    { habitId: string; date: string; data: BodyType<UpsertLogBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof upsertLog>>,
   TError,
-  { habitId: number; date: string; data: BodyType<UpsertLogBody> },
+  { habitId: string; date: string; data: BodyType<UpsertLogBody> },
   TContext
 > => {
   const mutationKey = ["upsertLog"];
@@ -1044,7 +1044,7 @@ export const getUpsertLogMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof upsertLog>>,
-    { habitId: number; date: string; data: BodyType<UpsertLogBody> }
+    { habitId: string; date: string; data: BodyType<UpsertLogBody> }
   > = (props) => {
     const { habitId, date, data } = props ?? {};
 
@@ -1070,14 +1070,14 @@ export const useUpsertLog = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof upsertLog>>,
     TError,
-    { habitId: number; date: string; data: BodyType<UpsertLogBody> },
+    { habitId: string; date: string; data: BodyType<UpsertLogBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
   Awaited<ReturnType<typeof upsertLog>>,
   TError,
-  { habitId: number; date: string; data: BodyType<UpsertLogBody> },
+  { habitId: string; date: string; data: BodyType<UpsertLogBody> },
   TContext
 > => {
   return useMutation(getUpsertLogMutationOptions(options));
@@ -1086,12 +1086,12 @@ export const useUpsertLog = <
 /**
  * @summary Remove a day log entry
  */
-export const getDeleteLogUrl = (habitId: number, date: string) => {
+export const getDeleteLogUrl = (habitId: string, date: string) => {
   return `/api/habits/${habitId}/logs/${date}`;
 };
 
 export const deleteLog = async (
-  habitId: number,
+  habitId: string,
   date: string,
   options?: RequestInit,
 ): Promise<void> => {
@@ -1108,14 +1108,14 @@ export const getDeleteLogMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof deleteLog>>,
     TError,
-    { habitId: number; date: string },
+    { habitId: string; date: string },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof deleteLog>>,
   TError,
-  { habitId: number; date: string },
+  { habitId: string; date: string },
   TContext
 > => {
   const mutationKey = ["deleteLog"];
@@ -1129,7 +1129,7 @@ export const getDeleteLogMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof deleteLog>>,
-    { habitId: number; date: string }
+    { habitId: string; date: string }
   > = (props) => {
     const { habitId, date } = props ?? {};
 
@@ -1155,14 +1155,14 @@ export const useDeleteLog = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof deleteLog>>,
     TError,
-    { habitId: number; date: string },
+    { habitId: string; date: string },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
   Awaited<ReturnType<typeof deleteLog>>,
   TError,
-  { habitId: number; date: string },
+  { habitId: string; date: string },
   TContext
 > => {
   return useMutation(getDeleteLogMutationOptions(options));
@@ -1236,12 +1236,12 @@ export function useListUsers<
 /**
  * @summary Approve a pending user
  */
-export const getApproveUserUrl = (userId: number) => {
+export const getApproveUserUrl = (userId: string) => {
   return `/api/admin/users/${userId}/approve`;
 };
 
 export const approveUser = async (
-  userId: number,
+  userId: string,
   options?: RequestInit,
 ): Promise<User> => {
   return customFetch<User>(getApproveUserUrl(userId), {
@@ -1257,14 +1257,14 @@ export const getApproveUserMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof approveUser>>,
     TError,
-    { userId: number },
+    { userId: string },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof approveUser>>,
   TError,
-  { userId: number },
+  { userId: string },
   TContext
 > => {
   const mutationKey = ["approveUser"];
@@ -1278,7 +1278,7 @@ export const getApproveUserMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof approveUser>>,
-    { userId: number }
+    { userId: string }
   > = (props) => {
     const { userId } = props ?? {};
 
@@ -1304,14 +1304,14 @@ export const useApproveUser = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof approveUser>>,
     TError,
-    { userId: number },
+    { userId: string },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
   Awaited<ReturnType<typeof approveUser>>,
   TError,
-  { userId: number },
+  { userId: string },
   TContext
 > => {
   return useMutation(getApproveUserMutationOptions(options));
@@ -1320,12 +1320,12 @@ export const useApproveUser = <
 /**
  * @summary Reject / deactivate a user
  */
-export const getRejectUserUrl = (userId: number) => {
+export const getRejectUserUrl = (userId: string) => {
   return `/api/admin/users/${userId}/reject`;
 };
 
 export const rejectUser = async (
-  userId: number,
+  userId: string,
   options?: RequestInit,
 ): Promise<User> => {
   return customFetch<User>(getRejectUserUrl(userId), {
@@ -1341,14 +1341,14 @@ export const getRejectUserMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof rejectUser>>,
     TError,
-    { userId: number },
+    { userId: string },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof rejectUser>>,
   TError,
-  { userId: number },
+  { userId: string },
   TContext
 > => {
   const mutationKey = ["rejectUser"];
@@ -1362,7 +1362,7 @@ export const getRejectUserMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof rejectUser>>,
-    { userId: number }
+    { userId: string }
   > = (props) => {
     const { userId } = props ?? {};
 
@@ -1378,7 +1378,32 @@ export type RejectUserMutationResult = NonNullable<
 
 export type RejectUserMutationError = ErrorType<ErrorResponse>;
 
-// ── Delete user permanently ────────────────────────────────────────────────────
+/**
+ * @summary Reject / deactivate a user
+ */
+export const useRejectUser = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof rejectUser>>,
+    TError,
+    { userId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof rejectUser>>,
+  TError,
+  { userId: string },
+  TContext
+> => {
+  return useMutation(getRejectUserMutationOptions(options));
+};
+
+/**
+ * @summary Permanently delete a user and their data
+ */
 export const getDeleteUserUrl = (userId: string) => {
   return `/api/admin/users/${userId}`;
 };
@@ -1424,6 +1449,7 @@ export const getDeleteUserMutationOptions = <
     { userId: string }
   > = (props) => {
     const { userId } = props ?? {};
+
     return deleteUser(userId, requestOptions);
   };
 
@@ -1457,27 +1483,4 @@ export const useDeleteUser = <
   TContext
 > => {
   return useMutation(getDeleteUserMutationOptions(options));
-};
-
-/**
- * @summary Reject / deactivate a user
- */
-export const useRejectUser = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof rejectUser>>,
-    TError,
-    { userId: number },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof rejectUser>>,
-  TError,
-  { userId: number },
-  TContext
-> => {
-  return useMutation(getRejectUserMutationOptions(options));
 };

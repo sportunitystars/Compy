@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     query: {
       retry: false,
       enabled: !!session,
-    },
+    } as any,
   });
 
   const logout = useCallback(async () => {

@@ -34,7 +34,7 @@ export const LoginBody = zod.object({
 export const LoginResponse = zod.object({
   token: zod.string(),
   user: zod.object({
-    id: zod.number(),
+    id: zod.string(),
     email: zod.string(),
     name: zod.string(),
     status: zod.enum(["pending", "active", "rejected"]),
@@ -47,7 +47,7 @@ export const LoginResponse = zod.object({
  * @summary Get current user info
  */
 export const GetMeResponse = zod.object({
-  id: zod.number(),
+  id: zod.string(),
   email: zod.string(),
   name: zod.string(),
   status: zod.enum(["pending", "active", "rejected"]),
@@ -66,8 +66,8 @@ export const LogoutResponse = zod.object({
  * @summary List all habits for current user
  */
 export const ListHabitsResponseItem = zod.object({
-  id: zod.number(),
-  userId: zod.number(),
+  id: zod.string(),
+  userId: zod.string(),
   name: zod.string(),
   emoji: zod.string(),
   options: zod.array(
@@ -102,12 +102,12 @@ export const CreateHabitBody = zod.object({
  * @summary Get a single habit with all logs for current year
  */
 export const GetHabitParams = zod.object({
-  habitId: zod.coerce.number(),
+  habitId: zod.coerce.string(),
 });
 
 export const GetHabitResponse = zod.object({
-  id: zod.number(),
-  userId: zod.number(),
+  id: zod.string(),
+  userId: zod.string(),
   name: zod.string(),
   emoji: zod.string(),
   options: zod.array(
@@ -121,7 +121,7 @@ export const GetHabitResponse = zod.object({
   createdAt: zod.string(),
   logs: zod.array(
     zod.object({
-      habitId: zod.number(),
+      habitId: zod.string(),
       date: zod.string(),
       optionIndex: zod.number(),
     }),
@@ -132,7 +132,7 @@ export const GetHabitResponse = zod.object({
  * @summary Update a habit
  */
 export const UpdateHabitParams = zod.object({
-  habitId: zod.coerce.number(),
+  habitId: zod.coerce.string(),
 });
 
 export const UpdateHabitBody = zod.object({
@@ -151,8 +151,8 @@ export const UpdateHabitBody = zod.object({
 });
 
 export const UpdateHabitResponse = zod.object({
-  id: zod.number(),
-  userId: zod.number(),
+  id: zod.string(),
+  userId: zod.string(),
   name: zod.string(),
   emoji: zod.string(),
   options: zod.array(
@@ -170,14 +170,14 @@ export const UpdateHabitResponse = zod.object({
  * @summary Delete a habit
  */
 export const DeleteHabitParams = zod.object({
-  habitId: zod.coerce.number(),
+  habitId: zod.coerce.string(),
 });
 
 /**
  * @summary Log or update a day entry (YYYY-MM-DD)
  */
 export const UpsertLogParams = zod.object({
-  habitId: zod.coerce.number(),
+  habitId: zod.coerce.string(),
   date: zod.coerce.string(),
 });
 
@@ -186,7 +186,7 @@ export const UpsertLogBody = zod.object({
 });
 
 export const UpsertLogResponse = zod.object({
-  habitId: zod.number(),
+  habitId: zod.string(),
   date: zod.string(),
   optionIndex: zod.number(),
 });
@@ -195,7 +195,7 @@ export const UpsertLogResponse = zod.object({
  * @summary Remove a day log entry
  */
 export const DeleteLogParams = zod.object({
-  habitId: zod.coerce.number(),
+  habitId: zod.coerce.string(),
   date: zod.coerce.string(),
 });
 
@@ -203,7 +203,7 @@ export const DeleteLogParams = zod.object({
  * @summary List all users (admin only)
  */
 export const ListUsersResponseItem = zod.object({
-  id: zod.number(),
+  id: zod.string(),
   email: zod.string(),
   name: zod.string(),
   status: zod.enum(["pending", "active", "rejected"]),
@@ -216,11 +216,11 @@ export const ListUsersResponse = zod.array(ListUsersResponseItem);
  * @summary Approve a pending user
  */
 export const ApproveUserParams = zod.object({
-  userId: zod.coerce.number(),
+  userId: zod.coerce.string(),
 });
 
 export const ApproveUserResponse = zod.object({
-  id: zod.number(),
+  id: zod.string(),
   email: zod.string(),
   name: zod.string(),
   status: zod.enum(["pending", "active", "rejected"]),
@@ -232,14 +232,25 @@ export const ApproveUserResponse = zod.object({
  * @summary Reject / deactivate a user
  */
 export const RejectUserParams = zod.object({
-  userId: zod.coerce.number(),
+  userId: zod.coerce.string(),
 });
 
 export const RejectUserResponse = zod.object({
-  id: zod.number(),
+  id: zod.string(),
   email: zod.string(),
   name: zod.string(),
   status: zod.enum(["pending", "active", "rejected"]),
   role: zod.enum(["user", "admin"]),
   createdAt: zod.string(),
+});
+
+/**
+ * @summary Permanently delete a user and their data
+ */
+export const DeleteUserParams = zod.object({
+  userId: zod.coerce.string(),
+});
+
+export const DeleteUserResponse = zod.object({
+  message: zod.string(),
 });

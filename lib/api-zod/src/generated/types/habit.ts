@@ -8,8 +8,8 @@
 import type { HabitOption } from "./habitOption";
 
 export interface Habit {
-  id: number;
-  userId: number;
+  id: string;
+  userId: string;
   name: string;
   emoji: string;
   options: HabitOption[];

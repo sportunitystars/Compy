@@ -7,7 +7,7 @@
  */
 
 export interface HabitLog {
-  habitId: number;
+  habitId: string;
   date: string;
   optionIndex: number;
 }

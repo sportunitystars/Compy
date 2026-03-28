@@ -14,7 +14,7 @@ import { getListUsersQueryKey } from "@workspace/api-client-react";
 export default function AdminDashboard() {
   const { user } = useAuth();
   const { data: users, isLoading, isFetching, refetch } = useListUsers({
-    query: { refetchInterval: 30000, refetchOnWindowFocus: true, staleTime: 0 }
+    query: { refetchInterval: 30000, refetchOnWindowFocus: true, staleTime: 0 } as any
   });
   const approveMut = useApproveUser();
   const rejectMut = useRejectUser();
@@ -32,7 +32,7 @@ export default function AdminDashboard() {
     );
   }
 
-  const handleApprove = (id: number) => {
+  const handleApprove = (id: string) => {
     approveMut.mutate(
       { userId: id },
       {
@@ -44,7 +44,7 @@ export default function AdminDashboard() {
     );
   };
 
-  const handleReject = (id: number) => {
+  const handleReject = (id: string) => {
     rejectMut.mutate(
       { userId: id },
       {

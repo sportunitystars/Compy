@@ -76,7 +76,7 @@ function calculateStreaks(logs: { date: string, optionIndex: number }[], options
 
 export default function HabitDetail() {
   const [, params] = useRoute("/habits/:id");
-  const habitId = parseInt(params?.id || "0", 10);
+  const habitId = params?.id || "";
   const { data: habit, isLoading } = useGetHabit(habitId);
   
   const [showSummary, setShowSummary] = useState(false);

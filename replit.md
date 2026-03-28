@@ -23,27 +23,35 @@ Full-stack Spanish habit tracking app. Features:
 - Google OAuth (via Supabase Auth — configure in Supabase dashboard)
 - Admin approval flow: new users → pending → admin approves via panel → email sent → active
 - Admin email: `luisgomezm10@gmail.com` (auto-gets admin + active status on register)
-- Resend for email notifications (new user notification to admin, approval email to user)
+- Gmail SMTP (nodemailer) for email notifications (new user notification to admin, approval/rejection email to user)
 - Yearly calendar view per habit (Jan–Dec, current year)
 - 2–6 custom options per habit with custom colors (isPositive / isNegative flags)
 - Streak tracking (current + max, per month and all-time)
 - Motivational alerts after 5 consecutive positive/negative days
-- Admin panel to approve/reject users
+- Admin panel to approve/reject/delete users
 
 ## Required Secrets
 
-- `SUPABASE_URL` — Supabase Project URL
+- `SUPABASE_URL` — Supabase Project URL (`https://msssbdjotmcebowmqwfl.supabase.co`)
 - `SUPABASE_ANON_KEY` — Supabase anon/public key (used in frontend)
 - `SUPABASE_SERVICE_ROLE_KEY` — Supabase service_role key (used in backend, bypasses RLS)
-- `SUPABASE_DB_URL` — Direct PostgreSQL connection string (not currently used but available)
-- `RESEND_API_KEY` — from resend.com, for email notifications
-- `JWT_SECRET` — legacy (kept for compatibility, not used for auth since Supabase handles it)
+- `SUPABASE_DB_URL` — Direct PostgreSQL connection string
+- `GMAIL_USER` — Gmail address for sending emails (luisgomezm10@gmail.com)
+- `GMAIL_APP_PASSWORD` — Gmail App Password for nodemailer SMTP
+- `JWT_SECRET` — legacy (kept for compatibility)
+- `RESEND_API_KEY` — unused (replaced by Gmail SMTP)
 
-## Database Tables (in Supabase)
+## Database Tables (in Supabase) — ACTUAL column names
 
-- `profiles` — linked to `auth.users(id)`, stores name/email/status/role
-- `habits` — user_id (uuid), name, emoji, options (jsonb)
-- `habit_logs` — habit_id, user_id, date (YYYY-MM-DD), option_index; unique(habit_id, date)
+- `profiles` — `id` (uuid), `email`, `name`, `status` (pending/active/rejected), `role` (user/admin), `created_at`
+- `habits` — `id` (uuid), `user_id` (uuid), `name`, `description` (stores emoji!), `options` (jsonb), `created_at`
+  - NOTE: DB uses `description` column, API maps it to/from `emoji` field
+- `habit_logs` — `id` (uuid), `habit_id` (uuid), `date` (YYYY-MM-DD), `value` (stores optionIndex as string!), `note`, `created_at`
+  - NOTE: DB uses `value` column, API maps it to/from `optionIndex` field; NO `user_id` column
+
+## ID Types
+
+All IDs (users, habits, logs) are UUIDs (string). The OpenAPI spec and generated client use `string` type for all IDs. Never use `parseInt()` on habit or user IDs.
 
 ## Structure
 

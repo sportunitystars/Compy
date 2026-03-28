@@ -44,7 +44,7 @@ export const UserRole = {
 } as const;
 
 export interface User {
-  id: number;
+  id: string;
   email: string;
   name: string;
   status: UserStatus;
@@ -65,8 +65,8 @@ export interface HabitOption {
 }
 
 export interface Habit {
-  id: number;
-  userId: number;
+  id: string;
+  userId: string;
   name: string;
   emoji: string;
   options: HabitOption[];
@@ -74,14 +74,14 @@ export interface Habit {
 }
 
 export interface HabitLog {
-  habitId: number;
+  habitId: string;
   date: string;
   optionIndex: number;
 }
 
 export interface HabitDetail {
-  id: number;
-  userId: number;
+  id: string;
+  userId: string;
   name: string;
   emoji: string;
   options: HabitOption[];
