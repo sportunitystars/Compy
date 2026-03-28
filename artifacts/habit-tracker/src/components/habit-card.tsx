@@ -61,13 +61,18 @@ function computeMonthStats(
     let activeStreak = 0;
     if (isCurrentMonthView) {
       const allDates = new Set(logs.filter((l) => l.optionIndex === idx).map((l) => l.date));
-      const todayStr = format(now, "yyyy-MM-dd");
-      const checkDate = new Date(now);
-      if (!allDates.has(todayStr)) checkDate.setDate(checkDate.getDate() - 1);
-      while (true) {
-        const ds = format(checkDate, "yyyy-MM-dd");
-        if (allDates.has(ds)) { activeStreak++; checkDate.setDate(checkDate.getDate() - 1); }
-        else break;
+      // Find the most recent logged date for this option in the current month
+      const monthOptDates = [...allDates]
+        .filter((d) => d.startsWith(`${displayYear}-${monthPadded}`))
+        .sort()
+        .reverse();
+      if (monthOptDates.length > 0) {
+        const checkDate = new Date(monthOptDates[0] + "T00:00:00");
+        while (true) {
+          const ds = format(checkDate, "yyyy-MM-dd");
+          if (allDates.has(ds)) { activeStreak++; checkDate.setDate(checkDate.getDate() - 1); }
+          else break;
+        }
       }
     }
 
