@@ -19,7 +19,7 @@ function formatLog(l: any) {
   return {
     habitId: l.habit_id,
     date: l.date,
-    optionIndex: l.option_index,
+    optionIndex: parseInt(l.value, 10),
   };
 }
 
@@ -65,8 +65,7 @@ router.post("/habits", requireActive, async (req, res): Promise<void> => {
 
 // ── Get habit detail + logs ────────────────────────────────────────────────────
 router.get("/habits/:habitId", requireActive, async (req, res): Promise<void> => {
-  const habitId = parseInt(req.params.habitId as string, 10);
-  if (isNaN(habitId)) { res.status(400).json({ error: "ID inválido" }); return; }
+  const habitId = req.params.habitId as string;
 
   const { data: habit, error: habitError } = await supabaseAdmin
     .from("habits")
@@ -82,16 +81,15 @@ router.get("/habits/:habitId", requireActive, async (req, res): Promise<void> =>
     .from("habit_logs")
     .select("*")
     .eq("habit_id", habitId)
-    .eq("user_id", req.user!.id)
-    .like("date", `${currentYear}-%`);
+    .gte("date", `${currentYear}-01-01`)
+    .lte("date", `${currentYear}-12-31`);
 
   res.json({ ...formatHabit(habit), logs: (logs || []).map(formatLog) });
 });
 
 // ── Update habit ──────────────────────────────────────────────────────────────
 router.patch("/habits/:habitId", requireActive, async (req, res): Promise<void> => {
-  const habitId = parseInt(req.params.habitId as string, 10);
-  if (isNaN(habitId)) { res.status(400).json({ error: "ID inválido" }); return; }
+  const habitId = req.params.habitId as string;
 
   const updates: any = {};
   if (req.body.name != null) updates.name = req.body.name;
@@ -113,8 +111,7 @@ router.patch("/habits/:habitId", requireActive, async (req, res): Promise<void> 
 
 // ── Delete habit ──────────────────────────────────────────────────────────────
 router.delete("/habits/:habitId", requireActive, async (req, res): Promise<void> => {
-  const habitId = parseInt(req.params.habitId as string, 10);
-  if (isNaN(habitId)) { res.status(400).json({ error: "ID inválido" }); return; }
+  const habitId = req.params.habitId as string;
 
   await supabaseAdmin.from("habit_logs").delete().eq("habit_id", habitId).eq("user_id", req.user!.id);
   await supabaseAdmin.from("habits").delete().eq("id", habitId).eq("user_id", req.user!.id);
@@ -124,16 +121,15 @@ router.delete("/habits/:habitId", requireActive, async (req, res): Promise<void>
 
 // ── Upsert log ────────────────────────────────────────────────────────────────
 router.put("/habits/:habitId/logs/:date", requireActive, async (req, res): Promise<void> => {
-  const habitId = parseInt(req.params.habitId as string, 10);
+  const habitId = req.params.habitId as string;
   const date = req.params.date as string;
   const { optionIndex } = req.body;
 
-  if (isNaN(habitId) || optionIndex == null) {
+  if (!habitId || optionIndex == null) {
     res.status(400).json({ error: "Datos inválidos" });
     return;
   }
 
-  // Verify habit belongs to user
   const { data: habit } = await supabaseAdmin
     .from("habits").select("id").eq("id", habitId).eq("user_id", req.user!.id).single();
 
@@ -142,7 +138,7 @@ router.put("/habits/:habitId/logs/:date", requireActive, async (req, res): Promi
   const { data, error } = await supabaseAdmin
     .from("habit_logs")
     .upsert(
-      { habit_id: habitId, user_id: req.user!.id, date, option_index: optionIndex },
+      { habit_id: habitId, date, value: String(optionIndex) },
       { onConflict: "habit_id,date" }
     )
     .select()
@@ -159,16 +155,13 @@ router.put("/habits/:habitId/logs/:date", requireActive, async (req, res): Promi
 
 // ── Delete log ────────────────────────────────────────────────────────────────
 router.delete("/habits/:habitId/logs/:date", requireActive, async (req, res): Promise<void> => {
-  const habitId = parseInt(req.params.habitId as string, 10);
+  const habitId = req.params.habitId as string;
   const date = req.params.date as string;
-
-  if (isNaN(habitId)) { res.status(400).json({ error: "ID inválido" }); return; }
 
   await supabaseAdmin
     .from("habit_logs")
     .delete()
     .eq("habit_id", habitId)
-    .eq("user_id", req.user!.id)
     .eq("date", date);
 
   res.sendStatus(204);
