@@ -93,10 +93,11 @@ export default function Register() {
         className="w-full max-w-md"
       >
         <div className="bg-white rounded-3xl shadow-xl shadow-purple-100/50 p-8 border border-purple-50">
-          <div className="flex justify-center mb-8">
-            <div className="h-16 w-16 bg-gradient-to-br from-primary to-pink-500 rounded-2xl flex items-center justify-center shadow-lg shadow-primary/25 -rotate-3">
+          <div className="flex flex-col items-center mb-8">
+            <div className="h-16 w-16 bg-gradient-to-br from-primary to-pink-500 rounded-2xl flex items-center justify-center shadow-lg shadow-primary/25 -rotate-3 mb-3">
               <CheckCircle2 className="w-8 h-8 text-white rotate-3" />
             </div>
+            <span className="text-2xl font-bold tracking-tight text-foreground">Compy</span>
           </div>
 
           <h1 className="text-3xl font-bold text-center text-foreground mb-2">Crear Cuenta</h1>

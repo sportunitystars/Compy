@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/"
-title = "Seguimiento de Hábitos"
+title = "Compy"
 version = "1.0.0"
 id = "artifacts/habit-tracker"
 router = "path"
