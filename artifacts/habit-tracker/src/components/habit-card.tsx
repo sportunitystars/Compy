@@ -24,7 +24,8 @@ interface HabitOption {
 interface MonthStats {
   percentages: Array<HabitOption & { percentage: number; count: number; maxStreak: number }>;
   streak: number;
-  streakPositive: boolean;
+  streakColor: string;
+  streakIsNegative: boolean;
 }
 
 function computeMonthStats(
@@ -107,9 +108,10 @@ function computeMonthStats(
   );
 
   const streak = isCurrentMonthView ? best.activeStreak : best.maxStreak;
-  const streakPositive = best.opt?.isPositive === true || best.opt?.isNegative !== true;
+  const streakColor = best.opt?.color ?? "#6366f1";
+  const streakIsNegative = best.opt?.isNegative === true;
 
-  return { percentages, streak, streakPositive };
+  return { percentages, streak, streakColor, streakIsNegative };
 }
 
 interface HabitCardProps {
@@ -168,7 +170,7 @@ export function HabitCard({ habitId, onDeleteClick }: HabitCardProps) {
   }
 
   const logs = (habit as any).logs ?? [];
-  const { percentages, streak, streakPositive } = computeMonthStats(
+  const { percentages, streak, streakColor, streakIsNegative } = computeMonthStats(
     habit.options as HabitOption[],
     logs,
     selectedMonth,
@@ -302,15 +304,18 @@ export function HabitCard({ habitId, onDeleteClick }: HabitCardProps) {
         {/* Row 3: streak (current month) or monthly summary (past month) */}
         {isCurrentMonth ? (
           <div className="flex items-center gap-1.5 pt-3 border-t border-gray-100">
-            <span className={`text-[11px] font-bold ${streak >= 2 ? (streakPositive ? "text-green-600" : "text-red-500") : "text-muted-foreground/60"}`}>
+            <span
+              className={`text-[11px] font-bold ${streak < 2 ? "text-muted-foreground/60" : ""}`}
+              style={streak >= 2 ? { color: streakColor } : undefined}
+            >
               Racha actual
             </span>
             {streak >= 2 ? (
               <div className="flex items-center gap-1 ml-auto">
-                {streakPositive
-                  ? <Flame className="w-3.5 h-3.5 text-green-600" />
-                  : <TriangleAlert className="w-3.5 h-3.5 text-red-500" />}
-                <span className={`text-[11px] font-bold ${streakPositive ? "text-green-600" : "text-red-500"}`}>
+                {streakIsNegative
+                  ? <TriangleAlert className="w-3.5 h-3.5" style={{ color: streakColor }} />
+                  : <Flame className="w-3.5 h-3.5" style={{ color: streakColor }} />}
+                <span className="text-[11px] font-bold" style={{ color: streakColor }}>
                   {streak} días
                 </span>
               </div>
