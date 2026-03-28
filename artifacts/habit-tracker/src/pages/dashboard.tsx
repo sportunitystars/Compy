@@ -1,15 +1,26 @@
+import { useState } from "react";
 import { Link } from "wouter";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
-import { Plus, CheckCircle2, ShieldCheck, LogOut } from "lucide-react";
+import { Plus, CheckCircle2, ShieldCheck, LogOut, Trash2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
-import { useListHabits } from "@workspace/api-client-react";
+import { useListHabits, useDeleteHabit } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
   const { data: habits, isLoading } = useListHabits();
+  const queryClient = useQueryClient();
+  const deleteHabit = useDeleteHabit();
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+
+  async function handleDelete(id: string) {
+    await deleteHabit.mutateAsync({ habitId: id });
+    queryClient.invalidateQueries({ queryKey: ["/api/habits"] });
+    setConfirmId(null);
+  }
 
   if (isLoading) {
     return (
@@ -87,9 +98,19 @@ export default function Dashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
+                className="relative group"
               >
+                {/* Delete button */}
+                <button
+                  onClick={(e) => { e.preventDefault(); setConfirmId(habit.id); }}
+                  className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white border border-red-200 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all opacity-0 group-hover:opacity-100 flex items-center justify-center shadow-sm"
+                  title="Eliminar hábito"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+
                 <Link href={`/habits/${habit.id}`} className="block">
-                  <div className="bg-white rounded-2xl p-6 shadow-sm shadow-black/5 border border-border hover:shadow-lg hover:border-primary/30 transition-all duration-300 group cursor-pointer h-full">
+                  <div className="bg-white rounded-2xl p-6 shadow-sm shadow-black/5 border border-border hover:shadow-lg hover:border-primary/30 transition-all duration-300 cursor-pointer h-full">
                     <div className="flex items-center gap-4 mb-4">
                       <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center text-3xl group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
                         {habit.emoji}
@@ -122,6 +143,52 @@ export default function Dashboard() {
           </div>
         )}
       </main>
+
+      {/* Confirm delete modal */}
+      <AnimatePresence>
+        {confirmId && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            onClick={() => setConfirmId(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl p-6 shadow-xl max-w-sm w-full"
+            >
+              <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trash2 className="w-6 h-6 text-red-500" />
+              </div>
+              <h3 className="text-xl font-bold text-center mb-2">¿Eliminar hábito?</h3>
+              <p className="text-muted-foreground text-center text-sm mb-6">
+                Se eliminarán el hábito y todos sus registros. Esta acción no se puede deshacer.
+              </p>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1 rounded-xl"
+                  onClick={() => setConfirmId(null)}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  variant="destructive"
+                  className="flex-1 rounded-xl"
+                  onClick={() => handleDelete(confirmId)}
+                  disabled={deleteHabit.isPending}
+                >
+                  {deleteHabit.isPending ? "Eliminando..." : "Eliminar"}
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
