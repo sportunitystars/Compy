@@ -285,24 +285,41 @@ export function HabitCard({ habitId, onDeleteClick }: HabitCardProps) {
           ))}
         </div>
 
-        {/* Row 3: streak */}
-        <div className="flex items-center gap-1.5 pt-3 border-t border-gray-100">
-          <span className={`text-[11px] font-bold ${streak >= 5 ? (streakPositive ? "text-green-600" : "text-red-500") : "text-muted-foreground/60"}`}>
-            Racha actual
-          </span>
-          {streak >= 5 ? (
-            <div className="flex items-center gap-1 ml-auto">
-              {streakPositive
-                ? <Flame className="w-3.5 h-3.5 text-green-600" />
-                : <TriangleAlert className="w-3.5 h-3.5 text-red-500" />}
-              <span className={`text-[11px] font-bold ${streakPositive ? "text-green-600" : "text-red-500"}`}>
-                {streak} días
-              </span>
+        {/* Row 3: streak (current month) or monthly summary (past month) */}
+        {isCurrentMonth ? (
+          <div className="flex items-center gap-1.5 pt-3 border-t border-gray-100">
+            <span className={`text-[11px] font-bold ${streak >= 5 ? (streakPositive ? "text-green-600" : "text-red-500") : "text-muted-foreground/60"}`}>
+              Racha actual
+            </span>
+            {streak >= 5 ? (
+              <div className="flex items-center gap-1 ml-auto">
+                {streakPositive
+                  ? <Flame className="w-3.5 h-3.5 text-green-600" />
+                  : <TriangleAlert className="w-3.5 h-3.5 text-red-500" />}
+                <span className={`text-[11px] font-bold ${streakPositive ? "text-green-600" : "text-red-500"}`}>
+                  {streak} días
+                </span>
+              </div>
+            ) : (
+              <span className="ml-auto text-[11px] text-muted-foreground/40">—</span>
+            )}
+          </div>
+        ) : (
+          <div className="pt-3 border-t border-gray-100">
+            <span className="text-[11px] font-bold text-muted-foreground/60 block mb-1.5">Racha</span>
+            <div className="flex flex-wrap gap-1.5">
+              {percentages.map((opt) => (
+                <span
+                  key={opt.label}
+                  className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full"
+                  style={{ color: opt.color, backgroundColor: `${opt.color}1a` }}
+                >
+                  {opt.label} · {opt.count} días
+                </span>
+              ))}
             </div>
-          ) : (
-            <span className="ml-auto text-[11px] text-muted-foreground/40">—</span>
-          )}
-        </div>
+          </div>
+        )}
 
       </a>
     </div>
