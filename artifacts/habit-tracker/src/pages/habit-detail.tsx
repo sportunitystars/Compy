@@ -206,11 +206,19 @@ export default function HabitDetail() {
         {/* YEARLY SUMMARY TOGGLE */}
         <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
           <button 
-            className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
+            className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50/80 transition-colors"
             onClick={() => setShowSummary(!showSummary)}
           >
-            <span className="font-semibold text-foreground">Resumen del Año {currentYear}</span>
-            {showSummary ? <ChevronUp className="w-5 h-5 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
+                <span className="text-sm">{habit.emoji}</span>
+              </div>
+              <div>
+                <span className="font-bold text-foreground">Resumen del Año {currentYear}</span>
+                <p className="text-xs text-muted-foreground mt-0.5">{totalLogs} registros en total</p>
+              </div>
+            </div>
+            {showSummary ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
           </button>
           
           <AnimatePresence>
@@ -219,53 +227,89 @@ export default function HabitDetail() {
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                className="border-t border-border"
+                className="border-t border-border/60"
               >
-                <div className="p-6">
-                  <div className="flex flex-wrap gap-6 mb-6">
-                    {habit.options.map((opt, idx) => {
+                <div className="p-5 space-y-5">
+                  {/* STAT CARDS */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {habit.options.map((opt: any, idx: number) => {
+                      if (opt.isExempt) return null;
                       const stat = streaks[idx];
                       const pct = totalLogs > 0 ? Math.round((stat.totalCount / totalLogs) * 100) : 0;
                       return (
-                        <div key={idx} className="flex items-center gap-3">
-                          <div className="w-4 h-4 rounded-full" style={{ backgroundColor: opt.color }} />
-                          <div>
-                            <p className="text-sm font-medium text-foreground">{opt.label}</p>
-                            <p className="text-2xl font-bold" style={{ color: opt.color }}>{pct}%</p>
-                            <p className="text-xs text-muted-foreground">{stat.totalCount} días</p>
+                        <div
+                          key={idx}
+                          className="rounded-2xl p-4 border"
+                          style={{ backgroundColor: `${opt.color}0d`, borderColor: `${opt.color}30` }}
+                        >
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider truncate">
+                              {opt.label}
+                            </span>
+                            {opt.isPositive && <span className="text-xs">🔥</span>}
+                            {opt.isNegative && <span className="text-xs">⚡</span>}
                           </div>
+                          <p className="text-3xl font-black leading-none mb-1" style={{ color: opt.color }}>
+                            {pct}<span className="text-lg font-bold">%</span>
+                          </p>
+                          <p className="text-xs text-muted-foreground mb-3">{stat.totalCount} días registrados</p>
+                          {/* Progress bar */}
+                          <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all duration-700"
+                              style={{ width: `${pct}%`, backgroundColor: opt.color }}
+                            />
+                          </div>
+                          {stat.maxStreak >= 2 && (
+                            <p className="text-[11px] text-muted-foreground mt-2">
+                              Mejor racha: <span className="font-semibold" style={{ color: opt.color }}>{stat.maxStreak} d</span>
+                            </p>
+                          )}
                         </div>
                       );
                     })}
                   </div>
 
                   {/* STREAK ALERTS */}
-                  <div className="space-y-3">
-                    {habit.options.map((opt, idx) => {
+                  <div className="space-y-2">
+                    {habit.options.map((opt: any, idx: number) => {
+                      if (opt.isExempt) return null;
                       const stat = streaks[idx];
-                      if (stat.currentStreak >= 5) {
-                        if (opt.isPositive) {
-                          return (
-                            <div key={idx} className="bg-orange-50 border border-orange-100 p-4 rounded-xl flex items-center gap-3 text-orange-800">
-                              <span className="text-2xl">🔥</span>
-                              <div>
-                                <p className="font-bold">¡Llevas {stat.currentStreak} días seguidos de {opt.label}!</p>
-                                <p className="text-sm opacity-90">¡Eso es dedicación pura! Sigue así.</p>
-                              </div>
+                      if (stat.currentStreak < 2) return null;
+
+                      if (opt.isPositive) {
+                        return (
+                          <div
+                            key={idx}
+                            className="rounded-2xl p-4 flex items-center gap-3"
+                            style={{ backgroundColor: `${opt.color}15`, border: `1px solid ${opt.color}30` }}
+                          >
+                            <span className="text-xl shrink-0">🔥</span>
+                            <div className="min-w-0">
+                              <p className="font-bold text-sm" style={{ color: opt.color }}>
+                                ¡{stat.currentStreak} días seguidos de {opt.label}!
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-0.5">Eso es dedicación pura. ¡Sigue así!</p>
                             </div>
-                          );
-                        }
-                        if (opt.isNegative) {
-                          return (
-                            <div key={idx} className="bg-slate-100 border border-slate-200 p-4 rounded-xl flex items-center gap-3 text-slate-800">
-                              <span className="text-2xl">⚡</span>
-                              <div>
-                                <p className="font-bold">{stat.currentStreak} días marcando {opt.label}.</p>
-                                <p className="text-sm opacity-90">Recuerda que cada nuevo día es una oportunidad para empezar de nuevo.</p>
-                              </div>
+                            <span className="text-2xl font-black ml-auto shrink-0" style={{ color: opt.color }}>
+                              {stat.currentStreak}
+                            </span>
+                          </div>
+                        );
+                      }
+                      if (opt.isNegative) {
+                        return (
+                          <div key={idx} className="rounded-2xl p-4 flex items-center gap-3 bg-slate-50 border border-slate-200">
+                            <span className="text-xl shrink-0">⚡</span>
+                            <div className="min-w-0">
+                              <p className="font-bold text-sm text-slate-700">{stat.currentStreak} días marcando {opt.label}.</p>
+                              <p className="text-xs text-slate-500 mt-0.5">Cada nuevo día es una oportunidad para cambiar.</p>
                             </div>
-                          );
-                        }
+                            <span className="text-2xl font-black ml-auto shrink-0 text-slate-500">
+                              {stat.currentStreak}
+                            </span>
+                          </div>
+                        );
                       }
                       return null;
                     })}
