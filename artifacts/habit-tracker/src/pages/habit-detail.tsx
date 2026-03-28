@@ -332,7 +332,7 @@ export default function HabitDetail() {
               return (
                 <div key={idx} className="rounded-2xl px-4 py-3" style={{ backgroundColor: `${opt.color}12`, border: `1px solid ${opt.color}28` }}>
                   <p className="font-bold text-sm leading-snug" style={{ color: opt.color }}>{title}</p>
-                  <p className="text-xs mt-0.5" style={{ color: `${opt.color}99` }}>{sub}</p>
+                  <p className="text-xs mt-0.5 text-muted-foreground">{sub}</p>
                 </div>
               );
             })}
