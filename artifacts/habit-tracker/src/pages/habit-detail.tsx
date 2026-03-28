@@ -316,35 +316,25 @@ export default function HabitDetail() {
                 else if (n < 30) { title = `¡${n} días sin parar!`; sub = 'Más de dos semanas. Tu disciplina está marcando la diferencia.'; }
                 else if (n < 60) { title = `¡${n} días! Un mes completo de ${opt.label}.`; sub = '¡Un mes de racha! Eso ya es un hábito de verdad.'; }
                 else             { title = `¡${n} días imparables!`; sub = 'Más de dos meses sin fallar. Eres un ejemplo de constancia.'; }
-                return (
-                  <div key={idx} className="rounded-2xl p-4 flex items-center gap-3" style={{ backgroundColor: `${opt.color}12`, border: `1px solid ${opt.color}28` }}>
-                    <div className="w-9 h-9 rounded-xl shrink-0 flex items-center justify-center font-black text-sm" style={{ backgroundColor: `${opt.color}25`, color: opt.color }}>{n}</div>
-                    <div className="min-w-0">
-                      <p className="font-bold text-sm leading-snug" style={{ color: opt.color }}>{title}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>
-                    </div>
-                  </div>
-                );
-              }
-
-              if (opt.isNegative) {
+              } else if (opt.isNegative) {
                 if (n < 5)       { title = `${n} días marcando ${opt.label}.`; sub = 'Aún puedes cambiar el rumbo. Hoy es un buen día para empezar.'; }
                 else if (n < 10) { title = `${n} días seguidos de ${opt.label}.`; sub = 'Una semana así. Identifica qué lo está provocando y actúa hoy.'; }
                 else if (n < 15) { title = `${n} días de ${opt.label}.`; sub = 'Casi dos semanas. Un pequeño cambio hoy puede romper este patrón.'; }
                 else if (n < 30) { title = `${n} días seguidos.`; sub = 'Más de dos semanas. Busca apoyo o cambia algo en tu entorno ahora.'; }
                 else             { title = `${n} días marcando ${opt.label}.`; sub = 'Llevas un mes. Recuerda: siempre puedes elegir diferente. Un día a la vez.'; }
-                return (
-                  <div key={idx} className="rounded-2xl p-4 flex items-center gap-3 bg-slate-50 border border-slate-200">
-                    <div className="w-9 h-9 rounded-xl shrink-0 flex items-center justify-center font-black text-sm bg-slate-200 text-slate-600">{n}</div>
-                    <div className="min-w-0">
-                      <p className="font-bold text-sm text-slate-700 leading-snug">{title}</p>
-                      <p className="text-xs text-slate-500 mt-0.5">{sub}</p>
-                    </div>
-                  </div>
-                );
+              } else {
+                title = `${n} días seguidos de ${opt.label}.`;
+                sub = 'Llevas una racha activa.';
               }
 
-              return null;
+              if (!title) return null;
+
+              return (
+                <div key={idx} className="rounded-2xl px-4 py-3" style={{ backgroundColor: `${opt.color}12`, border: `1px solid ${opt.color}28` }}>
+                  <p className="font-bold text-sm leading-snug" style={{ color: opt.color }}>{title}</p>
+                  <p className="text-xs mt-0.5" style={{ color: `${opt.color}99` }}>{sub}</p>
+                </div>
+              );
             })}
           </div>
         )}
