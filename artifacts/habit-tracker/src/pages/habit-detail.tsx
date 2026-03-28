@@ -17,28 +17,30 @@ const WEEKDAYS = ["L", "M", "X", "J", "V", "S", "D"];
 
 // Helper to get streak stats
 function calculateStreaks(logs: { date: string, optionIndex: number }[], options: any[]) {
-  // Sort logs by date ascending
   const sortedLogs = [...logs].sort((a, b) => a.date.localeCompare(b.date));
-  
-  const stats = options.map((opt, index) => {
-    let currentStreak = 0;
+
+  // Collect exempt dates (all-time, for current-streak backward walk)
+  const exemptIdx = options.findIndex((o: any) => o.isExempt);
+  const exemptDates = new Set(
+    exemptIdx >= 0 ? sortedLogs.filter(l => l.optionIndex === exemptIdx).map(l => l.date) : []
+  );
+
+  const stats = options.map((opt: any, index: number) => {
+    if (opt.isExempt) return { index, currentStreak: 0, maxStreak: 0, totalCount: 0 };
+
     let maxStreak = 0;
     let today = new Date();
     today.setHours(0,0,0,0);
-    
-    // We iterate chronologically
-    // A streak is broken if there's a day logged with DIFFERENT option, or if the current date is > 1 day after the last logged date for this option.
-    // However, it's easier: just count consecutive days in the year up to 'today'.
-    
-    // Create a set of dates where this option was chosen
+
     const dates = new Set(sortedLogs.filter(l => l.optionIndex === index).map(l => l.date));
-    
+
+    // Max streak: skip exempt days (don't break)
     let tempStreak = 0;
     let start = new Date(today.getFullYear(), 0, 1);
     const end = today;
-    
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       const dateStr = format(d, 'yyyy-MM-dd');
+      if (exemptDates.has(dateStr)) continue; // transparent
       if (dates.has(dateStr)) {
         tempStreak++;
         if (tempStreak > maxStreak) maxStreak = tempStreak;
@@ -46,21 +48,23 @@ function calculateStreaks(logs: { date: string, optionIndex: number }[], options
         tempStreak = 0;
       }
     }
-    
-    // Current streak is tempStreak after the loop (which ends on 'today')
-    // But what if they haven't logged today yet? A streak shouldn't break until tomorrow.
-    // So let's check yesterday.
+
+    // Current streak: count backward, skipping exempt days
     let streakCount = 0;
     let checkDate = new Date(today);
-    
-    // If today is logged, start counting backwards from today. If not, start from yesterday.
     const todayStr = format(today, 'yyyy-MM-dd');
-    if (!dates.has(todayStr)) {
+    if (!dates.has(todayStr) && !exemptDates.has(todayStr)) {
       checkDate.setDate(checkDate.getDate() - 1);
     }
-    
-    while(true) {
-      if (dates.has(format(checkDate, 'yyyy-MM-dd'))) {
+    let guard = 0;
+    while (guard < 400) {
+      guard++;
+      const ds = format(checkDate, 'yyyy-MM-dd');
+      if (exemptDates.has(ds)) {
+        checkDate.setDate(checkDate.getDate() - 1);
+        continue;
+      }
+      if (dates.has(ds)) {
         streakCount++;
         checkDate.setDate(checkDate.getDate() - 1);
       } else {
@@ -283,25 +287,37 @@ function MonthBlock({ month, year, habit, onLog, onClear }: { month: number, yea
   today.setHours(0,0,0,0);
 
   // Month stats calculation
-  const monthLogs = habit.logs.filter((l: any) => l.date.startsWith(`${year}-${(month+1).toString().padStart(2, '0')}`));
-  
+  const monthPadStr = (month+1).toString().padStart(2, '0');
+  const monthLogs = habit.logs.filter((l: any) => l.date.startsWith(`${year}-${monthPadStr}`));
+
+  // Exempt option setup
+  const exemptIdx = habit.options.findIndex((o: any) => o.isExempt);
+  const exemptDaysSet = new Set<string>(
+    exemptIdx >= 0 ? monthLogs.filter((l: any) => l.optionIndex === exemptIdx).map((l: any) => l.date) : []
+  );
+  const exemptCount = exemptDaysSet.size;
+
   // We need max streak IN THIS MONTH for each option.
   // And current streak (only if this is the current month).
   const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year;
-  
+  const lastDayToCount = isCurrentMonth ? today.getDate() : daysInMonth;
+  const effectiveDays = lastDayToCount - exemptCount;
+
   return (
     <div className="bg-white rounded-2xl p-5 shadow-sm border border-border flex flex-col">
       <div className="flex justify-between items-baseline mb-3">
         <h3 className="font-bold text-lg capitalize">{format(date, 'MMMM', { locale: es })}</h3>
         <span className="text-xs font-semibold text-muted-foreground bg-gray-100 px-2 py-1 rounded-md">
-          {monthLogs.length}/{daysInMonth}
+          {monthLogs.filter((l: any) => !exemptDaysSet.has(l.date)).length}/{effectiveDays > 0 ? effectiveDays : daysInMonth}
+          {exemptCount > 0 && <span className="ml-1 text-slate-400">· {exemptCount} exc.</span>}
         </span>
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4">
         {habit.options.map((opt: any, i: number) => {
+          if (opt.isExempt) return null; // never show exempt option in stats pills
           const count = monthLogs.filter((l:any) => l.optionIndex === i).length;
-          const pct = monthLogs.length > 0 ? Math.round((count / daysInMonth) * 100) : 0;
+          const pct = effectiveDays > 0 ? Math.round((count / effectiveDays) * 100) : 0;
           if (count === 0) return null;
           return (
             <span key={i} className="text-xs font-semibold px-2 py-0.5 rounded-sm" style={{ color: opt.color, backgroundColor: `${opt.color}15` }}>
@@ -328,6 +344,7 @@ function MonthBlock({ month, year, habit, onLog, onClear }: { month: number, yea
           const isFuture = isAfter(dayDate, today);
           const existingLog = habit.logs.find((l: any) => l.date === dateStr);
           const opt = existingLog ? habit.options[existingLog.optionIndex] : null;
+          const isExemptDay = opt?.isExempt === true;
 
           if (isFuture) {
             return (
@@ -341,14 +358,19 @@ function MonthBlock({ month, year, habit, onLog, onClear }: { month: number, yea
             <Popover key={i}>
               <PopoverTrigger asChild>
                 <button
-                  className={`aspect-square rounded-md flex items-center justify-center text-xs font-medium transition-all hover:scale-105 active:scale-95 shadow-sm`}
-                  style={{
+                  className={`aspect-square rounded-md flex flex-col items-center justify-center text-xs font-medium transition-all hover:scale-105 active:scale-95 shadow-sm relative`}
+                  style={isExemptDay ? {
+                    backgroundColor: `${opt!.color}18`,
+                    color: opt!.color,
+                    border: `1.5px dashed ${opt!.color}80`,
+                  } : {
                     backgroundColor: opt ? opt.color : '#f3f4f6',
                     color: opt ? '#fff' : '#6b7280',
                     border: opt ? `1px solid ${opt.color}` : '1px solid #e5e7eb'
                   }}
                 >
                   {i + 1}
+                  {isExemptDay && <span className="text-[7px] leading-none opacity-70">⊘</span>}
                 </button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-2 rounded-xl" align="center">
@@ -386,11 +408,15 @@ function MonthBlock({ month, year, habit, onLog, onClear }: { month: number, yea
       {/* STREAKS SECTION PER MONTH */}
       <div className="mt-4 pt-3 border-t border-border/50 grid grid-cols-2 gap-2">
         {habit.options.map((opt: any, i: number) => {
-          // Calculate max streak in this month
+          // Skip exempt option in streak display
+          if (opt.isExempt) return null;
+
+          // Max streak in this month, skipping exempt days
           let max = 0;
           let curr = 0;
           for(let d=1; d<=daysInMonth; d++) {
-            const str = `${year}-${(month+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
+            const str = `${year}-${monthPadStr}-${d.toString().padStart(2,'0')}`;
+            if (exemptDaysSet.has(str)) continue; // transparent, don't break
             if (monthLogs.find((l:any) => l.date === str && l.optionIndex === i)) {
               curr++;
               if (curr > max) max = curr;
@@ -398,8 +424,6 @@ function MonthBlock({ month, year, habit, onLog, onClear }: { month: number, yea
               curr = 0;
             }
           }
-          // The current streak shown is only if this is the current month
-          const showCurrent = isCurrentMonth;
 
           if (max === 0) return null;
 
@@ -409,7 +433,7 @@ function MonthBlock({ month, year, habit, onLog, onClear }: { month: number, yea
                 {opt.label}
               </div>
               <div className="text-muted-foreground flex flex-col gap-0.5">
-                {showCurrent && <span>Actual: {curr} d</span>}
+                {isCurrentMonth && <span>Actual: {curr} d</span>}
                 <span>Max: {max} d</span>
               </div>
             </div>

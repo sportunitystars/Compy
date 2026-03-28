@@ -27,7 +27,8 @@ const editHabitSchema = z.object({
     label: z.string().min(1, "La etiqueta es requerida"),
     color: z.string(),
     isPositive: z.boolean(),
-    isNegative: z.boolean()
+    isNegative: z.boolean(),
+    isExempt: z.boolean()
   })).min(2, "Mínimo 2 opciones").max(6, "Máximo 6 opciones")
 });
 
@@ -47,8 +48,8 @@ export default function EditHabit() {
       name: "",
       emoji: "💧",
       options: [
-        { label: "Sí", color: "#22c55e", isPositive: true, isNegative: false },
-        { label: "No", color: "#ef4444", isPositive: false, isNegative: true }
+        { label: "Sí", color: "#22c55e", isPositive: true, isNegative: false, isExempt: false },
+        { label: "No", color: "#ef4444", isPositive: false, isNegative: true, isExempt: false }
       ]
     },
   });
@@ -63,6 +64,7 @@ export default function EditHabit() {
           color: o.color,
           isPositive: o.isPositive ?? false,
           isNegative: o.isNegative ?? false,
+          isExempt: o.isExempt ?? false,
         })),
       });
     }
@@ -195,7 +197,7 @@ export default function EditHabit() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => append({ label: "Nueva opción", color: "#6b7280", isPositive: false, isNegative: false })}
+                    onClick={() => append({ label: "Nueva opción", color: "#6b7280", isPositive: false, isNegative: false, isExempt: false })}
                     className="rounded-lg"
                   >
                     <Plus className="w-4 h-4 mr-2" /> Agregar
@@ -256,7 +258,7 @@ export default function EditHabit() {
                             fields.forEach((_, i) => form.setValue(`options.${i}.isPositive`, false));
                           }
                           form.setValue(`options.${index}.isPositive`, !isPos);
-                          if (!isPos) form.setValue(`options.${index}.isNegative`, false);
+                          if (!isPos) { form.setValue(`options.${index}.isNegative`, false); form.setValue(`options.${index}.isExempt`, false); }
                         }}
                         className={`text-xs h-8 ${form.watch(`options.${index}.isPositive`) ? 'bg-green-500 hover:bg-green-600' : ''}`}
                       >
@@ -272,11 +274,27 @@ export default function EditHabit() {
                             fields.forEach((_, i) => form.setValue(`options.${i}.isNegative`, false));
                           }
                           form.setValue(`options.${index}.isNegative`, !isNeg);
-                          if (!isNeg) form.setValue(`options.${index}.isPositive`, false);
+                          if (!isNeg) { form.setValue(`options.${index}.isPositive`, false); form.setValue(`options.${index}.isExempt`, false); }
                         }}
                         className="text-xs h-8"
                       >
                         ⚡ Negativo
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const isEx = form.watch(`options.${index}.isExempt`);
+                          if (!isEx) {
+                            fields.forEach((_, i) => form.setValue(`options.${i}.isExempt`, false));
+                          }
+                          form.setValue(`options.${index}.isExempt`, !isEx);
+                          if (!isEx) { form.setValue(`options.${index}.isPositive`, false); form.setValue(`options.${index}.isNegative`, false); }
+                        }}
+                        className={`text-xs h-8 transition-all ${form.watch(`options.${index}.isExempt`) ? 'bg-slate-500 text-white border-slate-500 hover:bg-slate-600' : 'border-dashed'}`}
+                      >
+                        ⊘ Exceptuado
                       </Button>
                     </div>
 

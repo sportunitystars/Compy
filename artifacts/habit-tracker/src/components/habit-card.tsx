@@ -21,6 +21,7 @@ interface HabitOption {
   color: string;
   isPositive?: boolean;
   isNegative?: boolean;
+  isExempt?: boolean;
 }
 
 interface MonthStats {
@@ -46,13 +47,29 @@ function computeMonthStats(
   const isCurrentMonthView = displayMonth === now.getMonth() && displayYear === now.getFullYear();
   const lastDayToCheck = isCurrentMonthView ? now.getDate() : daysInMonth;
 
+  // Find exempt option index and collect exempt days in this month
+  const exemptIdx = options.findIndex((o) => o.isExempt);
+  const exemptDays = new Set(
+    exemptIdx >= 0
+      ? monthLogs.filter((l) => l.optionIndex === exemptIdx).map((l) => l.date)
+      : []
+  );
+
+  // Effective days = calendar days minus exempt days
+  const effectiveDays = lastDayToCheck - exemptDays.size;
+
   const optionStreaks = options.map((opt, idx) => {
+    // Exempt option itself is excluded from streak display
+    if (opt.isExempt) return { opt, idx, maxStreak: 0, activeStreak: 0 };
+
     const monthDates = new Set(monthLogs.filter((l) => l.optionIndex === idx).map((l) => l.date));
 
+    // Max streak: skip (don't break) exempt days
     let maxStreak = 0;
     let temp = 0;
     for (let day = 1; day <= lastDayToCheck; day++) {
       const ds = format(new Date(displayYear, displayMonth, day), "yyyy-MM-dd");
+      if (exemptDays.has(ds)) continue; // transparent — don't break streak
       if (monthDates.has(ds)) {
         temp++;
         if (temp > maxStreak) maxStreak = temp;
@@ -64,21 +81,32 @@ function computeMonthStats(
     let activeStreak = 0;
     if (isCurrentMonthView) {
       const optDates = new Set(logs.filter((l) => l.optionIndex === idx).map((l) => l.date));
-      // Most recent logged day in the month across ALL options
+      // Most recent logged day in the month across ALL non-exempt options
       const allMonthDates = logs
         .map((l) => l.date)
-        .filter((d) => d.startsWith(`${displayYear}-${monthPadded}`))
+        .filter((d) => d.startsWith(`${displayYear}-${monthPadded}`) && !exemptDays.has(d))
         .sort()
         .reverse();
       if (allMonthDates.length > 0) {
         const mostRecentDay = allMonthDates[0];
-        // Streak is only active if the most recent logged day has THIS option
+        // Streak is only active if the most recent non-exempt logged day has THIS option
         if (optDates.has(mostRecentDay)) {
           const checkDate = new Date(mostRecentDay + "T00:00:00");
-          while (true) {
+          let guard = 0;
+          while (guard < 400) {
+            guard++;
             const ds = format(checkDate, "yyyy-MM-dd");
-            if (optDates.has(ds)) { activeStreak++; checkDate.setDate(checkDate.getDate() - 1); }
-            else break;
+            if (exemptDays.has(ds)) {
+              // Skip exempt day — doesn't break or count
+              checkDate.setDate(checkDate.getDate() - 1);
+              continue;
+            }
+            if (optDates.has(ds)) {
+              activeStreak++;
+              checkDate.setDate(checkDate.getDate() - 1);
+            } else {
+              break;
+            }
           }
         }
       }
@@ -87,26 +115,32 @@ function computeMonthStats(
     return { opt, idx, maxStreak, activeStreak };
   });
 
-  const percentages = options.map((opt, idx) => {
-    const count = monthLogs.filter((l) => l.optionIndex === idx).length;
-    const maxStreak = optionStreaks.find((s) => s.idx === idx)?.maxStreak ?? 0;
-    return {
-      ...opt,
-      count,
-      maxStreak,
-      percentage: daysInMonth > 0 ? Math.round((count / daysInMonth) * 100) : 0,
-    };
-  });
+  // Percentages: exclude exempt option, use effectiveDays as denominator
+  const percentages = options
+    .map((opt, idx) => {
+      if (opt.isExempt) return null;
+      const count = monthLogs.filter((l) => l.optionIndex === idx).length;
+      const maxStreak = optionStreaks.find((s) => s.idx === idx)?.maxStreak ?? 0;
+      return {
+        ...opt,
+        count,
+        maxStreak,
+        percentage: effectiveDays > 0 ? Math.round((count / effectiveDays) * 100) : 0,
+      };
+    })
+    .filter(Boolean) as MonthStats["percentages"];
 
   // Current month → show the streak that is actively running right now (backward from today).
   // Past months → show the max consecutive streak reached that month.
-  const best = optionStreaks.reduce(
+  // Exclude exempt option from streak "best" calculation.
+  const nonExemptStreaks = optionStreaks.filter((s) => !options[s.idx]?.isExempt);
+  const best = nonExemptStreaks.reduce(
     (acc, cur) => {
       const curCount = isCurrentMonthView ? cur.activeStreak : cur.maxStreak;
       const accCount = isCurrentMonthView ? acc.activeStreak : acc.maxStreak;
       return curCount > accCount ? cur : acc;
     },
-    { opt: options[0], idx: 0, maxStreak: 0, activeStreak: 0 }
+    { opt: options.find((o) => !o.isExempt) ?? options[0], idx: 0, maxStreak: 0, activeStreak: 0 }
   );
 
   const streak = isCurrentMonthView ? best.activeStreak : best.maxStreak;
