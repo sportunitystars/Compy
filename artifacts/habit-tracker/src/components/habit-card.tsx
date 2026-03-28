@@ -277,10 +277,10 @@ export function HabitCard({ habitId, onDeleteClick }: HabitCardProps) {
           </div>
         </div>
 
-        {/* Bottom: streak */}
+        {/* Bottom: streak (only shown at 5+ consecutive days) */}
         <div className="border-t border-border/60 pt-3 flex items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground">Racha actual</span>
-          {streak > 0 ? (
+          {streak >= 5 ? (
             <div className="flex items-center gap-1 ml-auto">
               {streakPositive ? (
                 <Flame className="w-4 h-4 text-orange-500" />
@@ -288,7 +288,7 @@ export function HabitCard({ habitId, onDeleteClick }: HabitCardProps) {
                 <TriangleAlert className="w-4 h-4 text-red-500" />
               )}
               <span className={`text-sm font-bold ${streakPositive ? "text-orange-500" : "text-red-500"}`}>
-                {streak}
+                {streak} días
               </span>
             </div>
           ) : (
