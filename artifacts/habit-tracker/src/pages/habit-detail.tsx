@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { Link, useRoute } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { format, getDaysInMonth, startOfMonth, getDay, isAfter, parseISO } from "date-fns";
@@ -93,6 +93,9 @@ export default function HabitDetail() {
   const upsertMutation = useUpsertLog();
   const deleteLogMutation = useDeleteLog();
 
+  // Track in-flight log mutations to avoid stale refetches overwriting optimistic state
+  const pendingLogMutations = useRef(0);
+
   const handleUpdateName = () => {
     if (!editName.trim() || editName === habit?.name) {
       setIsEditingName(false);
@@ -112,9 +115,13 @@ export default function HabitDetail() {
 
   const handleLog = (dateStr: string, optionIndex: number) => {
     const key = getGetHabitQueryKey(habitId);
-    const previous = queryClient.getQueryData(key);
 
-    // Optimistic update: apply instantly before server responds
+    // Cancel any in-flight refetch so it doesn't overwrite our optimistic state
+    queryClient.cancelQueries({ queryKey: key });
+
+    const previous = queryClient.getQueryData(key);
+    pendingLogMutations.current++;
+
     queryClient.setQueryData(key, (old: any) => {
       if (!old) return old;
       const logs = (old.logs as any[]).filter((l: any) => l.date !== dateStr);
@@ -126,16 +133,25 @@ export default function HabitDetail() {
       { habitId, date: dateStr, data: { optionIndex } },
       {
         onError: () => queryClient.setQueryData(key, previous),
-        onSettled: () => queryClient.invalidateQueries({ queryKey: key }),
+        onSettled: () => {
+          pendingLogMutations.current--;
+          // Only re-fetch once all in-flight mutations have settled
+          if (pendingLogMutations.current === 0) {
+            queryClient.invalidateQueries({ queryKey: key });
+          }
+        },
       }
     );
   };
 
   const handleClearLog = (dateStr: string) => {
     const key = getGetHabitQueryKey(habitId);
-    const previous = queryClient.getQueryData(key);
 
-    // Optimistic update: remove log instantly
+    queryClient.cancelQueries({ queryKey: key });
+
+    const previous = queryClient.getQueryData(key);
+    pendingLogMutations.current++;
+
     queryClient.setQueryData(key, (old: any) => {
       if (!old) return old;
       return { ...old, logs: (old.logs as any[]).filter((l: any) => l.date !== dateStr) };
@@ -145,7 +161,12 @@ export default function HabitDetail() {
       { habitId, date: dateStr },
       {
         onError: () => queryClient.setQueryData(key, previous),
-        onSettled: () => queryClient.invalidateQueries({ queryKey: key }),
+        onSettled: () => {
+          pendingLogMutations.current--;
+          if (pendingLogMutations.current === 0) {
+            queryClient.invalidateQueries({ queryKey: key });
+          }
+        },
       }
     );
   };
