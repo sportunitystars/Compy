@@ -12,6 +12,7 @@ import Register from "@/pages/register";
 import AuthCallback from "@/pages/auth-callback";
 import Dashboard from "@/pages/dashboard";
 import CreateHabit from "@/pages/create-habit";
+import EditHabit from "@/pages/edit-habit";
 import HabitDetail from "@/pages/habit-detail";
 import AdminDashboard from "@/pages/admin";
 import { PendingScreen, RejectedScreen } from "@/pages/pending";
@@ -52,6 +53,7 @@ function Router() {
 
       <Route path="/" component={() => <ProtectedRoute component={Dashboard} />} />
       <Route path="/habits/new" component={() => <ProtectedRoute component={CreateHabit} />} />
+      <Route path="/habits/:id/edit" component={() => <ProtectedRoute component={EditHabit} />} />
       <Route path="/habits/:id" component={() => <ProtectedRoute component={HabitDetail} />} />
       <Route path="/admin" component={() => <ProtectedRoute component={AdminDashboard} />} />
 

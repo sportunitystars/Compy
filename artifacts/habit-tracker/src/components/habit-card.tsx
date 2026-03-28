@@ -1,8 +1,10 @@
-import { useState, useRef, useCallback } from "react";
-import { Trash2, Flame, TriangleAlert, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
+import { useState } from "react";
+import { Flame, TriangleAlert, ChevronLeft, ChevronRight, ChevronDown, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { format, getDaysInMonth } from "date-fns";
 import { useGetHabit } from "@workspace/api-client-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useLocation } from "wouter";
 
 const MESES = [
   "ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO",
@@ -121,44 +123,13 @@ interface HabitCardProps {
 
 export function HabitCard({ habitId, onDeleteClick }: HabitCardProps) {
   const { data: habit, isLoading } = useGetHabit(habitId);
+  const [, navigate] = useLocation();
 
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [pickerYear, setPickerYear] = useState(now.getFullYear());
   const [open, setOpen] = useState(false);
-
-  // Long-press to show delete on mobile — all hooks before any early return
-  const [showMobileDelete, setShowMobileDelete] = useState(false);
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const preventNextClick = useRef(false);
-
-  const handleTouchStart = useCallback(() => {
-    longPressTimer.current = setTimeout(() => {
-      setShowMobileDelete(true);
-      preventNextClick.current = true;
-    }, 600);
-  }, []);
-
-  const handleTouchEnd = useCallback(() => {
-    if (longPressTimer.current) clearTimeout(longPressTimer.current);
-  }, []);
-
-  const handleTouchMove = useCallback(() => {
-    if (longPressTimer.current) clearTimeout(longPressTimer.current);
-  }, []);
-
-  const handleCardClick = useCallback((e: React.MouseEvent) => {
-    if (preventNextClick.current) {
-      e.preventDefault();
-      preventNextClick.current = false;
-      return;
-    }
-    if (showMobileDelete) {
-      e.preventDefault();
-      setShowMobileDelete(false);
-    }
-  }, [showMobileDelete]);
 
   if (isLoading || !habit) {
     return (
@@ -185,32 +156,45 @@ export function HabitCard({ habitId, onDeleteClick }: HabitCardProps) {
   const isCurrentMonth = selectedMonth === now.getMonth() && selectedYear === now.getFullYear();
 
   return (
-    <div
-      className="relative group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden select-none"
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      onTouchMove={handleTouchMove}
-      onContextMenu={(e) => e.preventDefault()}
-    >
-      {/* Delete button */}
-      <button
-        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDeleteClick(habit.id); }}
-        className={`absolute top-3 left-3 z-10 w-7 h-7 rounded-full bg-white border border-red-100 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all flex items-center justify-center shadow-sm
-          ${showMobileDelete ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
-        title="Eliminar hábito"
-      >
-        <Trash2 className="w-3.5 h-3.5" />
-      </button>
+    <div className="relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
 
-      <a href={`/habits/${habit.id}`} className="block px-5 pt-4 pb-4" onClick={handleCardClick}>
+      <a href={`/habits/${habit.id}`} className="block px-5 pt-4 pb-4">
 
-        {/* Row 1: emoji + name + month picker */}
+        {/* Row 1: emoji + name (with dropdown) + month picker */}
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2.5 min-w-0">
             <span className="text-2xl leading-none shrink-0">{habit.emoji}</span>
-            <h3 className="text-[15px] font-bold text-foreground leading-tight truncate">
-              {habit.name}
-            </h3>
+
+            {/* Name with dropdown trigger */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  className="flex items-center gap-1 group/name text-left min-w-0"
+                >
+                  <h3 className="text-[15px] font-bold text-foreground leading-tight truncate group-hover/name:text-primary transition-colors">
+                    {habit.name}
+                  </h3>
+                  <MoreHorizontal className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0 group-hover/name:text-primary transition-colors" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-40" onClick={(e) => e.stopPropagation()}>
+                <DropdownMenuItem
+                  onClick={(e) => { e.stopPropagation(); navigate(`/habits/${habit.id}/edit`); }}
+                  className="cursor-pointer"
+                >
+                  <Pencil className="w-4 h-4 mr-2" /> Modificar
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={(e) => { e.stopPropagation(); onDeleteClick(habit.id); }}
+                  className="cursor-pointer text-red-600 focus:text-red-600"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" /> Eliminar
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Month picker trigger */}
