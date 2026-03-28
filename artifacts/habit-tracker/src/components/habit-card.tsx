@@ -170,150 +170,140 @@ export function HabitCard({ habitId, onDeleteClick }: HabitCardProps) {
 
   return (
     <div
-      className="relative group bg-white rounded-2xl border border-border shadow-sm hover:shadow-lg hover:border-primary/30 transition-all duration-300 overflow-hidden select-none"
+      className="relative group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden select-none"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onTouchMove={handleTouchMove}
       onContextMenu={(e) => e.preventDefault()}
     >
-      {/* Delete button — top-left, visible on hover (desktop) or long-press (mobile) */}
+      {/* Delete button */}
       <button
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDeleteClick(habit.id); }}
-        className={`absolute top-3 left-3 z-10 w-8 h-8 rounded-full bg-white border border-red-200 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all flex items-center justify-center shadow-sm
+        className={`absolute top-3 left-3 z-10 w-7 h-7 rounded-full bg-white border border-red-100 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all flex items-center justify-center shadow-sm
           ${showMobileDelete ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
         title="Eliminar hábito"
       >
-        <Trash2 className="w-4 h-4" />
+        <Trash2 className="w-3.5 h-3.5" />
       </button>
 
-      <a href={`/habits/${habit.id}`} className="block p-5 pl-11" onClick={handleCardClick}>
-        {/* Top row: emoji + name + month picker */}
-        <div className="flex items-start justify-between gap-3 mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-2xl shrink-0">
-              {habit.emoji}
-            </div>
-            <h3 className="text-lg font-bold text-foreground leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+      <a href={`/habits/${habit.id}`} className="block px-5 pt-4 pb-4" onClick={handleCardClick}>
+
+        {/* Row 1: emoji + name + month picker */}
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="text-2xl leading-none shrink-0">{habit.emoji}</span>
+            <h3 className="text-[15px] font-bold text-foreground leading-tight truncate">
               {habit.name}
             </h3>
           </div>
 
-          {/* Month picker + percentage bars */}
-          <div className="flex flex-col items-end gap-1.5 shrink-0 ml-2">
-            <Popover open={open} onOpenChange={setOpen}>
-              <PopoverTrigger asChild>
+          {/* Month picker trigger */}
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPickerYear(selectedYear); setOpen(true); }}
+                className="flex items-center gap-0.5 text-[10px] font-semibold text-muted-foreground/70 tracking-wider hover:text-primary transition-colors shrink-0 cursor-pointer"
+              >
+                <span>{mesLabel}</span>
+                <ChevronDown className="w-2.5 h-2.5" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              className="w-64 p-3"
+              align="end"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-3">
                 <button
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPickerYear(selectedYear); setOpen(true); }}
-                  className="flex items-center gap-1 text-xs font-semibold text-muted-foreground tracking-widest mb-0.5 hover:text-primary transition-colors cursor-pointer group/month"
+                  onClick={(e) => { e.stopPropagation(); setPickerYear(y => y - 1); }}
+                  className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-gray-100 transition-colors"
                 >
-                  <span>{mesLabel}</span>
-                  <ChevronDown className="w-3 h-3 opacity-50 group-hover/month:opacity-100 transition-opacity" />
+                  <ChevronLeft className="w-4 h-4 text-muted-foreground" />
                 </button>
-              </PopoverTrigger>
-              <PopoverContent
-                className="w-64 p-3"
-                align="end"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* Year navigation */}
-                <div className="flex items-center justify-between mb-3">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setPickerYear(y => y - 1); }}
-                    className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-gray-100 transition-colors"
-                  >
-                    <ChevronLeft className="w-4 h-4 text-muted-foreground" />
-                  </button>
-                  <span className="text-sm font-bold text-foreground">{pickerYear}</span>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setPickerYear(y => Math.min(y + 1, currentYear)); }}
-                    className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-gray-100 transition-colors disabled:opacity-30"
-                    disabled={pickerYear >= currentYear}
-                  >
-                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                  </button>
-                </div>
-
-                {/* Month grid */}
-                <div className="grid grid-cols-3 gap-1">
-                  {MESES_CORTO.map((m, idx) => {
-                    const isFuture = pickerYear === currentYear && idx > now.getMonth();
-                    const isSelected = idx === selectedMonth && pickerYear === selectedYear;
-                    const isCurrent = idx === now.getMonth() && pickerYear === currentYear;
-                    return (
-                      <button
-                        key={m}
-                        disabled={isFuture}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedMonth(idx);
-                          setSelectedYear(pickerYear);
-                          setOpen(false);
-                        }}
-                        className={`
-                          text-xs font-medium py-1.5 rounded-md transition-colors
-                          ${isFuture ? "opacity-30 cursor-not-allowed text-muted-foreground" : "hover:bg-gray-100 cursor-pointer"}
-                          ${isSelected ? "bg-primary text-white hover:bg-primary" : ""}
-                          ${isCurrent && !isSelected ? "text-primary font-bold" : ""}
-                        `}
-                      >
-                        {m}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Reset to current month */}
-                {!isCurrentMonth && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedMonth(now.getMonth());
-                      setSelectedYear(now.getFullYear());
-                      setPickerYear(now.getFullYear());
-                      setOpen(false);
-                    }}
-                    className="mt-3 w-full text-xs text-primary hover:underline font-medium"
-                  >
-                    Volver al mes actual
-                  </button>
-                )}
-              </PopoverContent>
-            </Popover>
-
-            {percentages.map((opt) => (
-              <div
-                key={opt.label}
-                className="flex items-center justify-end rounded-md px-2.5 py-0.5 min-w-[52px]"
-                style={{ backgroundColor: opt.color }}
-              >
-                <span className="text-white text-xs font-bold">
-                  {opt.percentage}%
-                </span>
+                <span className="text-sm font-bold text-foreground">{pickerYear}</span>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setPickerYear(y => Math.min(y + 1, currentYear)); }}
+                  className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-gray-100 transition-colors disabled:opacity-30"
+                  disabled={pickerYear >= currentYear}
+                >
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                </button>
               </div>
-            ))}
-          </div>
+              <div className="grid grid-cols-3 gap-1">
+                {MESES_CORTO.map((m, idx) => {
+                  const isFuture = pickerYear === currentYear && idx > now.getMonth();
+                  const isSelected = idx === selectedMonth && pickerYear === selectedYear;
+                  const isCurrent = idx === now.getMonth() && pickerYear === currentYear;
+                  return (
+                    <button
+                      key={m}
+                      disabled={isFuture}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedMonth(idx);
+                        setSelectedYear(pickerYear);
+                        setOpen(false);
+                      }}
+                      className={`text-xs font-medium py-1.5 rounded-md transition-colors
+                        ${isFuture ? "opacity-30 cursor-not-allowed text-muted-foreground" : "hover:bg-gray-100 cursor-pointer"}
+                        ${isSelected ? "bg-primary text-white hover:bg-primary" : ""}
+                        ${isCurrent && !isSelected ? "text-primary font-bold" : ""}`}
+                    >
+                      {m}
+                    </button>
+                  );
+                })}
+              </div>
+              {!isCurrentMonth && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedMonth(now.getMonth());
+                    setSelectedYear(now.getFullYear());
+                    setPickerYear(now.getFullYear());
+                    setOpen(false);
+                  }}
+                  className="mt-3 w-full text-xs text-primary hover:underline font-medium"
+                >
+                  Volver al mes actual
+                </button>
+              )}
+            </PopoverContent>
+          </Popover>
         </div>
 
-        {/* Bottom: streak (only shown at 5+ consecutive days) */}
-        <div className="border-t border-border/60 pt-3 flex items-center gap-2">
-          <span className={`text-xs font-bold ${streak >= 5 ? (streakPositive ? "text-green-600" : "text-red-500") : "text-muted-foreground"}`}>
+        {/* Row 2: percentage pills */}
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {percentages.map((opt) => (
+            <span
+              key={opt.label}
+              className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full"
+              style={{ color: opt.color, backgroundColor: `${opt.color}1a` }}
+            >
+              {opt.label} · {opt.percentage}%
+            </span>
+          ))}
+        </div>
+
+        {/* Row 3: streak */}
+        <div className="flex items-center gap-1.5 pt-3 border-t border-gray-100">
+          <span className={`text-[11px] font-bold ${streak >= 5 ? (streakPositive ? "text-green-600" : "text-red-500") : "text-muted-foreground/60"}`}>
             Racha actual
           </span>
           {streak >= 5 ? (
             <div className="flex items-center gap-1 ml-auto">
-              {streakPositive ? (
-                <Flame className="w-4 h-4 text-green-600" />
-              ) : (
-                <TriangleAlert className="w-4 h-4 text-red-500" />
-              )}
-              <span className={`text-sm font-bold ${streakPositive ? "text-green-600" : "text-red-500"}`}>
+              {streakPositive
+                ? <Flame className="w-3.5 h-3.5 text-green-600" />
+                : <TriangleAlert className="w-3.5 h-3.5 text-red-500" />}
+              <span className={`text-[11px] font-bold ${streakPositive ? "text-green-600" : "text-red-500"}`}>
                 {streak} días
               </span>
             </div>
           ) : (
-            <span className="ml-auto text-xs text-muted-foreground/60">—</span>
+            <span className="ml-auto text-[11px] text-muted-foreground/40">—</span>
           )}
         </div>
+
       </a>
     </div>
   );
