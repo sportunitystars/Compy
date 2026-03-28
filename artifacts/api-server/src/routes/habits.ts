@@ -9,7 +9,7 @@ function formatHabit(h: any) {
     id: h.id,
     userId: h.user_id,
     name: h.name,
-    emoji: h.emoji,
+    emoji: h.description || "✨",
     options: h.options,
     createdAt: h.created_at,
   };
@@ -50,7 +50,7 @@ router.post("/habits", requireActive, async (req, res): Promise<void> => {
 
   const { data, error } = await supabaseAdmin
     .from("habits")
-    .insert({ user_id: req.user!.id, name, emoji: emoji || "✨", options })
+    .insert({ user_id: req.user!.id, name, description: emoji || "✨", options })
     .select()
     .single();
 
@@ -95,7 +95,7 @@ router.patch("/habits/:habitId", requireActive, async (req, res): Promise<void> 
 
   const updates: any = {};
   if (req.body.name != null) updates.name = req.body.name;
-  if (req.body.emoji != null) updates.emoji = req.body.emoji;
+  if (req.body.emoji != null) updates.description = req.body.emoji;
   if (req.body.options != null) updates.options = req.body.options;
 
   const { data, error } = await supabaseAdmin
