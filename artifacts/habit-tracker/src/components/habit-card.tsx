@@ -296,7 +296,7 @@ export function HabitCard({ habitId, onDeleteClick }: HabitCardProps) {
 
         {/* Bottom: streak (only shown at 5+ consecutive days) */}
         <div className="border-t border-border/60 pt-3 flex items-center gap-2">
-          <span className={`text-xs font-medium ${streak >= 5 ? (streakPositive ? "text-green-600" : "text-red-500") : "text-muted-foreground"}`}>
+          <span className={`text-xs font-bold ${streak >= 5 ? (streakPositive ? "text-green-600" : "text-red-500") : "text-muted-foreground"}`}>
             Racha actual
           </span>
           {streak >= 5 ? (
