@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Trash2, Flame, TriangleAlert, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import { format, getDaysInMonth } from "date-fns";
 import { useGetHabit } from "@workspace/api-client-react";
@@ -119,18 +119,57 @@ export function HabitCard({ habitId, onDeleteClick }: HabitCardProps) {
 
   const isCurrentMonth = selectedMonth === now.getMonth() && selectedYear === now.getFullYear();
 
+  // Long-press to show delete on mobile
+  const [showMobileDelete, setShowMobileDelete] = useState(false);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const preventNextClick = useRef(false);
+
+  const handleTouchStart = useCallback(() => {
+    longPressTimer.current = setTimeout(() => {
+      setShowMobileDelete(true);
+      preventNextClick.current = true; // swallow the click that fires on touchend
+    }, 600);
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+  }, []);
+
+  const handleTouchMove = useCallback(() => {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+  }, []);
+
+  const handleCardClick = useCallback((e: React.MouseEvent) => {
+    if (preventNextClick.current) {
+      e.preventDefault();
+      preventNextClick.current = false;
+      return;
+    }
+    if (showMobileDelete) {
+      e.preventDefault();
+      setShowMobileDelete(false);
+    }
+  }, [showMobileDelete]);
+
   return (
-    <div className="relative group bg-white rounded-2xl border border-border shadow-sm hover:shadow-lg hover:border-primary/30 transition-all duration-300 overflow-hidden">
-      {/* Delete button */}
+    <div
+      className="relative group bg-white rounded-2xl border border-border shadow-sm hover:shadow-lg hover:border-primary/30 transition-all duration-300 overflow-hidden select-none"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchMove={handleTouchMove}
+      onContextMenu={(e) => e.preventDefault()}
+    >
+      {/* Delete button — top-left, visible on hover (desktop) or long-press (mobile) */}
       <button
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDeleteClick(habit.id); }}
-        className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white border border-red-200 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all opacity-0 group-hover:opacity-100 flex items-center justify-center shadow-sm"
+        className={`absolute top-3 left-3 z-10 w-8 h-8 rounded-full bg-white border border-red-200 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all flex items-center justify-center shadow-sm
+          ${showMobileDelete ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
         title="Eliminar hábito"
       >
         <Trash2 className="w-4 h-4" />
       </button>
 
-      <a href={`/habits/${habit.id}`} className="block p-5">
+      <a href={`/habits/${habit.id}`} className="block p-5 pl-11" onClick={handleCardClick}>
         {/* Top row: emoji + name + month picker */}
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex items-center gap-3">
