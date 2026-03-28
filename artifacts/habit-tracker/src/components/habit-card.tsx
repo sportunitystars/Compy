@@ -71,12 +71,12 @@ function computeMonthStats(
       }
     }
 
-    return { opt, idx, streakCount: Math.max(maxStreak, activeStreak) };
+    return { opt, idx, maxStreak, activeStreak };
   });
 
   const percentages = options.map((opt, idx) => {
     const count = monthLogs.filter((l) => l.optionIndex === idx).length;
-    const maxStreak = optionStreaks.find((s) => s.idx === idx)?.streakCount ?? 0;
+    const maxStreak = optionStreaks.find((s) => s.idx === idx)?.maxStreak ?? 0;
     return {
       ...opt,
       count,
@@ -85,12 +85,18 @@ function computeMonthStats(
     };
   });
 
+  // For current month: use only the live active streak (not the max achieved this month)
+  // For past months: use the max streak per option (shown in the summary)
   const best = optionStreaks.reduce(
-    (acc, cur) => (cur.streakCount > acc.streakCount ? cur : acc),
-    { opt: options[0], idx: 0, streakCount: 0 }
+    (acc, cur) => {
+      const curCount = isCurrentMonthView ? cur.activeStreak : cur.maxStreak;
+      const accCount = isCurrentMonthView ? acc.activeStreak : acc.maxStreak;
+      return curCount > accCount ? cur : acc;
+    },
+    { opt: options[0], idx: 0, maxStreak: 0, activeStreak: 0 }
   );
 
-  const streak = best.streakCount;
+  const streak = isCurrentMonthView ? best.activeStreak : best.maxStreak;
   const streakPositive = best.opt?.isPositive === true || best.opt?.isNegative !== true;
 
   return { percentages, streak, streakPositive };
