@@ -85,18 +85,24 @@ function computeMonthStats(
     };
   });
 
-  // For current month: use only the live active streak (not the max achieved this month)
-  // For past months: use the max streak per option (shown in the summary)
+  // Best streak: for current month use max(maxStreak, activeStreak) so any 5+ run in the month
+  // is shown as "Racha actual". For past months use maxStreak only.
   const best = optionStreaks.reduce(
     (acc, cur) => {
-      const curCount = isCurrentMonthView ? cur.activeStreak : cur.maxStreak;
-      const accCount = isCurrentMonthView ? acc.activeStreak : acc.maxStreak;
+      const curCount = isCurrentMonthView
+        ? Math.max(cur.maxStreak, cur.activeStreak)
+        : cur.maxStreak;
+      const accCount = isCurrentMonthView
+        ? Math.max(acc.maxStreak, acc.activeStreak)
+        : acc.maxStreak;
       return curCount > accCount ? cur : acc;
     },
     { opt: options[0], idx: 0, maxStreak: 0, activeStreak: 0 }
   );
 
-  const streak = isCurrentMonthView ? best.activeStreak : best.maxStreak;
+  const streak = isCurrentMonthView
+    ? Math.max(best.maxStreak, best.activeStreak)
+    : best.maxStreak;
   const streakPositive = best.opt?.isPositive === true || best.opt?.isNegative !== true;
 
   return { percentages, streak, streakPositive };
