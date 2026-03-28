@@ -3,12 +3,11 @@ import { Link, useRoute } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { format, getDaysInMonth, startOfMonth, getDay, isAfter, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { ArrowLeft, ChevronDown, ChevronUp, Check, Trash2, Edit2 } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, Check, Edit2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useGetHabit, useUpsertLog, useDeleteLog, useUpdateHabit, getGetHabitQueryKey, getListHabitsQueryKey } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 
@@ -355,52 +354,35 @@ function MonthBlock({ month, year, habit, onLog, onClear }: { month: number, yea
           }
 
           return (
-            <Popover key={i}>
-              <PopoverTrigger asChild>
-                <button
-                  className={`aspect-square rounded-md flex flex-col items-center justify-center text-xs font-medium transition-all hover:scale-105 active:scale-95 shadow-sm relative`}
-                  style={isExemptDay ? {
-                    backgroundColor: `${opt!.color}18`,
-                    color: opt!.color,
-                    border: `1.5px dashed ${opt!.color}80`,
-                  } : {
-                    backgroundColor: opt ? opt.color : '#f3f4f6',
-                    color: opt ? '#fff' : '#6b7280',
-                    border: opt ? `1px solid ${opt.color}` : '1px solid #e5e7eb'
-                  }}
-                >
-                  {i + 1}
-                  {isExemptDay && <span className="text-[7px] leading-none opacity-70">⊘</span>}
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-2 rounded-xl" align="center">
-                <div className="flex flex-col gap-1">
-                  <div className="text-xs text-center text-muted-foreground font-medium mb-1">
-                    {format(dayDate, "d 'de' MMMM", { locale: es })}
-                  </div>
-                  {habit.options.map((o: any, idx: number) => (
-                    <Button 
-                      key={idx}
-                      variant="ghost" 
-                      className={`justify-start h-9 px-3 ${existingLog?.optionIndex === idx ? 'bg-gray-100 font-bold' : ''}`}
-                      onClick={() => onLog(dateStr, idx)}
-                    >
-                      <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: o.color }} />
-                      {o.label}
-                    </Button>
-                  ))}
-                  {existingLog && (
-                    <Button 
-                      variant="ghost" 
-                      className="justify-start h-9 px-3 text-red-500 hover:text-red-600 hover:bg-red-50 mt-1 border-t border-border rounded-none"
-                      onClick={() => onClear(dateStr)}
-                    >
-                      <Trash2 className="w-3 h-3 mr-2" /> Borrar
-                    </Button>
-                  )}
-                </div>
-              </PopoverContent>
-            </Popover>
+            <button
+              key={i}
+              title={opt ? opt.label : 'Sin registrar'}
+              onClick={() => {
+                if (!existingLog) {
+                  onLog(dateStr, 0);
+                } else {
+                  const nextIdx = existingLog.optionIndex + 1;
+                  if (nextIdx >= habit.options.length) {
+                    onClear(dateStr);
+                  } else {
+                    onLog(dateStr, nextIdx);
+                  }
+                }
+              }}
+              className="aspect-square rounded-md flex flex-col items-center justify-center text-xs font-medium transition-all hover:scale-110 active:scale-90 shadow-sm"
+              style={isExemptDay ? {
+                backgroundColor: `${opt!.color}18`,
+                color: opt!.color,
+                border: `1.5px dashed ${opt!.color}80`,
+              } : {
+                backgroundColor: opt ? opt.color : '#f3f4f6',
+                color: opt ? '#fff' : '#6b7280',
+                border: opt ? `1px solid ${opt.color}` : '1px solid #e5e7eb'
+              }}
+            >
+              {i + 1}
+              {isExemptDay && <span className="text-[7px] leading-none opacity-70">⊘</span>}
+            </button>
           );
         })}
       </div>
