@@ -49,25 +49,42 @@ function computeMonthStats(
     };
   });
 
-  // Streak: uses ALL logs with grace period (same as calculateStreaks in habit-detail)
+  // Streak: max consecutive days for any option WITHIN the selected month.
+  // For the current month we also check if the streak is still live (going back from today).
+  const isCurrentMonthView = displayMonth === now.getMonth() && displayYear === now.getFullYear();
+  const lastDayToCheck = isCurrentMonthView ? now.getDate() : daysInMonth;
+
   const optionStreaks = options.map((opt, idx) => {
-    const dates = new Set(logs.filter((l) => l.optionIndex === idx).map((l) => l.date));
-    let streakCount = 0;
-    const todayStr = format(now, "yyyy-MM-dd");
-    const checkDate = new Date(now);
-    if (!dates.has(todayStr)) {
-      checkDate.setDate(checkDate.getDate() - 1);
-    }
-    while (true) {
-      const ds = format(checkDate, "yyyy-MM-dd");
-      if (dates.has(ds)) {
-        streakCount++;
-        checkDate.setDate(checkDate.getDate() - 1);
+    const monthDates = new Set(monthLogs.filter((l) => l.optionIndex === idx).map((l) => l.date));
+
+    // Max streak within the month
+    let maxStreak = 0;
+    let temp = 0;
+    for (let day = 1; day <= lastDayToCheck; day++) {
+      const ds = format(new Date(displayYear, displayMonth, day), "yyyy-MM-dd");
+      if (monthDates.has(ds)) {
+        temp++;
+        if (temp > maxStreak) maxStreak = temp;
       } else {
-        break;
+        temp = 0;
       }
     }
-    return { opt, streakCount };
+
+    // For the current month, also check active cross-month streak (backward from today)
+    let activeStreak = 0;
+    if (isCurrentMonthView) {
+      const allDates = new Set(logs.filter((l) => l.optionIndex === idx).map((l) => l.date));
+      const todayStr = format(now, "yyyy-MM-dd");
+      const checkDate = new Date(now);
+      if (!allDates.has(todayStr)) checkDate.setDate(checkDate.getDate() - 1);
+      while (true) {
+        const ds = format(checkDate, "yyyy-MM-dd");
+        if (allDates.has(ds)) { activeStreak++; checkDate.setDate(checkDate.getDate() - 1); }
+        else break;
+      }
+    }
+
+    return { opt, streakCount: Math.max(maxStreak, activeStreak) };
   });
 
   const best = optionStreaks.reduce(
