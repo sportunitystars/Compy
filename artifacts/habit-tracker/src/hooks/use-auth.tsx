@@ -41,7 +41,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const token = session?.access_token;
       if (token) {
         const [resource, config] = args;
-        const headers = { ...(config?.headers ?? {}), Authorization: `Bearer ${token}` };
+        // Use new Headers() to properly copy a Headers instance (spread doesn't work on Headers objects)
+        const headers = new Headers(config?.headers);
+        headers.set("Authorization", `Bearer ${token}`);
         return originalFetch(resource, { ...config, headers });
       }
       return originalFetch(...args);
