@@ -95,6 +95,38 @@ export function HabitCard({ habitId, onDeleteClick }: HabitCardProps) {
   const [pickerYear, setPickerYear] = useState(now.getFullYear());
   const [open, setOpen] = useState(false);
 
+  // Long-press to show delete on mobile — all hooks before any early return
+  const [showMobileDelete, setShowMobileDelete] = useState(false);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const preventNextClick = useRef(false);
+
+  const handleTouchStart = useCallback(() => {
+    longPressTimer.current = setTimeout(() => {
+      setShowMobileDelete(true);
+      preventNextClick.current = true;
+    }, 600);
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+  }, []);
+
+  const handleTouchMove = useCallback(() => {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+  }, []);
+
+  const handleCardClick = useCallback((e: React.MouseEvent) => {
+    if (preventNextClick.current) {
+      e.preventDefault();
+      preventNextClick.current = false;
+      return;
+    }
+    if (showMobileDelete) {
+      e.preventDefault();
+      setShowMobileDelete(false);
+    }
+  }, [showMobileDelete]);
+
   if (isLoading || !habit) {
     return (
       <div className="bg-white rounded-2xl p-6 border border-border h-40 animate-pulse">
@@ -118,38 +150,6 @@ export function HabitCard({ habitId, onDeleteClick }: HabitCardProps) {
     : MESES[selectedMonth];
 
   const isCurrentMonth = selectedMonth === now.getMonth() && selectedYear === now.getFullYear();
-
-  // Long-press to show delete on mobile
-  const [showMobileDelete, setShowMobileDelete] = useState(false);
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const preventNextClick = useRef(false);
-
-  const handleTouchStart = useCallback(() => {
-    longPressTimer.current = setTimeout(() => {
-      setShowMobileDelete(true);
-      preventNextClick.current = true; // swallow the click that fires on touchend
-    }, 600);
-  }, []);
-
-  const handleTouchEnd = useCallback(() => {
-    if (longPressTimer.current) clearTimeout(longPressTimer.current);
-  }, []);
-
-  const handleTouchMove = useCallback(() => {
-    if (longPressTimer.current) clearTimeout(longPressTimer.current);
-  }, []);
-
-  const handleCardClick = useCallback((e: React.MouseEvent) => {
-    if (preventNextClick.current) {
-      e.preventDefault();
-      preventNextClick.current = false;
-      return;
-    }
-    if (showMobileDelete) {
-      e.preventDefault();
-      setShowMobileDelete(false);
-    }
-  }, [showMobileDelete]);
 
   return (
     <div
