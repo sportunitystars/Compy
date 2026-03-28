@@ -1,10 +1,17 @@
-import { Trash2, Flame, TriangleAlert } from "lucide-react";
+import { useState } from "react";
+import { Trash2, Flame, TriangleAlert, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import { format, getDaysInMonth } from "date-fns";
 import { useGetHabit } from "@workspace/api-client-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const MESES = [
   "ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO",
   "JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"
+];
+
+const MESES_CORTO = [
+  "Ene","Feb","Mar","Abr","May","Jun",
+  "Jul","Ago","Sep","Oct","Nov","Dic"
 ];
 
 interface HabitOption {
@@ -18,37 +25,21 @@ interface MonthStats {
   percentages: Array<HabitOption & { percentage: number; count: number }>;
   streak: number;
   streakPositive: boolean;
-  displayMonth: number;
-  displayYear: number;
 }
 
 function computeMonthStats(
   options: HabitOption[],
-  logs: Array<{ date: string; optionIndex: number }>
+  logs: Array<{ date: string; optionIndex: number }>,
+  displayMonth: number,
+  displayYear: number
 ): MonthStats {
   const now = new Date();
   now.setHours(0, 0, 0, 0);
 
-  // Determine which month to display: current month if it has data,
-  // otherwise fall back to the most recent month that has any logs.
-  let displayYear = now.getFullYear();
-  let displayMonth = now.getMonth();
-  let monthPadded = (displayMonth + 1).toString().padStart(2, "0");
-  let monthLogs = logs.filter((l) => l.date.startsWith(`${displayYear}-${monthPadded}`));
-
-  if (monthLogs.length === 0 && logs.length > 0) {
-    // Find the most recent log date and use that month
-    const sorted = [...logs].sort((a, b) => b.date.localeCompare(a.date));
-    const [ry, rm] = sorted[0].date.split("-").map(Number);
-    displayYear = ry;
-    displayMonth = rm - 1;
-    monthPadded = rm.toString().padStart(2, "0");
-    monthLogs = logs.filter((l) => l.date.startsWith(`${displayYear}-${monthPadded}`));
-  }
-
+  const monthPadded = (displayMonth + 1).toString().padStart(2, "0");
+  const monthLogs = logs.filter((l) => l.date.startsWith(`${displayYear}-${monthPadded}`));
   const daysInMonth = getDaysInMonth(new Date(displayYear, displayMonth, 1));
 
-  // Percentages: same formula as MonthBlock inside habit-detail (count / daysInMonth)
   const percentages = options.map((opt, idx) => {
     const count = monthLogs.filter((l) => l.optionIndex === idx).length;
     return {
@@ -58,9 +49,7 @@ function computeMonthStats(
     };
   });
 
-  // Streak: same logic as calculateStreaks in habit-detail
-  // Uses ALL logs (not just this month) so cross-month streaks are counted correctly
-  // Grace period: if today isn't logged yet, start counting from yesterday
+  // Streak: uses ALL logs with grace period (same as calculateStreaks in habit-detail)
   const optionStreaks = options.map((opt, idx) => {
     const dates = new Set(logs.filter((l) => l.optionIndex === idx).map((l) => l.date));
     let streakCount = 0;
@@ -81,7 +70,6 @@ function computeMonthStats(
     return { opt, streakCount };
   });
 
-  // Pick the option with the longest current streak
   const best = optionStreaks.reduce(
     (acc, cur) => (cur.streakCount > acc.streakCount ? cur : acc),
     { opt: options[0], streakCount: 0 }
@@ -90,7 +78,7 @@ function computeMonthStats(
   const streak = best.streakCount;
   const streakPositive = best.opt?.isPositive === true || best.opt?.isNegative !== true;
 
-  return { percentages, streak, streakPositive, displayMonth, displayYear };
+  return { percentages, streak, streakPositive };
 }
 
 interface HabitCardProps {
@@ -100,6 +88,12 @@ interface HabitCardProps {
 
 export function HabitCard({ habitId, onDeleteClick }: HabitCardProps) {
   const { data: habit, isLoading } = useGetHabit(habitId);
+
+  const now = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const [pickerYear, setPickerYear] = useState(now.getFullYear());
+  const [open, setOpen] = useState(false);
 
   if (isLoading || !habit) {
     return (
@@ -111,11 +105,19 @@ export function HabitCard({ habitId, onDeleteClick }: HabitCardProps) {
   }
 
   const logs = (habit as any).logs ?? [];
-  const { percentages, streak, streakPositive, displayMonth, displayYear } = computeMonthStats(habit.options as HabitOption[], logs);
-  const currentYear = new Date().getFullYear();
-  const mesLabel = displayYear !== currentYear
-    ? `${MESES[displayMonth]} ${displayYear}`
-    : MESES[displayMonth];
+  const { percentages, streak, streakPositive } = computeMonthStats(
+    habit.options as HabitOption[],
+    logs,
+    selectedMonth,
+    selectedYear
+  );
+
+  const currentYear = now.getFullYear();
+  const mesLabel = selectedYear !== currentYear
+    ? `${MESES[selectedMonth]} ${selectedYear}`
+    : MESES[selectedMonth];
+
+  const isCurrentMonth = selectedMonth === now.getMonth() && selectedYear === now.getFullYear();
 
   return (
     <div className="relative group bg-white rounded-2xl border border-border shadow-sm hover:shadow-lg hover:border-primary/30 transition-all duration-300 overflow-hidden">
@@ -129,7 +131,7 @@ export function HabitCard({ habitId, onDeleteClick }: HabitCardProps) {
       </button>
 
       <a href={`/habits/${habit.id}`} className="block p-5">
-        {/* Top row: emoji + name + month label */}
+        {/* Top row: emoji + name + month picker */}
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-2xl shrink-0">
@@ -139,11 +141,89 @@ export function HabitCard({ habitId, onDeleteClick }: HabitCardProps) {
               {habit.name}
             </h3>
           </div>
-          {/* Month + percentage bars */}
+
+          {/* Month picker + percentage bars */}
           <div className="flex flex-col items-end gap-1.5 shrink-0 ml-2">
-            <span className="text-xs font-semibold text-muted-foreground tracking-widest mb-0.5">
-              {mesLabel}
-            </span>
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPickerYear(selectedYear); setOpen(true); }}
+                  className="flex items-center gap-1 text-xs font-semibold text-muted-foreground tracking-widest mb-0.5 hover:text-primary transition-colors cursor-pointer group/month"
+                >
+                  <span>{mesLabel}</span>
+                  <ChevronDown className="w-3 h-3 opacity-50 group-hover/month:opacity-100 transition-opacity" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-64 p-3"
+                align="end"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Year navigation */}
+                <div className="flex items-center justify-between mb-3">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setPickerYear(y => y - 1); }}
+                    className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-gray-100 transition-colors"
+                  >
+                    <ChevronLeft className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                  <span className="text-sm font-bold text-foreground">{pickerYear}</span>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setPickerYear(y => Math.min(y + 1, currentYear)); }}
+                    className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-gray-100 transition-colors disabled:opacity-30"
+                    disabled={pickerYear >= currentYear}
+                  >
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                </div>
+
+                {/* Month grid */}
+                <div className="grid grid-cols-3 gap-1">
+                  {MESES_CORTO.map((m, idx) => {
+                    const isFuture = pickerYear === currentYear && idx > now.getMonth();
+                    const isSelected = idx === selectedMonth && pickerYear === selectedYear;
+                    const isCurrent = idx === now.getMonth() && pickerYear === currentYear;
+                    return (
+                      <button
+                        key={m}
+                        disabled={isFuture}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedMonth(idx);
+                          setSelectedYear(pickerYear);
+                          setOpen(false);
+                        }}
+                        className={`
+                          text-xs font-medium py-1.5 rounded-md transition-colors
+                          ${isFuture ? "opacity-30 cursor-not-allowed text-muted-foreground" : "hover:bg-gray-100 cursor-pointer"}
+                          ${isSelected ? "bg-primary text-white hover:bg-primary" : ""}
+                          ${isCurrent && !isSelected ? "text-primary font-bold" : ""}
+                        `}
+                      >
+                        {m}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Reset to current month */}
+                {!isCurrentMonth && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedMonth(now.getMonth());
+                      setSelectedYear(now.getFullYear());
+                      setPickerYear(now.getFullYear());
+                      setOpen(false);
+                    }}
+                    className="mt-3 w-full text-xs text-primary hover:underline font-medium"
+                  >
+                    Volver al mes actual
+                  </button>
+                )}
+              </PopoverContent>
+            </Popover>
+
             {percentages.map((opt) => (
               <div
                 key={opt.label}
