@@ -155,7 +155,37 @@ export default function HabitDetail() {
     return calculateStreaks(habit.logs, habit.options);
   }, [habit]);
 
-  const totalLogs = habit?.logs.length || 0;
+  // Year-level stats
+  const today = useMemo(() => { const d = new Date(); d.setHours(0,0,0,0); return d; }, []);
+  const currentYear = today.getFullYear();
+  const yearStart = new Date(currentYear, 0, 1);
+  const totalYearDays = Math.floor((today.getTime() - yearStart.getTime()) / 86400000) + 1;
+
+  // Month-level stats (current month only)
+  const currentMonthIdx = today.getMonth();
+  const currentMonthDays = today.getDate();
+  const monthPadStr = (currentMonthIdx + 1).toString().padStart(2, '0');
+  const currentMonthLogs = useMemo(() => {
+    if (!habit) return [];
+    return habit.logs.filter((l: any) => l.date.startsWith(`${currentYear}-${monthPadStr}`));
+  }, [habit, currentYear, monthPadStr]);
+
+  const exemptIdx = useMemo(() => habit?.options.findIndex((o: any) => o.isExempt) ?? -1, [habit]);
+  const monthExemptDays = useMemo(() => {
+    if (!habit) return 0;
+    return exemptIdx >= 0 ? currentMonthLogs.filter((l: any) => l.optionIndex === exemptIdx).length : 0;
+  }, [currentMonthLogs, exemptIdx, habit]);
+
+  const effectiveMonthDays = Math.max(1, currentMonthDays - monthExemptDays);
+
+  const monthCountPerOption = useMemo(() => {
+    if (!habit) return {};
+    const counts: Record<number, number> = {};
+    habit.options.forEach((_: any, i: number) => {
+      counts[i] = currentMonthLogs.filter((l: any) => l.optionIndex === i).length;
+    });
+    return counts;
+  }, [currentMonthLogs, habit]);
 
   if (isLoading || !habit) {
     return (
@@ -164,8 +194,6 @@ export default function HabitDetail() {
       </div>
     );
   }
-
-  const currentYear = new Date().getFullYear();
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -205,7 +233,7 @@ export default function HabitDetail() {
         
         {/* YEARLY SUMMARY TOGGLE */}
         <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
-          <button 
+          <button
             className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50/80 transition-colors"
             onClick={() => setShowSummary(!showSummary)}
           >
@@ -214,13 +242,13 @@ export default function HabitDetail() {
                 <span className="text-sm">{habit.emoji}</span>
               </div>
               <div>
-                <span className="font-bold text-foreground">Resumen del Año {currentYear}</span>
-                <p className="text-xs text-muted-foreground mt-0.5">{totalLogs} registros en total</p>
+                <span className="font-bold text-foreground">Resumen</span>
+                <p className="text-xs text-muted-foreground mt-0.5">Mes actual · Año {currentYear}</p>
               </div>
             </div>
             {showSummary ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
           </button>
-          
+
           <AnimatePresence>
             {showSummary && (
               <motion.div
@@ -230,44 +258,62 @@ export default function HabitDetail() {
                 className="border-t border-border/60"
               >
                 <div className="p-5 space-y-5">
-                  {/* STAT CARDS */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {habit.options.map((opt: any, idx: number) => {
-                      if (opt.isExempt) return null;
-                      const stat = streaks[idx];
-                      const pct = totalLogs > 0 ? Math.round((stat.totalCount / totalLogs) * 100) : 0;
-                      return (
-                        <div
-                          key={idx}
-                          className="rounded-2xl p-4 border"
-                          style={{ backgroundColor: `${opt.color}0d`, borderColor: `${opt.color}30` }}
-                        >
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider truncate">
-                              {opt.label}
-                            </span>
-                            {opt.isPositive && <span className="text-xs">🔥</span>}
-                            {opt.isNegative && <span className="text-xs">⚡</span>}
-                          </div>
-                          <p className="text-3xl font-black leading-none mb-1" style={{ color: opt.color }}>
-                            {pct}<span className="text-lg font-bold">%</span>
-                          </p>
-                          <p className="text-xs text-muted-foreground mb-3">{stat.totalCount} días registrados</p>
-                          {/* Progress bar */}
-                          <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
-                            <div
-                              className="h-full rounded-full transition-all duration-700"
-                              style={{ width: `${pct}%`, backgroundColor: opt.color }}
-                            />
-                          </div>
-                          {stat.maxStreak >= 2 && (
-                            <p className="text-[11px] text-muted-foreground mt-2">
-                              Mejor racha: <span className="font-semibold" style={{ color: opt.color }}>{stat.maxStreak} d</span>
-                            </p>
-                          )}
-                        </div>
-                      );
-                    })}
+                  {/* TWO-COLUMN STATS */}
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* LEFT: current month */}
+                    <div>
+                      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-3">
+                        {format(new Date(currentYear, currentMonthIdx, 1), 'MMMM', { locale: es })} · {currentMonthDays} días
+                      </p>
+                      <div className="space-y-3">
+                        {habit.options.map((opt: any, idx: number) => {
+                          if (opt.isExempt) return null;
+                          const count = monthCountPerOption[idx] ?? 0;
+                          const pct = Math.round((count / effectiveMonthDays) * 100);
+                          return (
+                            <div key={idx}>
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-xs font-medium text-foreground">{opt.label}</span>
+                                <span className="text-xs font-bold" style={{ color: opt.color }}>{pct}%</span>
+                              </div>
+                              <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden mb-0.5">
+                                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: opt.color }} />
+                              </div>
+                              <p className="text-[10px] text-muted-foreground">{count} de {effectiveMonthDays} días</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="border-l border-border/50 pl-4">
+                      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-3">
+                        Año {currentYear} · {totalYearDays} días
+                      </p>
+                      <div className="space-y-3">
+                        {habit.options.map((opt: any, idx: number) => {
+                          if (opt.isExempt) return null;
+                          const stat = streaks[idx];
+                          const pct = Math.round((stat.totalCount / totalYearDays) * 100);
+                          return (
+                            <div key={idx}>
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-xs font-medium text-foreground">{opt.label}</span>
+                                <span className="text-xs font-bold" style={{ color: opt.color }}>{pct}%</span>
+                              </div>
+                              <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden mb-0.5">
+                                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: opt.color }} />
+                              </div>
+                              <p className="text-[10px] text-muted-foreground">
+                                {stat.totalCount} de {totalYearDays} días
+                                {stat.maxStreak >= 2 && <span> · mejor racha: {stat.maxStreak}d</span>}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
 
                   {/* STREAK ALERTS */}
@@ -277,40 +323,77 @@ export default function HabitDetail() {
                       const stat = streaks[idx];
                       if (stat.currentStreak < 2) return null;
 
+                      const n = stat.currentStreak;
+                      let title = '';
+                      let sub = '';
+
                       if (opt.isPositive) {
+                        if (n < 5) {
+                          title = `¡${n} días seguidos de ${opt.label}!`;
+                          sub = 'Buen comienzo. El hábito se construye día a día.';
+                        } else if (n < 10) {
+                          title = `¡${n} días de racha en ${opt.label}!`;
+                          sub = 'Ya llevas casi una semana. La constancia da sus frutos.';
+                        } else if (n < 15) {
+                          title = `¡${n} días consecutivos!`;
+                          sub = 'Dos semanas seguidas. Esto ya está empezando a ser rutina.';
+                        } else if (n < 30) {
+                          title = `¡${n} días sin parar!`;
+                          sub = 'Más de dos semanas. Tu disciplina está marcando la diferencia.';
+                        } else if (n < 60) {
+                          title = `¡${n} días! Un mes completo.`;
+                          sub = 'Un mes de racha. Eso ya es un hábito de verdad. ¡Extraordinario!';
+                        } else {
+                          title = `¡${n} días! Eso es imparable.`;
+                          sub = 'Más de dos meses sin fallar. Eres un ejemplo de constancia.';
+                        }
                         return (
                           <div
                             key={idx}
-                            className="rounded-2xl p-4 flex items-center gap-3"
-                            style={{ backgroundColor: `${opt.color}15`, border: `1px solid ${opt.color}30` }}
+                            className="rounded-2xl p-4 flex items-start gap-3"
+                            style={{ backgroundColor: `${opt.color}12`, border: `1px solid ${opt.color}28` }}
                           >
-                            <span className="text-xl shrink-0">🔥</span>
-                            <div className="min-w-0">
-                              <p className="font-bold text-sm" style={{ color: opt.color }}>
-                                ¡{stat.currentStreak} días seguidos de {opt.label}!
-                              </p>
-                              <p className="text-xs text-muted-foreground mt-0.5">Eso es dedicación pura. ¡Sigue así!</p>
+                            <div className="w-8 h-8 rounded-xl shrink-0 flex items-center justify-center" style={{ backgroundColor: `${opt.color}25` }}>
+                              <span className="text-base font-black" style={{ color: opt.color }}>{n}</span>
                             </div>
-                            <span className="text-2xl font-black ml-auto shrink-0" style={{ color: opt.color }}>
-                              {stat.currentStreak}
-                            </span>
+                            <div className="min-w-0">
+                              <p className="font-bold text-sm leading-snug" style={{ color: opt.color }}>{title}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>
+                            </div>
                           </div>
                         );
                       }
+
                       if (opt.isNegative) {
+                        if (n < 5) {
+                          title = `${n} días marcando ${opt.label}.`;
+                          sub = 'Aún puedes cambiar el rumbo fácilmente. Hoy es un buen día para empezar.';
+                        } else if (n < 10) {
+                          title = `${n} días seguidos de ${opt.label}.`;
+                          sub = 'Una semana acumulando esto. Identifica qué lo está provocando.';
+                        } else if (n < 15) {
+                          title = `${n} días de ${opt.label}.`;
+                          sub = 'Ya van casi dos semanas. Es momento de tomar una acción concreta.';
+                        } else if (n < 30) {
+                          title = `${n} días seguidos.`;
+                          sub = 'Más de dos semanas. Habla con alguien o busca un pequeño cambio hoy.';
+                        } else {
+                          title = `${n} días marcando ${opt.label}.`;
+                          sub = 'Llevas un mes. Recuerda: siempre puedes elegir diferente. Un día a la vez.';
+                        }
                         return (
-                          <div key={idx} className="rounded-2xl p-4 flex items-center gap-3 bg-slate-50 border border-slate-200">
-                            <span className="text-xl shrink-0">⚡</span>
-                            <div className="min-w-0">
-                              <p className="font-bold text-sm text-slate-700">{stat.currentStreak} días marcando {opt.label}.</p>
-                              <p className="text-xs text-slate-500 mt-0.5">Cada nuevo día es una oportunidad para cambiar.</p>
+                          <div key={idx} className="rounded-2xl p-4 flex items-start gap-3 bg-slate-50 border border-slate-200">
+                            <div className="w-8 h-8 rounded-xl shrink-0 flex items-center justify-center bg-slate-200">
+                              <span className="text-base font-black text-slate-600">{n}</span>
                             </div>
-                            <span className="text-2xl font-black ml-auto shrink-0 text-slate-500">
-                              {stat.currentStreak}
-                            </span>
+                            <div className="min-w-0">
+                              <p className="font-bold text-sm text-slate-700 leading-snug">{title}</p>
+                              <p className="text-xs text-slate-500 mt-0.5">{sub}</p>
+                            </div>
                           </div>
                         );
                       }
+
                       return null;
                     })}
                   </div>
@@ -453,41 +536,6 @@ function MonthBlock({ month, year, habit, onLog, onClear }: { month: number, yea
         })}
       </div>
 
-      {/* STREAKS SECTION PER MONTH */}
-      <div className="mt-4 pt-3 border-t border-border/50 grid grid-cols-2 gap-2">
-        {habit.options.map((opt: any, i: number) => {
-          // Skip exempt option in streak display
-          if (opt.isExempt) return null;
-
-          // Max streak in this month, skipping exempt days
-          let max = 0;
-          let curr = 0;
-          for(let d=1; d<=daysInMonth; d++) {
-            const str = `${year}-${monthPadStr}-${d.toString().padStart(2,'0')}`;
-            if (exemptDaysSet.has(str)) continue; // transparent, don't break
-            if (monthLogs.find((l:any) => l.date === str && l.optionIndex === i)) {
-              curr++;
-              if (curr > max) max = curr;
-            } else {
-              curr = 0;
-            }
-          }
-
-          if (max === 0) return null;
-
-          return (
-            <div key={i} className="text-xs p-2 rounded-lg bg-gray-50 border border-border/50">
-              <div className="font-semibold mb-1 flex items-center gap-1" style={{ color: opt.color }}>
-                {opt.label}
-              </div>
-              <div className="text-muted-foreground flex flex-col gap-0.5">
-                {isCurrentMonth && <span>Actual: {curr} d</span>}
-                <span>Max: {max} d</span>
-              </div>
-            </div>
-          )
-        })}
-      </div>
     </div>
   );
 }
