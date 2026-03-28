@@ -18,6 +18,8 @@ interface MonthStats {
   percentages: Array<HabitOption & { percentage: number; count: number }>;
   streak: number;
   streakPositive: boolean;
+  displayMonth: number;
+  displayYear: number;
 }
 
 function computeMonthStats(
@@ -26,12 +28,25 @@ function computeMonthStats(
 ): MonthStats {
   const now = new Date();
   now.setHours(0, 0, 0, 0);
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const monthPadded = (month + 1).toString().padStart(2, "0");
-  const daysInMonth = getDaysInMonth(new Date(year, month, 1));
 
-  const monthLogs = logs.filter((l) => l.date.startsWith(`${year}-${monthPadded}`));
+  // Determine which month to display: current month if it has data,
+  // otherwise fall back to the most recent month that has any logs.
+  let displayYear = now.getFullYear();
+  let displayMonth = now.getMonth();
+  let monthPadded = (displayMonth + 1).toString().padStart(2, "0");
+  let monthLogs = logs.filter((l) => l.date.startsWith(`${displayYear}-${monthPadded}`));
+
+  if (monthLogs.length === 0 && logs.length > 0) {
+    // Find the most recent log date and use that month
+    const sorted = [...logs].sort((a, b) => b.date.localeCompare(a.date));
+    const [ry, rm] = sorted[0].date.split("-").map(Number);
+    displayYear = ry;
+    displayMonth = rm - 1;
+    monthPadded = rm.toString().padStart(2, "0");
+    monthLogs = logs.filter((l) => l.date.startsWith(`${displayYear}-${monthPadded}`));
+  }
+
+  const daysInMonth = getDaysInMonth(new Date(displayYear, displayMonth, 1));
 
   // Percentages: same formula as MonthBlock inside habit-detail (count / daysInMonth)
   const percentages = options.map((opt, idx) => {
@@ -75,7 +90,7 @@ function computeMonthStats(
   const streak = best.streakCount;
   const streakPositive = best.opt?.isPositive === true || best.opt?.isNegative !== true;
 
-  return { percentages, streak, streakPositive };
+  return { percentages, streak, streakPositive, displayMonth, displayYear };
 }
 
 interface HabitCardProps {
@@ -96,8 +111,11 @@ export function HabitCard({ habitId, onDeleteClick }: HabitCardProps) {
   }
 
   const logs = (habit as any).logs ?? [];
-  const { percentages, streak, streakPositive } = computeMonthStats(habit.options as HabitOption[], logs);
-  const mesActual = MESES[new Date().getMonth()];
+  const { percentages, streak, streakPositive, displayMonth, displayYear } = computeMonthStats(habit.options as HabitOption[], logs);
+  const currentYear = new Date().getFullYear();
+  const mesLabel = displayYear !== currentYear
+    ? `${MESES[displayMonth]} ${displayYear}`
+    : MESES[displayMonth];
 
   return (
     <div className="relative group bg-white rounded-2xl border border-border shadow-sm hover:shadow-lg hover:border-primary/30 transition-all duration-300 overflow-hidden">
@@ -124,7 +142,7 @@ export function HabitCard({ habitId, onDeleteClick }: HabitCardProps) {
           {/* Month + percentage bars */}
           <div className="flex flex-col items-end gap-1.5 shrink-0 ml-2">
             <span className="text-xs font-semibold text-muted-foreground tracking-widest mb-0.5">
-              {mesActual}
+              {mesLabel}
             </span>
             {percentages.map((opt) => (
               <div
