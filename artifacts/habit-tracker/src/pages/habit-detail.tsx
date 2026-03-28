@@ -161,31 +161,6 @@ export default function HabitDetail() {
   const yearStart = new Date(currentYear, 0, 1);
   const totalYearDays = Math.floor((today.getTime() - yearStart.getTime()) / 86400000) + 1;
 
-  // Month-level stats (current month only)
-  const currentMonthIdx = today.getMonth();
-  const currentMonthDays = today.getDate();
-  const monthPadStr = (currentMonthIdx + 1).toString().padStart(2, '0');
-  const currentMonthLogs = useMemo(() => {
-    if (!habit) return [];
-    return habit.logs.filter((l: any) => l.date.startsWith(`${currentYear}-${monthPadStr}`));
-  }, [habit, currentYear, monthPadStr]);
-
-  const exemptIdx = useMemo(() => habit?.options.findIndex((o: any) => o.isExempt) ?? -1, [habit]);
-  const monthExemptDays = useMemo(() => {
-    if (!habit) return 0;
-    return exemptIdx >= 0 ? currentMonthLogs.filter((l: any) => l.optionIndex === exemptIdx).length : 0;
-  }, [currentMonthLogs, exemptIdx, habit]);
-
-  const effectiveMonthDays = Math.max(1, currentMonthDays - monthExemptDays);
-
-  const monthCountPerOption = useMemo(() => {
-    if (!habit) return {};
-    const counts: Record<number, number> = {};
-    habit.options.forEach((_: any, i: number) => {
-      counts[i] = currentMonthLogs.filter((l: any) => l.optionIndex === i).length;
-    });
-    return counts;
-  }, [currentMonthLogs, habit]);
 
   if (isLoading || !habit) {
     return (
@@ -258,61 +233,33 @@ export default function HabitDetail() {
                 className="border-t border-border/60"
               >
                 <div className="p-5 space-y-5">
-                  {/* TWO-COLUMN STATS */}
-                  <div className="grid grid-cols-2 gap-4">
-                    {/* LEFT: current month */}
-                    <div>
-                      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-3">
-                        {format(new Date(currentYear, currentMonthIdx, 1), 'MMMM', { locale: es })} · {currentMonthDays} días
-                      </p>
-                      <div className="space-y-3">
-                        {habit.options.map((opt: any, idx: number) => {
-                          if (opt.isExempt) return null;
-                          const count = monthCountPerOption[idx] ?? 0;
-                          const pct = Math.round((count / effectiveMonthDays) * 100);
-                          return (
-                            <div key={idx}>
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="text-xs font-medium text-foreground">{opt.label}</span>
-                                <span className="text-xs font-bold" style={{ color: opt.color }}>{pct}%</span>
-                              </div>
-                              <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden mb-0.5">
-                                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: opt.color }} />
-                              </div>
-                              <p className="text-[10px] text-muted-foreground">{count} de {effectiveMonthDays} días</p>
+                  {/* YEAR STATS */}
+                  <div>
+                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-3">
+                      Año {currentYear} · {totalYearDays} días transcurridos
+                    </p>
+                    <div className="space-y-3">
+                      {habit.options.map((opt: any, idx: number) => {
+                        if (opt.isExempt) return null;
+                        const stat = streaks[idx];
+                        const pct = Math.round((stat.totalCount / totalYearDays) * 100);
+                        const streakLabel = opt.isNegative ? 'peor racha' : 'mejor racha';
+                        return (
+                          <div key={idx}>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs font-medium text-foreground">{opt.label}</span>
+                              <span className="text-xs font-bold" style={{ color: opt.color }}>{pct}%</span>
                             </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Divider */}
-                    <div className="border-l border-border/50 pl-4">
-                      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-3">
-                        Año {currentYear} · {totalYearDays} días
-                      </p>
-                      <div className="space-y-3">
-                        {habit.options.map((opt: any, idx: number) => {
-                          if (opt.isExempt) return null;
-                          const stat = streaks[idx];
-                          const pct = Math.round((stat.totalCount / totalYearDays) * 100);
-                          return (
-                            <div key={idx}>
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="text-xs font-medium text-foreground">{opt.label}</span>
-                                <span className="text-xs font-bold" style={{ color: opt.color }}>{pct}%</span>
-                              </div>
-                              <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden mb-0.5">
-                                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: opt.color }} />
-                              </div>
-                              <p className="text-[10px] text-muted-foreground">
-                                {stat.totalCount} de {totalYearDays} días
-                                {stat.maxStreak >= 2 && <span> · mejor racha: {stat.maxStreak}d</span>}
-                              </p>
+                            <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden mb-0.5">
+                              <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: opt.color }} />
                             </div>
-                          );
-                        })}
-                      </div>
+                            <p className="text-[10px] text-muted-foreground">
+                              {stat.totalCount} de {totalYearDays} días
+                              {stat.maxStreak >= 2 && <span> · {streakLabel}: {stat.maxStreak}d</span>}
+                            </p>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 
