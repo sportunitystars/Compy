@@ -22,7 +22,7 @@ interface HabitOption {
 }
 
 interface MonthStats {
-  percentages: Array<HabitOption & { percentage: number; count: number }>;
+  percentages: Array<HabitOption & { percentage: number; count: number; maxStreak: number }>;
   streak: number;
   streakPositive: boolean;
 }
@@ -40,24 +40,12 @@ function computeMonthStats(
   const monthLogs = logs.filter((l) => l.date.startsWith(`${displayYear}-${monthPadded}`));
   const daysInMonth = getDaysInMonth(new Date(displayYear, displayMonth, 1));
 
-  const percentages = options.map((opt, idx) => {
-    const count = monthLogs.filter((l) => l.optionIndex === idx).length;
-    return {
-      ...opt,
-      count,
-      percentage: daysInMonth > 0 ? Math.round((count / daysInMonth) * 100) : 0,
-    };
-  });
-
-  // Streak: max consecutive days for any option WITHIN the selected month.
-  // For the current month we also check if the streak is still live (going back from today).
   const isCurrentMonthView = displayMonth === now.getMonth() && displayYear === now.getFullYear();
   const lastDayToCheck = isCurrentMonthView ? now.getDate() : daysInMonth;
 
   const optionStreaks = options.map((opt, idx) => {
     const monthDates = new Set(monthLogs.filter((l) => l.optionIndex === idx).map((l) => l.date));
 
-    // Max streak within the month
     let maxStreak = 0;
     let temp = 0;
     for (let day = 1; day <= lastDayToCheck; day++) {
@@ -70,7 +58,6 @@ function computeMonthStats(
       }
     }
 
-    // For the current month, also check active cross-month streak (backward from today)
     let activeStreak = 0;
     if (isCurrentMonthView) {
       const allDates = new Set(logs.filter((l) => l.optionIndex === idx).map((l) => l.date));
@@ -84,12 +71,23 @@ function computeMonthStats(
       }
     }
 
-    return { opt, streakCount: Math.max(maxStreak, activeStreak) };
+    return { opt, idx, streakCount: Math.max(maxStreak, activeStreak) };
+  });
+
+  const percentages = options.map((opt, idx) => {
+    const count = monthLogs.filter((l) => l.optionIndex === idx).length;
+    const maxStreak = optionStreaks.find((s) => s.idx === idx)?.streakCount ?? 0;
+    return {
+      ...opt,
+      count,
+      maxStreak,
+      percentage: daysInMonth > 0 ? Math.round((count / daysInMonth) * 100) : 0,
+    };
   });
 
   const best = optionStreaks.reduce(
     (acc, cur) => (cur.streakCount > acc.streakCount ? cur : acc),
-    { opt: options[0], streakCount: 0 }
+    { opt: options[0], idx: 0, streakCount: 0 }
   );
 
   const streak = best.streakCount;
@@ -307,19 +305,25 @@ export function HabitCard({ habitId, onDeleteClick }: HabitCardProps) {
         ) : (
           <div className="pt-3 border-t border-gray-100">
             <span className="text-[11px] font-bold text-muted-foreground/60 block mb-1.5">Racha</span>
-            <div className="flex flex-wrap gap-1.5">
-              {percentages.map((opt) => (
-                <span
-                  key={opt.label}
-                  className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full"
-                  style={{ color: opt.color, backgroundColor: `${opt.color}1a` }}
-                >
-                  {opt.isNegative
-                    ? <TriangleAlert className="w-3 h-3 shrink-0" />
-                    : <Flame className="w-3 h-3 shrink-0" />}
-                  {opt.label} · {opt.count} días
-                </span>
-              ))}
+            <div className="flex flex-wrap gap-x-4 gap-y-1">
+              {percentages.filter((opt) => opt.maxStreak > 0).length === 0 ? (
+                <span className="text-[11px] text-muted-foreground/40">Sin racha este mes</span>
+              ) : (
+                percentages
+                  .filter((opt) => opt.maxStreak > 0)
+                  .map((opt) => (
+                    <span
+                      key={opt.label}
+                      className="inline-flex items-center gap-1 text-[11px] font-bold"
+                      style={{ color: opt.color }}
+                    >
+                      {opt.isNegative
+                        ? <TriangleAlert className="w-3.5 h-3.5 shrink-0" />
+                        : <Flame className="w-3.5 h-3.5 shrink-0" />}
+                      {opt.label} · {opt.maxStreak} días
+                    </span>
+                  ))
+              )}
             </div>
           </div>
         )}
