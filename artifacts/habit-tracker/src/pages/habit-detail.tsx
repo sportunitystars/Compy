@@ -52,9 +52,17 @@ function calculateStreaks(logs: { date: string, optionIndex: number }[], options
     let streakCount = 0;
     let checkDate = new Date(today);
     const todayStr = format(today, 'yyyy-MM-dd');
+
+    // If today has a DIFFERENT non-exempt option logged → streak is broken
+    const todayLog = sortedLogs.find(l => l.date === todayStr);
+    if (todayLog && !dates.has(todayStr) && !exemptDates.has(todayStr)) {
+      return { index, currentStreak: 0, maxStreak, totalCount: dates.size };
+    }
+    // If today has no log at all (and is not exempt) → start checking from yesterday
     if (!dates.has(todayStr) && !exemptDates.has(todayStr)) {
       checkDate.setDate(checkDate.getDate() - 1);
     }
+
     let guard = 0;
     while (guard < 400) {
       guard++;
@@ -370,6 +378,57 @@ export default function HabitDetail() {
             )}
           </AnimatePresence>
         </div>
+
+        {/* STREAK MESSAGES — visible below summary when streak ≥ 2 */}
+        {streaks.some((s, i) => !habit.options[i]?.isExempt && s.currentStreak >= 2) && (
+          <div className="space-y-2">
+            {habit.options.map((opt: any, idx: number) => {
+              if (opt.isExempt) return null;
+              const n = streaks[idx].currentStreak;
+              if (n < 2) return null;
+
+              let title = '';
+              let sub = '';
+
+              if (opt.isPositive) {
+                if (n < 5)       { title = `¡${n} días seguidos de ${opt.label}!`; sub = 'Buen comienzo. El hábito se construye día a día.'; }
+                else if (n < 10) { title = `¡${n} días de racha en ${opt.label}!`; sub = 'Casi una semana. Tu constancia está dando resultados.'; }
+                else if (n < 15) { title = `¡${n} días consecutivos!`; sub = 'Dos semanas seguidas. Esto ya está convirtiéndose en rutina.'; }
+                else if (n < 30) { title = `¡${n} días sin parar!`; sub = 'Más de dos semanas. Tu disciplina está marcando la diferencia.'; }
+                else if (n < 60) { title = `¡${n} días! Un mes completo de ${opt.label}.`; sub = '¡Un mes de racha! Eso ya es un hábito de verdad.'; }
+                else             { title = `¡${n} días imparables!`; sub = 'Más de dos meses sin fallar. Eres un ejemplo de constancia.'; }
+                return (
+                  <div key={idx} className="rounded-2xl p-4 flex items-center gap-3" style={{ backgroundColor: `${opt.color}12`, border: `1px solid ${opt.color}28` }}>
+                    <div className="w-9 h-9 rounded-xl shrink-0 flex items-center justify-center font-black text-sm" style={{ backgroundColor: `${opt.color}25`, color: opt.color }}>{n}</div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-sm leading-snug" style={{ color: opt.color }}>{title}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>
+                    </div>
+                  </div>
+                );
+              }
+
+              if (opt.isNegative) {
+                if (n < 5)       { title = `${n} días marcando ${opt.label}.`; sub = 'Aún puedes cambiar el rumbo. Hoy es un buen día para empezar.'; }
+                else if (n < 10) { title = `${n} días seguidos de ${opt.label}.`; sub = 'Una semana así. Identifica qué lo está provocando y actúa hoy.'; }
+                else if (n < 15) { title = `${n} días de ${opt.label}.`; sub = 'Casi dos semanas. Un pequeño cambio hoy puede romper este patrón.'; }
+                else if (n < 30) { title = `${n} días seguidos.`; sub = 'Más de dos semanas. Busca apoyo o cambia algo en tu entorno ahora.'; }
+                else             { title = `${n} días marcando ${opt.label}.`; sub = 'Llevas un mes. Recuerda: siempre puedes elegir diferente. Un día a la vez.'; }
+                return (
+                  <div key={idx} className="rounded-2xl p-4 flex items-center gap-3 bg-slate-50 border border-slate-200">
+                    <div className="w-9 h-9 rounded-xl shrink-0 flex items-center justify-center font-black text-sm bg-slate-200 text-slate-600">{n}</div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-sm text-slate-700 leading-snug">{title}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">{sub}</p>
+                    </div>
+                  </div>
+                );
+              }
+
+              return null;
+            })}
+          </div>
+        )}
 
         {/* CALENDAR GRID */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
