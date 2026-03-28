@@ -310,20 +310,20 @@ export default function HabitDetail() {
               let sub = '';
 
               if (opt.isPositive) {
-                if (n < 5)       { title = `¡${n} días seguidos de ${opt.label}!`; sub = 'Buen comienzo. El hábito se construye día a día.'; }
-                else if (n < 10) { title = `¡${n} días de racha en ${opt.label}!`; sub = 'Casi una semana. Tu constancia está dando resultados.'; }
-                else if (n < 15) { title = `¡${n} días consecutivos!`; sub = 'Dos semanas seguidas. Esto ya está convirtiéndose en rutina.'; }
-                else if (n < 30) { title = `¡${n} días sin parar!`; sub = 'Más de dos semanas. Tu disciplina está marcando la diferencia.'; }
-                else if (n < 60) { title = `¡${n} días! Un mes completo de ${opt.label}.`; sub = '¡Un mes de racha! Eso ya es un hábito de verdad.'; }
-                else             { title = `¡${n} días imparables!`; sub = 'Más de dos meses sin fallar. Eres un ejemplo de constancia.'; }
+                if (n < 5)       { title = `¡${n} días de racha!`; sub = 'Buen comienzo. El hábito se construye día a día.'; }
+                else if (n < 10) { title = `¡${n} días de racha!`; sub = 'Casi una semana. Tu constancia está dando resultados.'; }
+                else if (n < 15) { title = `¡${n} días de racha!`; sub = 'Dos semanas seguidas. Esto ya está convirtiéndose en rutina.'; }
+                else if (n < 30) { title = `¡${n} días de racha!`; sub = 'Más de dos semanas. Tu disciplina está marcando la diferencia.'; }
+                else if (n < 60) { title = `¡${n} días de racha!`; sub = 'Un mes de racha. Eso ya es un hábito de verdad.'; }
+                else             { title = `¡${n} días de racha!`; sub = 'Más de dos meses sin fallar. Eres un ejemplo de constancia.'; }
               } else if (opt.isNegative) {
-                if (n < 5)       { title = `${n} días marcando ${opt.label}.`; sub = 'Aún puedes cambiar el rumbo. Hoy es un buen día para empezar.'; }
-                else if (n < 10) { title = `${n} días seguidos de ${opt.label}.`; sub = 'Una semana así. Identifica qué lo está provocando y actúa hoy.'; }
-                else if (n < 15) { title = `${n} días de ${opt.label}.`; sub = 'Casi dos semanas. Un pequeño cambio hoy puede romper este patrón.'; }
-                else if (n < 30) { title = `${n} días seguidos.`; sub = 'Más de dos semanas. Busca apoyo o cambia algo en tu entorno ahora.'; }
-                else             { title = `${n} días marcando ${opt.label}.`; sub = 'Llevas un mes. Recuerda: siempre puedes elegir diferente. Un día a la vez.'; }
+                if (n < 5)       { title = `${n} días de racha.`; sub = 'Aún puedes cambiar el rumbo. Hoy es un buen día para empezar.'; }
+                else if (n < 10) { title = `${n} días de racha.`; sub = 'Una semana así. Identifica qué lo está provocando y actúa hoy.'; }
+                else if (n < 15) { title = `${n} días de racha.`; sub = 'Casi dos semanas. Un pequeño cambio hoy puede romper este patrón.'; }
+                else if (n < 30) { title = `${n} días de racha.`; sub = 'Más de dos semanas. Busca apoyo o cambia algo en tu entorno ahora.'; }
+                else             { title = `${n} días de racha.`; sub = 'Llevas un mes. Recuerda: siempre puedes elegir diferente. Un día a la vez.'; }
               } else {
-                title = `${n} días seguidos de ${opt.label}.`;
+                title = `${n} días de racha.`;
                 sub = 'Llevas una racha activa.';
               }
 
