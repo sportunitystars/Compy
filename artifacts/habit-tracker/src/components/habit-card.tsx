@@ -302,10 +302,10 @@ export function HabitCard({ habitId, onDeleteClick }: HabitCardProps) {
         {/* Row 3: streak (current month) or monthly summary (past month) */}
         {isCurrentMonth ? (
           <div className="flex items-center gap-1.5 pt-3 border-t border-gray-100">
-            <span className={`text-[11px] font-bold ${streak >= 5 ? (streakPositive ? "text-green-600" : "text-red-500") : "text-muted-foreground/60"}`}>
+            <span className={`text-[11px] font-bold ${streak >= 2 ? (streakPositive ? "text-green-600" : "text-red-500") : "text-muted-foreground/60"}`}>
               Racha actual
             </span>
-            {streak >= 5 ? (
+            {streak >= 2 ? (
               <div className="flex items-center gap-1 ml-auto">
                 {streakPositive
                   ? <Flame className="w-3.5 h-3.5 text-green-600" />
@@ -322,11 +322,11 @@ export function HabitCard({ habitId, onDeleteClick }: HabitCardProps) {
           <div className="pt-3 border-t border-gray-100">
             <span className="text-[11px] font-bold text-muted-foreground/60 block mb-1.5">Racha</span>
             <div className="flex flex-wrap gap-x-4 gap-y-1">
-              {percentages.filter((opt) => opt.maxStreak > 0).length === 0 ? (
+              {percentages.filter((opt) => opt.maxStreak >= 2).length === 0 ? (
                 <span className="text-[11px] text-muted-foreground/40">Sin racha este mes</span>
               ) : (
                 percentages
-                  .filter((opt) => opt.maxStreak > 0)
+                  .filter((opt) => opt.maxStreak >= 2)
                   .map((opt) => (
                     <span
                       key={opt.label}
