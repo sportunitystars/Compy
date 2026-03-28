@@ -8,6 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useListHabits, useDeleteHabit } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
+import { HabitCard } from "@/components/habit-card";
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -72,7 +73,7 @@ export default function Dashboard() {
         </div>
 
         {!habits || habits.length === 0 ? (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="bg-white rounded-3xl p-12 text-center border border-border shadow-sm"
@@ -98,46 +99,11 @@ export default function Dashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
-                className="relative group"
               >
-                {/* Delete button */}
-                <button
-                  onClick={(e) => { e.preventDefault(); setConfirmId(habit.id); }}
-                  className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white border border-red-200 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all opacity-0 group-hover:opacity-100 flex items-center justify-center shadow-sm"
-                  title="Eliminar hábito"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-
-                <Link href={`/habits/${habit.id}`} className="block">
-                  <div className="bg-white rounded-2xl p-6 shadow-sm shadow-black/5 border border-border hover:shadow-lg hover:border-primary/30 transition-all duration-300 cursor-pointer h-full">
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center text-3xl group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
-                        {habit.emoji}
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors">
-                          {habit.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {habit.options.length} opciones
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-wrap gap-2 mt-6">
-                      {habit.options.map(opt => (
-                        <span 
-                          key={opt.label} 
-                          className="px-3 py-1 rounded-lg text-xs font-medium text-white shadow-sm"
-                          style={{ backgroundColor: opt.color }}
-                        >
-                          {opt.label} {opt.isPositive && "🔥"} {opt.isNegative && "⚡"}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </Link>
+                <HabitCard
+                  habitId={habit.id}
+                  onDeleteClick={setConfirmId}
+                />
               </motion.div>
             ))}
           </div>
