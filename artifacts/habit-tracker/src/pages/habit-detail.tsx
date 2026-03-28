@@ -111,19 +111,41 @@ export default function HabitDetail() {
   };
 
   const handleLog = (dateStr: string, optionIndex: number) => {
+    const key = getGetHabitQueryKey(habitId);
+    const previous = queryClient.getQueryData(key);
+
+    // Optimistic update: apply instantly before server responds
+    queryClient.setQueryData(key, (old: any) => {
+      if (!old) return old;
+      const logs = (old.logs as any[]).filter((l: any) => l.date !== dateStr);
+      logs.push({ date: dateStr, optionIndex });
+      return { ...old, logs };
+    });
+
     upsertMutation.mutate(
       { habitId, date: dateStr, data: { optionIndex } },
       {
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: getGetHabitQueryKey(habitId) })
+        onError: () => queryClient.setQueryData(key, previous),
+        onSettled: () => queryClient.invalidateQueries({ queryKey: key }),
       }
     );
   };
 
   const handleClearLog = (dateStr: string) => {
+    const key = getGetHabitQueryKey(habitId);
+    const previous = queryClient.getQueryData(key);
+
+    // Optimistic update: remove log instantly
+    queryClient.setQueryData(key, (old: any) => {
+      if (!old) return old;
+      return { ...old, logs: (old.logs as any[]).filter((l: any) => l.date !== dateStr) };
+    });
+
     deleteLogMutation.mutate(
       { habitId, date: dateStr },
       {
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: getGetHabitQueryKey(habitId) })
+        onError: () => queryClient.setQueryData(key, previous),
+        onSettled: () => queryClient.invalidateQueries({ queryKey: key }),
       }
     );
   };
