@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import { Plus, CheckCircle2, ShieldCheck, LogOut, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -61,7 +62,13 @@ export default function Dashboard() {
           <div>
             <h1 className="text-3xl font-display font-bold text-foreground">Tu progreso</h1>
             <p className="text-muted-foreground mt-1 text-lg">
-              Hoy es {format(new Date(), "dd/MM/yyyy")}
+              {(() => {
+                const raw = format(new Date(), "EEE, d 'de' MMMM", { locale: es });
+                return raw
+                  .replace(/\./g, "")
+                  .replace(/^\w/, c => c.toUpperCase())
+                  .replace(/de (\w)/, (_, c) => `de ${c.toUpperCase()}`);
+              })()}
             </p>
           </div>
           <Link href="/habits/new">
