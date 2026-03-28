@@ -1,5 +1,5 @@
 import { Trash2, Flame, TriangleAlert } from "lucide-react";
-import { format, getDate } from "date-fns";
+import { format, getDaysInMonth } from "date-fns";
 import { useGetHabit } from "@workspace/api-client-react";
 
 const MESES = [
@@ -25,38 +25,55 @@ function computeMonthStats(
   logs: Array<{ date: string; optionIndex: number }>
 ): MonthStats {
   const now = new Date();
+  now.setHours(0, 0, 0, 0);
   const year = now.getFullYear();
-  const month = now.getMonth() + 1;
-  const daysElapsed = getDate(now);
+  const month = now.getMonth();
+  const monthPadded = (month + 1).toString().padStart(2, "0");
+  const daysInMonth = getDaysInMonth(new Date(year, month, 1));
 
-  const monthLogs = logs.filter((l) => {
-    const [y, m] = l.date.split("-").map(Number);
-    return y === year && m === month;
-  });
+  const monthLogs = logs.filter((l) => l.date.startsWith(`${year}-${monthPadded}`));
 
+  // Percentages: same formula as MonthBlock inside habit-detail (count / daysInMonth)
   const percentages = options.map((opt, idx) => {
     const count = monthLogs.filter((l) => l.optionIndex === idx).length;
     return {
       ...opt,
       count,
-      percentage: daysElapsed > 0 ? Math.round((count / daysElapsed) * 100) : 0,
+      percentage: daysInMonth > 0 ? Math.round((count / daysInMonth) * 100) : 0,
     };
   });
 
-  // Streak: consecutive logged days going backwards from today
-  let streak = 0;
-  let streakPositive = true;
-  for (let i = 0; i < daysElapsed; i++) {
-    const d = new Date(year, now.getMonth(), daysElapsed - i);
-    const dateStr = format(d, "yyyy-MM-dd");
-    const log = monthLogs.find((l) => l.date === dateStr);
-    if (!log) break;
-    const opt = options[log.optionIndex];
-    if (i === 0) {
-      streakPositive = opt?.isPositive === true || opt?.isNegative !== true;
+  // Streak: same logic as calculateStreaks in habit-detail
+  // Uses ALL logs (not just this month) so cross-month streaks are counted correctly
+  // Grace period: if today isn't logged yet, start counting from yesterday
+  const optionStreaks = options.map((opt, idx) => {
+    const dates = new Set(logs.filter((l) => l.optionIndex === idx).map((l) => l.date));
+    let streakCount = 0;
+    const todayStr = format(now, "yyyy-MM-dd");
+    const checkDate = new Date(now);
+    if (!dates.has(todayStr)) {
+      checkDate.setDate(checkDate.getDate() - 1);
     }
-    streak++;
-  }
+    while (true) {
+      const ds = format(checkDate, "yyyy-MM-dd");
+      if (dates.has(ds)) {
+        streakCount++;
+        checkDate.setDate(checkDate.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+    return { opt, streakCount };
+  });
+
+  // Pick the option with the longest current streak
+  const best = optionStreaks.reduce(
+    (acc, cur) => (cur.streakCount > acc.streakCount ? cur : acc),
+    { opt: options[0], streakCount: 0 }
+  );
+
+  const streak = best.streakCount;
+  const streakPositive = best.opt?.isPositive === true || best.opt?.isNegative !== true;
 
   return { percentages, streak, streakPositive };
 }
