@@ -1,9 +1,9 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import { Link, useRoute } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { format, getDaysInMonth, startOfMonth, getDay, isAfter, parseISO } from "date-fns";
+import { format, getDaysInMonth, getDay, isAfter } from "date-fns";
 import { es } from "date-fns/locale";
-import { ArrowLeft, ChevronDown, ChevronUp, Check, Edit2 } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, Edit2, CheckSquare, X, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useGetHabit, useUpsertLog, useDeleteLog, useUpdateHabit, getGetHabitQueryKey, getListHabitsQueryKey } from "@workspace/api-client-react";
@@ -14,11 +14,9 @@ import { useToast } from "@/hooks/use-toast";
 const MONTHS = Array.from({ length: 12 }, (_, i) => i);
 const WEEKDAYS = ["L", "M", "X", "J", "V", "S", "D"];
 
-// Helper to get streak stats
 function calculateStreaks(logs: { date: string, optionIndex: number }[], options: any[]) {
   const sortedLogs = [...logs].sort((a, b) => a.date.localeCompare(b.date));
 
-  // Collect exempt dates (all-time, for current-streak backward walk)
   const exemptIdx = options.findIndex((o: any) => o.isExempt);
   const exemptDates = new Set(
     exemptIdx >= 0 ? sortedLogs.filter(l => l.optionIndex === exemptIdx).map(l => l.date) : []
@@ -33,13 +31,12 @@ function calculateStreaks(logs: { date: string, optionIndex: number }[], options
 
     const dates = new Set(sortedLogs.filter(l => l.optionIndex === index).map(l => l.date));
 
-    // Max streak: skip exempt days (don't break)
     let tempStreak = 0;
     let start = new Date(today.getFullYear(), 0, 1);
     const end = today;
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       const dateStr = format(d, 'yyyy-MM-dd');
-      if (exemptDates.has(dateStr)) continue; // transparent
+      if (exemptDates.has(dateStr)) continue;
       if (dates.has(dateStr)) {
         tempStreak++;
         if (tempStreak > maxStreak) maxStreak = tempStreak;
@@ -48,17 +45,14 @@ function calculateStreaks(logs: { date: string, optionIndex: number }[], options
       }
     }
 
-    // Current streak: count backward, skipping exempt days
     let streakCount = 0;
     let checkDate = new Date(today);
     const todayStr = format(today, 'yyyy-MM-dd');
 
-    // If today has a DIFFERENT non-exempt option logged → streak is broken
     const todayLog = sortedLogs.find(l => l.date === todayStr);
     if (todayLog && !dates.has(todayStr) && !exemptDates.has(todayStr)) {
       return { index, currentStreak: 0, maxStreak, totalCount: dates.size };
     }
-    // If today has no log at all (and is not exempt) → start checking from yesterday
     if (!dates.has(todayStr) && !exemptDates.has(todayStr)) {
       checkDate.setDate(checkDate.getDate() - 1);
     }
@@ -89,19 +83,22 @@ export default function HabitDetail() {
   const [, params] = useRoute("/habits/:id");
   const habitId = params?.id || "";
   const { data: habit, isLoading } = useGetHabit(habitId);
-  
+
   const [showSummary, setShowSummary] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState("");
-  
+
+  // Multi-select state: which month is in select mode (null = none), and which dates are selected
+  const [selectMonth, setSelectMonth] = useState<number | null>(null);
+  const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set());
+
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  
+
   const updateMutation = useUpdateHabit();
   const upsertMutation = useUpsertLog();
   const deleteLogMutation = useDeleteLog();
 
-  // Track in-flight log mutations to avoid stale refetches overwriting optimistic state
   const pendingLogMutations = useRef(0);
 
   const handleUpdateName = () => {
@@ -121,12 +118,9 @@ export default function HabitDetail() {
     );
   };
 
-  const handleLog = (dateStr: string, optionIndex: number) => {
+  const handleLog = useCallback((dateStr: string, optionIndex: number) => {
     const key = getGetHabitQueryKey(habitId);
-
-    // Cancel any in-flight refetch so it doesn't overwrite our optimistic state
     queryClient.cancelQueries({ queryKey: key });
-
     const previous = queryClient.getQueryData(key);
     pendingLogMutations.current++;
 
@@ -143,20 +137,17 @@ export default function HabitDetail() {
         onError: () => queryClient.setQueryData(key, previous),
         onSettled: () => {
           pendingLogMutations.current--;
-          // Only re-fetch once all in-flight mutations have settled
           if (pendingLogMutations.current === 0) {
             queryClient.invalidateQueries({ queryKey: key });
           }
         },
       }
     );
-  };
+  }, [habitId, queryClient, upsertMutation]);
 
-  const handleClearLog = (dateStr: string) => {
+  const handleClearLog = useCallback((dateStr: string) => {
     const key = getGetHabitQueryKey(habitId);
-
     queryClient.cancelQueries({ queryKey: key });
-
     const previous = queryClient.getQueryData(key);
     pendingLogMutations.current++;
 
@@ -177,20 +168,64 @@ export default function HabitDetail() {
         },
       }
     );
-  };
+  }, [habitId, queryClient, deleteLogMutation]);
+
+  // Toggle select mode for a given month
+  const handleToggleSelectMode = useCallback((month: number) => {
+    if (selectMonth === month) {
+      setSelectMonth(null);
+      setSelectedDates(new Set());
+    } else {
+      setSelectMonth(month);
+      setSelectedDates(new Set());
+    }
+  }, [selectMonth]);
+
+  // Toggle a date in/out of the selection set
+  const handleToggleDate = useCallback((dateStr: string) => {
+    setSelectedDates(prev => {
+      const next = new Set(prev);
+      if (next.has(dateStr)) {
+        next.delete(dateStr);
+      } else {
+        next.add(dateStr);
+      }
+      return next;
+    });
+  }, []);
+
+  // Apply an option to all selected dates in parallel, then exit select mode
+  const handleBulkApply = useCallback((optionIndex: number) => {
+    const dates = Array.from(selectedDates);
+    dates.forEach(dateStr => handleLog(dateStr, optionIndex));
+    setSelectMonth(null);
+    setSelectedDates(new Set());
+  }, [selectedDates, handleLog]);
+
+  // Clear logs for all selected dates in parallel, then exit select mode
+  const handleBulkClear = useCallback(() => {
+    const dates = Array.from(selectedDates);
+    dates.forEach(dateStr => handleClearLog(dateStr));
+    setSelectMonth(null);
+    setSelectedDates(new Set());
+  }, [selectedDates, handleClearLog]);
+
+  // Cancel select mode without changes
+  const handleExitSelect = useCallback(() => {
+    setSelectMonth(null);
+    setSelectedDates(new Set());
+  }, []);
 
   const streaks = useMemo(() => {
     if (!habit) return [];
     return calculateStreaks(habit.logs, habit.options);
   }, [habit]);
 
-  // Year-level stats
   const today = useMemo(() => { const d = new Date(); d.setHours(0,0,0,0); return d; }, []);
   const currentYear = today.getFullYear();
   const yearStart = new Date(currentYear, 0, 1);
   const totalYearDays = Math.floor((today.getTime() - yearStart.getTime()) / 86400000) + 1;
 
-  // Count exempt (excluded) days this year — removed from stat denominators
   const exemptYearCount = useMemo(() => {
     if (!habit) return 0;
     const exemptIdx = habit.options.findIndex((o: any) => o.isExempt);
@@ -199,7 +234,6 @@ export default function HabitDetail() {
     return habit.logs.filter((l: any) => l.optionIndex === exemptIdx && l.date.startsWith(yearStr)).length;
   }, [habit, currentYear]);
 
-
   if (isLoading || !habit) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -207,6 +241,8 @@ export default function HabitDetail() {
       </div>
     );
   }
+
+  const selectionActive = selectMonth !== null;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -221,7 +257,7 @@ export default function HabitDetail() {
             </Link>
             <div className="text-2xl sm:text-4xl shrink-0">{habit.emoji}</div>
             {isEditingName ? (
-              <Input 
+              <Input
                 autoFocus
                 value={editName}
                 onChange={e => setEditName(e.target.value)}
@@ -243,7 +279,7 @@ export default function HabitDetail() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
-        
+
         {/* YEARLY SUMMARY TOGGLE */}
         <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
           <button
@@ -266,7 +302,6 @@ export default function HabitDetail() {
                 className="border-t border-border/60"
               >
                 <div className="p-5 space-y-5">
-                  {/* YEAR STATS */}
                   <div>
                     <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-3 leading-relaxed">
                       Año {currentYear} · {totalYearDays} días transcurridos · {Math.round((totalYearDays / 365) * 100)}% del año
@@ -296,14 +331,13 @@ export default function HabitDetail() {
                       })}
                     </div>
                   </div>
-
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
-        {/* STREAK MESSAGES — visible below summary when streak ≥ 2 */}
+        {/* STREAK MESSAGES */}
         {streaks.some((s, i) => !habit.options[i]?.isExempt && s.currentStreak >= 2) && (
           <div className="space-y-2">
             {habit.options.map((opt: any, idx: number) => {
@@ -347,65 +381,158 @@ export default function HabitDetail() {
         {/* CALENDAR GRID */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {MONTHS.map(month => (
-            <MonthBlock 
-              key={month} 
-              month={month} 
-              year={currentYear} 
-              habit={habit} 
+            <MonthBlock
+              key={month}
+              month={month}
+              year={currentYear}
+              habit={habit}
               onLog={handleLog}
               onClear={handleClearLog}
+              isSelectMode={selectMonth === month}
+              selectedDates={selectedDates}
+              onToggleSelectMode={() => handleToggleSelectMode(month)}
+              onToggleDate={handleToggleDate}
             />
           ))}
         </div>
-        
+
       </main>
+
+      {/* FLOATING ACTION BAR — shown when dates are selected */}
+      <AnimatePresence>
+        {selectionActive && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            className="fixed bottom-0 left-0 right-0 z-30 px-4 pb-4"
+          >
+            <div className="max-w-lg mx-auto mb-4 bg-white rounded-2xl shadow-2xl border border-border overflow-hidden">
+              {/* Header row */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border/60 bg-gray-50/80">
+                <div className="flex items-center gap-2">
+                  <CheckSquare className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-semibold text-foreground">
+                    {selectedDates.size === 0
+                      ? "Toca días para seleccionar"
+                      : `${selectedDates.size} ${selectedDates.size === 1 ? 'día seleccionado' : 'días seleccionados'}`}
+                  </span>
+                </div>
+                <button
+                  onClick={handleExitSelect}
+                  className="p-1 rounded-lg hover:bg-gray-200 text-muted-foreground transition-colors"
+                  title="Cancelar selección"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Options row */}
+              <div className="flex items-center gap-2 px-4 py-3 flex-wrap">
+                {habit.options.map((opt: any, idx: number) => (
+                  <button
+                    key={idx}
+                    disabled={selectedDates.size === 0}
+                    onClick={() => handleBulkApply(idx)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:scale-105 active:scale-95"
+                    style={{
+                      backgroundColor: opt.isExempt ? `${opt.color}18` : opt.color,
+                      color: opt.isExempt ? opt.color : '#fff',
+                      border: opt.isExempt ? `1.5px dashed ${opt.color}80` : 'none',
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+
+                <button
+                  disabled={selectedDates.size === 0}
+                  onClick={handleBulkClear}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold border border-red-200 text-red-500 bg-red-50 transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-red-100 hover:scale-105 active:scale-95"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Limpiar
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
 // Sub-component for individual month
-function MonthBlock({ month, year, habit, onLog, onClear }: { month: number, year: number, habit: any, onLog: any, onClear: any }) {
+interface MonthBlockProps {
+  month: number;
+  year: number;
+  habit: any;
+  onLog: (dateStr: string, optionIndex: number) => void;
+  onClear: (dateStr: string) => void;
+  isSelectMode: boolean;
+  selectedDates: Set<string>;
+  onToggleSelectMode: () => void;
+  onToggleDate: (dateStr: string) => void;
+}
+
+function MonthBlock({ month, year, habit, onLog, onClear, isSelectMode, selectedDates, onToggleSelectMode, onToggleDate }: MonthBlockProps) {
   const date = new Date(year, month, 1);
   const daysInMonth = getDaysInMonth(date);
-  
-  // getDay() returns 0 (Sun) to 6 (Sat). We want Monday=0, Sunday=6
+
   let startDay = getDay(date) - 1;
   if (startDay === -1) startDay = 6;
 
   const today = new Date();
   today.setHours(0,0,0,0);
 
-  // Month stats calculation
   const monthPadStr = (month+1).toString().padStart(2, '0');
   const monthLogs = habit.logs.filter((l: any) => l.date.startsWith(`${year}-${monthPadStr}`));
 
-  // Exempt option setup
   const exemptIdx = habit.options.findIndex((o: any) => o.isExempt);
   const exemptDaysSet = new Set<string>(
     exemptIdx >= 0 ? monthLogs.filter((l: any) => l.optionIndex === exemptIdx).map((l: any) => l.date) : []
   );
   const exemptCount = exemptDaysSet.size;
 
-  // We need max streak IN THIS MONTH for each option.
-  // And current streak (only if this is the current month).
   const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year;
-  const lastDayToCount = isCurrentMonth ? today.getDate() : daysInMonth;
-  // Denominator is always the full month (not elapsed days) minus excluded days
   const effectiveDays = daysInMonth - exemptCount;
 
+  // Only show "Seleccionar" for months that are not entirely in the future
+  const firstDayOfMonth = new Date(year, month, 1);
+  const monthIsAllFuture = isAfter(firstDayOfMonth, today);
+
   return (
-    <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-border flex flex-col">
-      <div className="flex justify-between items-baseline mb-3">
+    <div
+      className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border flex flex-col transition-all duration-200"
+      style={{ borderColor: isSelectMode ? 'rgb(124 58 237 / 0.4)' : undefined }}
+    >
+      {/* Month header */}
+      <div className="flex justify-between items-center mb-3 gap-2">
         <h3 className="font-bold text-base sm:text-lg capitalize">{format(date, 'MMMM', { locale: es })}</h3>
-        <span className="text-xs font-semibold text-muted-foreground bg-gray-100 px-2 py-1 rounded-md">
-          {monthLogs.filter((l: any) => !exemptDaysSet.has(l.date)).length}/{effectiveDays > 0 ? effectiveDays : daysInMonth}
-          {exemptCount > 0 && <span className="ml-1 text-slate-400">· {exemptCount} excl.</span>}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-muted-foreground bg-gray-100 px-2 py-1 rounded-md">
+            {monthLogs.filter((l: any) => !exemptDaysSet.has(l.date)).length}/{effectiveDays > 0 ? effectiveDays : daysInMonth}
+            {exemptCount > 0 && <span className="ml-1 text-slate-400">· {exemptCount} excl.</span>}
+          </span>
+          {!monthIsAllFuture && (
+            <button
+              onClick={onToggleSelectMode}
+              className={`text-[11px] font-semibold px-2 py-1 rounded-md transition-colors ${
+                isSelectMode
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:text-primary hover:bg-primary/8'
+              }`}
+            >
+              {isSelectMode ? 'Cancelar' : 'Seleccionar'}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4">
         {habit.options.map((opt: any, i: number) => {
-          if (opt.isExempt) return null; // never show exempt option in stats pills
+          if (opt.isExempt) return null;
           const count = monthLogs.filter((l:any) => l.optionIndex === i).length;
           const pct = effectiveDays > 0 ? Math.round((count / effectiveDays) * 100) : 0;
           return (
@@ -422,7 +549,7 @@ function MonthBlock({ month, year, habit, onLog, onClear }: { month: number, yea
             {d}
           </div>
         ))}
-        
+
         {Array.from({ length: startDay }).map((_, i) => (
           <div key={`empty-${i}`} className="aspect-square" />
         ))}
@@ -434,6 +561,7 @@ function MonthBlock({ month, year, habit, onLog, onClear }: { month: number, yea
           const existingLog = habit.logs.find((l: any) => l.date === dateStr);
           const opt = existingLog ? habit.options[existingLog.optionIndex] : null;
           const isExemptDay = opt?.isExempt === true;
+          const isSelected = isSelectMode && selectedDates.has(dateStr);
 
           if (isFuture) {
             return (
@@ -443,6 +571,42 @@ function MonthBlock({ month, year, habit, onLog, onClear }: { month: number, yea
             );
           }
 
+          if (isSelectMode) {
+            return (
+              <button
+                key={i}
+                title={dateStr}
+                onClick={() => onToggleDate(dateStr)}
+                className="aspect-square min-h-[2rem] rounded-md flex flex-col items-center justify-center text-xs font-medium transition-all active:scale-90 relative"
+                style={isExemptDay ? {
+                  backgroundColor: isSelected ? `${opt!.color}40` : `${opt!.color}18`,
+                  color: opt!.color,
+                  border: isSelected ? `2px solid ${opt!.color}` : `1.5px dashed ${opt!.color}80`,
+                  outline: isSelected ? `2px solid ${opt!.color}60` : 'none',
+                  outlineOffset: '1px',
+                } : {
+                  backgroundColor: isSelected
+                    ? (opt ? opt.color : '#e0e7ff')
+                    : (opt ? opt.color : '#f3f4f6'),
+                  color: isSelected ? '#fff' : (opt ? '#fff' : '#6b7280'),
+                  border: isSelected
+                    ? `2px solid #fff`
+                    : (opt ? `1px solid ${opt.color}` : '1px solid #e5e7eb'),
+                  outline: isSelected ? '2.5px solid #7c3aed' : 'none',
+                  outlineOffset: '1px',
+                  opacity: isSelected ? 1 : 0.75,
+                }}
+              >
+                {i + 1}
+                {isExemptDay && <span className="text-[7px] leading-none opacity-70">⊘</span>}
+                {isSelected && !isExemptDay && (
+                  <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-primary rounded-full border border-white" />
+                )}
+              </button>
+            );
+          }
+
+          // Normal (non-select) mode
           return (
             <button
               key={i}
@@ -476,7 +640,6 @@ function MonthBlock({ month, year, habit, onLog, onClear }: { month: number, yea
           );
         })}
       </div>
-
     </div>
   );
 }
