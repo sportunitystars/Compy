@@ -1,18 +1,41 @@
 import { Router, type IRouter } from "express";
+import { Pool } from "pg";
 import { supabaseAdmin } from "../lib/supabase";
 import { requireActive } from "../lib/auth";
 import { sendPush } from "../lib/webpush";
 import { format } from "date-fns";
 
 const router: IRouter = Router();
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
-function formatHabit(h: any) {
+async function getPrivacyMap(habitIds: string[]): Promise<Map<string, boolean>> {
+  if (!habitIds.length) return new Map();
+  const result = await pool.query(
+    `SELECT supabase_habit_id, is_private FROM habit_metadata WHERE supabase_habit_id = ANY($1)`,
+    [habitIds]
+  );
+  const map = new Map<string, boolean>();
+  for (const row of result.rows) map.set(row.supabase_habit_id, row.is_private);
+  return map;
+}
+
+async function setPrivacy(habitId: string, isPrivate: boolean): Promise<void> {
+  await pool.query(
+    `INSERT INTO habit_metadata (supabase_habit_id, is_private)
+     VALUES ($1, $2)
+     ON CONFLICT (supabase_habit_id) DO UPDATE SET is_private = $2, updated_at = NOW()`,
+    [habitId, isPrivate]
+  );
+}
+
+function formatHabit(h: any, isPrivate = false) {
   return {
     id: h.id,
     userId: h.user_id,
     name: h.name,
     emoji: h.description || "✨",
     options: h.options,
+    isPrivate,
     createdAt: h.created_at,
   };
 }
@@ -39,12 +62,14 @@ router.get("/habits", requireActive, async (req, res): Promise<void> => {
     return;
   }
 
-  res.json((data || []).map(formatHabit));
+  const habits = data || [];
+  const privacyMap = await getPrivacyMap(habits.map(h => h.id));
+  res.json(habits.map(h => formatHabit(h, privacyMap.get(h.id) ?? false)));
 });
 
 // ── Create habit ──────────────────────────────────────────────────────────────
 router.post("/habits", requireActive, async (req, res): Promise<void> => {
-  const { name, emoji, options } = req.body;
+  const { name, emoji, options, isPrivate } = req.body;
   if (!name || !options || !Array.isArray(options)) {
     res.status(400).json({ error: "Nombre y opciones son requeridos" });
     return;
@@ -62,7 +87,9 @@ router.post("/habits", requireActive, async (req, res): Promise<void> => {
     return;
   }
 
-  res.status(201).json(formatHabit(data));
+  const privacy = isPrivate ?? false;
+  if (privacy) await setPrivacy(data.id, true);
+  res.status(201).json(formatHabit(data, privacy));
 });
 
 // ── Get habit detail + logs ────────────────────────────────────────────────────
@@ -79,14 +106,17 @@ router.get("/habits/:habitId", requireActive, async (req, res): Promise<void> =>
   if (habitError || !habit) { res.status(404).json({ error: "Hábito no encontrado" }); return; }
 
   const currentYear = new Date().getFullYear();
-  const { data: logs } = await supabaseAdmin
-    .from("habit_logs")
-    .select("*")
-    .eq("habit_id", habitId)
-    .gte("date", `${currentYear}-01-01`)
-    .lte("date", `${currentYear}-12-31`);
+  const [{ data: logs }, privacyMap] = await Promise.all([
+    supabaseAdmin
+      .from("habit_logs")
+      .select("*")
+      .eq("habit_id", habitId)
+      .gte("date", `${currentYear}-01-01`)
+      .lte("date", `${currentYear}-12-31`),
+    getPrivacyMap([habitId]),
+  ]);
 
-  res.json({ ...formatHabit(habit), logs: (logs || []).map(formatLog) });
+  res.json({ ...formatHabit(habit, privacyMap.get(habitId) ?? false), logs: (logs || []).map(formatLog) });
 });
 
 // ── Update habit ──────────────────────────────────────────────────────────────
@@ -108,7 +138,16 @@ router.patch("/habits/:habitId", requireActive, async (req, res): Promise<void> 
 
   if (error || !data) { res.status(404).json({ error: "Hábito no encontrado" }); return; }
 
-  res.json(formatHabit(data));
+  let privacy = false;
+  if (req.body.isPrivate != null) {
+    await setPrivacy(habitId, req.body.isPrivate);
+    privacy = req.body.isPrivate;
+  } else {
+    const privacyMap = await getPrivacyMap([habitId]);
+    privacy = privacyMap.get(habitId) ?? false;
+  }
+
+  res.json(formatHabit(data, privacy));
 });
 
 // ── Delete habit ──────────────────────────────────────────────────────────────
@@ -117,6 +156,7 @@ router.delete("/habits/:habitId", requireActive, async (req, res): Promise<void>
 
   await supabaseAdmin.from("habit_logs").delete().eq("habit_id", habitId).eq("user_id", req.user!.id);
   await supabaseAdmin.from("habits").delete().eq("id", habitId).eq("user_id", req.user!.id);
+  await pool.query(`DELETE FROM habit_metadata WHERE supabase_habit_id = $1`, [habitId]);
 
   res.sendStatus(204);
 });

@@ -43,9 +43,10 @@ Full-stack Spanish habit tracking app. Features:
 
 ## Database Tables (in Supabase) — ACTUAL column names
 
-- `profiles` — `id` (uuid), `email`, `name`, `status` (pending/active/rejected), `role` (user/admin), `created_at`
-- `habits` — `id` (uuid), `user_id` (uuid), `name`, `description` (stores emoji!), `options` (jsonb), `created_at`
+- `profiles` — `id` (uuid), `email`, `name`, `status` (pending/active/rejected), `role` (user/admin), `pin_hash` (text, SHA-256 hash with `compy-pin:` salt prefix), `created_at`
+- `habits` — `id` (uuid), `user_id` (uuid), `name`, `description` (stores emoji!), `options` (jsonb), `is_private` (bool, default false), `created_at`
   - NOTE: DB uses `description` column, API maps it to/from `emoji` field
+  - NOTE: `is_private` maps to `isPrivate` in API responses
 - `habit_logs` — `id` (uuid), `habit_id` (uuid), `date` (YYYY-MM-DD), `value` (stores optionIndex as string!), `note`, `created_at`
   - NOTE: DB uses `value` column, API maps it to/from `optionIndex` field; NO `user_id` column
 

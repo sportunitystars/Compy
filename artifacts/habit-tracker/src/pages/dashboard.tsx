@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Plus, CheckCircle2, ShieldCheck, LogOut, Trash2 } from "lucide-react";
+import { Plus, CheckCircle2, ShieldCheck, LogOut, Trash2, Lock, Unlock } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import {
@@ -26,24 +26,21 @@ import { CSS } from "@dnd-kit/utilities";
 
 import { useListHabits, useDeleteHabit } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
+import { usePinContext } from "@/contexts/pin-context";
 import { Button } from "@/components/ui/button";
 import { HabitCard } from "@/components/habit-card";
 import { PushToggle } from "@/components/push-toggle";
+import { PinModal } from "@/components/pin-modal";
 
 const ORDER_STORAGE_KEY = "compy_habit_order";
 
 function loadOrder(): string[] {
-  try {
-    return JSON.parse(localStorage.getItem(ORDER_STORAGE_KEY) ?? "[]");
-  } catch {
-    return [];
-  }
+  try { return JSON.parse(localStorage.getItem(ORDER_STORAGE_KEY) ?? "[]"); }
+  catch { return []; }
 }
-
 function saveOrder(ids: string[]) {
   localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(ids));
 }
-
 function applyOrder(habits: { id: string }[], order: string[]): { id: string }[] {
   if (!order.length) return habits;
   const map = new Map(habits.map(h => [h.id, h]));
@@ -52,14 +49,27 @@ function applyOrder(habits: { id: string }[], order: string[]): { id: string }[]
   return [...sorted, ...rest];
 }
 
+function LockedCard() {
+  return (
+    <div className="rounded-3xl bg-gray-900 border border-gray-800 h-52 flex flex-col items-center justify-center gap-3 select-none">
+      <div className="w-12 h-12 rounded-2xl bg-gray-800 flex items-center justify-center">
+        <Lock className="w-6 h-6 text-gray-500" />
+      </div>
+      <p className="text-gray-500 text-sm font-medium">Hábito privado</p>
+    </div>
+  );
+}
+
 function SortableCard({
   habitId,
+  isPrivate,
+  isUnlocked,
   onDeleteClick,
-  isDraggingOver,
 }: {
   habitId: string;
+  isPrivate: boolean;
+  isUnlocked: boolean;
   onDeleteClick: (id: string) => void;
-  isDraggingOver: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: habitId });
@@ -68,15 +78,19 @@ function SortableCard({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0 : 1,
-    zIndex: isDragging ? 10 : undefined,
   };
+
+  if (isPrivate && !isUnlocked) {
+    return (
+      <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="touch-none cursor-grab active:cursor-grabbing">
+        <LockedCard />
+      </div>
+    );
+  }
 
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
-      <div
-        {...listeners}
-        className="touch-none cursor-grab active:cursor-grabbing"
-      >
+      <div {...listeners} className="touch-none cursor-grab active:cursor-grabbing">
         <HabitCard habitId={habitId} onDeleteClick={onDeleteClick} />
       </div>
     </div>
@@ -85,12 +99,14 @@ function SortableCard({
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
+  const { isUnlocked, lock } = usePinContext();
   const { data: habits, isLoading } = useListHabits();
   const queryClient = useQueryClient();
   const deleteHabit = useDeleteHabit();
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [orderedIds, setOrderedIds] = useState<string[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [pinModalOpen, setPinModalOpen] = useState(false);
 
   useEffect(() => {
     if (habits) {
@@ -137,6 +153,8 @@ export default function Dashboard() {
     );
   }
 
+  const habitsWithMeta = habits as (typeof habits extends (infer T)[] | undefined ? T & { isPrivate?: boolean } : never)[] | undefined;
+  const hasPrivate = habitsWithMeta?.some(h => (h as any).isPrivate) ?? false;
   const orderedHabits = habits ? applyOrder(habits, orderedIds) : [];
 
   return (
@@ -156,6 +174,29 @@ export default function Dashboard() {
             <span className="text-sm font-medium text-foreground hidden sm:block">
               Hola, {user?.name.split(" ")[0]}
             </span>
+            {hasPrivate && (
+              isUnlocked ? (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={lock}
+                  title="Bloquear hábitos privados"
+                  className="text-primary hover:text-primary/80 rounded-full"
+                >
+                  <Unlock className="w-5 h-5" />
+                </Button>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setPinModalOpen(true)}
+                  title="Ver hábitos privados"
+                  className="text-muted-foreground hover:text-primary rounded-full"
+                >
+                  <Lock className="w-5 h-5" />
+                </Button>
+              )
+            )}
             <PushToggle />
             <Button variant="ghost" size="icon" onClick={logout} title="Cerrar Sesión" className="text-muted-foreground hover:text-red-500 rounded-full">
               <LogOut className="w-5 h-5" />
@@ -171,10 +212,7 @@ export default function Dashboard() {
             <p className="text-muted-foreground mt-1 text-base sm:text-lg">
               {(() => {
                 const raw = format(new Date(), "EEE, d 'de' MMMM", { locale: es });
-                return raw
-                  .replace(/\./g, "")
-                  .replace(/^\w/, c => c.toUpperCase())
-                  .replace(/de (\w)/, (_, c) => `de ${c.toUpperCase()}`);
+                return raw.replace(/\./g, "").replace(/^\w/, c => c.toUpperCase()).replace(/de (\w)/, (_, c) => `de ${c.toUpperCase()}`);
               })()}
             </p>
           </div>
@@ -200,9 +238,7 @@ export default function Dashboard() {
               Comienza a construir una mejor versión de ti mismo creando tu primer hábito a seguir.
             </p>
             <Link href="/habits/new">
-              <Button size="lg" className="rounded-xl h-14 px-8 text-lg">
-                Crear mi primer hábito
-              </Button>
+              <Button size="lg" className="rounded-xl h-14 px-8 text-lg">Crear mi primer hábito</Button>
             </Link>
           </motion.div>
         ) : (
@@ -218,17 +254,20 @@ export default function Dashboard() {
                   <SortableCard
                     key={habit.id}
                     habitId={habit.id}
+                    isPrivate={(habit as any).isPrivate ?? false}
+                    isUnlocked={isUnlocked}
                     onDeleteClick={setConfirmId}
-                    isDraggingOver={activeId !== null && activeId !== habit.id}
                   />
                 ))}
               </div>
             </SortableContext>
-
             <DragOverlay>
               {activeId ? (
                 <div className="rotate-2 scale-105 opacity-90 shadow-2xl rounded-3xl">
-                  <HabitCard habitId={activeId} onDeleteClick={() => {}} />
+                  {(orderedHabits.find(h => h.id === activeId) as any)?.isPrivate && !isUnlocked
+                    ? <LockedCard />
+                    : <HabitCard habitId={activeId} onDeleteClick={() => {}} />
+                  }
                 </div>
               ) : null}
             </DragOverlay>
@@ -236,7 +275,12 @@ export default function Dashboard() {
         )}
       </main>
 
-      {/* Confirm delete modal */}
+      <PinModal
+        open={pinModalOpen}
+        onClose={() => setPinModalOpen(false)}
+        mode="unlock"
+      />
+
       <AnimatePresence>
         {confirmId && (
           <motion.div
@@ -261,19 +305,8 @@ export default function Dashboard() {
                 Se eliminarán el hábito y todos sus registros. Esta acción no se puede deshacer.
               </p>
               <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  className="flex-1 rounded-xl"
-                  onClick={() => setConfirmId(null)}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  variant="destructive"
-                  className="flex-1 rounded-xl"
-                  onClick={() => handleDelete(confirmId)}
-                  disabled={deleteHabit.isPending}
-                >
+                <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setConfirmId(null)}>Cancelar</Button>
+                <Button variant="destructive" className="flex-1 rounded-xl" onClick={() => handleDelete(confirmId)} disabled={deleteHabit.isPending}>
                   {deleteHabit.isPending ? "Eliminando..." : "Eliminar"}
                 </Button>
               </div>

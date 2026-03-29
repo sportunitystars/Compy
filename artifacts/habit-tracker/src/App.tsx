@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "./hooks/use-auth";
+import { PinProvider } from "@/contexts/pin-context";
 import { queryClient } from "@/lib/query-client";
 
 import NotFound from "@/pages/not-found";
@@ -68,7 +69,9 @@ export default function App() {
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
           <AuthProvider>
-            <Router />
+            <PinProvider>
+              <Router />
+            </PinProvider>
           </AuthProvider>
         </WouterRouter>
         <Toaster />

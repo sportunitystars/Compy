@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Flame, TriangleAlert, ChevronLeft, ChevronRight, ChevronDown, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Flame, TriangleAlert, ChevronLeft, ChevronRight, ChevronDown, MoreHorizontal, Pencil, Trash2, Lock } from "lucide-react";
 import { format, getDaysInMonth } from "date-fns";
 import { useGetHabit } from "@workspace/api-client-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -198,6 +198,11 @@ export function HabitCard({ habitId, onDeleteClick }: HabitCardProps) {
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2.5 min-w-0">
             <span className="text-2xl leading-none shrink-0">{habit.emoji}</span>
+            {(habit as any).isPrivate && (
+              <span className="shrink-0 w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center" title="Hábito privado">
+                <Lock className="w-3 h-3 text-primary" />
+              </span>
+            )}
 
             {/* Name with dropdown trigger */}
             <DropdownMenu>

@@ -1,10 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "wouter";
 import { motion } from "framer-motion";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { ArrowLeft, Check, Plus, Trash2, Loader2 } from "lucide-react";
+import { ArrowLeft, Check, Plus, Trash2, Loader2, Lock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useGetHabit, useUpdateHabit } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { PinModal } from "@/components/pin-modal";
+
+const BASE_URL = import.meta.env.BASE_URL ?? "/";
 
 const PALETTE = [
   "#22c55e", "#ef4444", "#3b82f6", "#f59e0b", "#8b5cf6",
@@ -48,6 +51,27 @@ export default function EditHabit() {
   const queryClient = useQueryClient();
   const { data: habit, isLoading } = useGetHabit(id);
   const updateMutation = useUpdateHabit();
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [pinModalMode, setPinModalMode] = useState<"set" | "unlock" | null>(null);
+
+  async function checkPinStatus() {
+    try {
+      const res = await fetch(`${BASE_URL}api/pin/status`);
+      const data = await res.json();
+      return data.hasPin as boolean;
+    } catch { return false; }
+  }
+
+  async function handlePrivateToggle() {
+    if (!isPrivate) {
+      const hasPinAlready = await checkPinStatus();
+      if (!hasPinAlready) {
+        setPinModalMode("set");
+        return;
+      }
+    }
+    setIsPrivate(!isPrivate);
+  }
 
   const form = useForm<FormValues>({
     resolver: zodResolver(editHabitSchema),
@@ -74,6 +98,7 @@ export default function EditHabit() {
           isExempt: o.isExempt ?? false,
         })),
       });
+      setIsPrivate((habit as any).isPrivate ?? false);
     }
   }, [habit]);
 
@@ -97,7 +122,7 @@ export default function EditHabit() {
     }
 
     updateMutation.mutate(
-      { habitId: id, data: values },
+      { habitId: id, data: { ...values, isPrivate } as any },
       {
         onSuccess: () => {
           toast({ title: "Hábito actualizado" });
@@ -332,6 +357,31 @@ export default function EditHabit() {
               </div>
             </motion.div>
 
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-border">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-bold">Privacidad</h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Los hábitos privados solo se ven con tu PIN de 4 dígitos.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handlePrivateToggle}
+                  className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 ${isPrivate ? "bg-primary" : "bg-gray-300"}`}
+                >
+                  <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full bg-white shadow transition-transform ${isPrivate ? "translate-x-6" : "translate-x-1"}`}>
+                    {isPrivate && <Lock className="w-3 h-3 text-primary" />}
+                  </span>
+                </button>
+              </div>
+              {isPrivate && (
+                <p className="mt-3 text-sm text-primary font-medium flex items-center gap-1.5">
+                  <Lock className="w-3.5 h-3.5" /> Este hábito es privado
+                </p>
+              )}
+            </motion.div>
+
             <div className="flex justify-end pt-4">
               <Button
                 type="submit"
@@ -345,6 +395,15 @@ export default function EditHabit() {
           </form>
         </Form>
       </main>
+
+      {pinModalMode && (
+        <PinModal
+          open={true}
+          onClose={() => setPinModalMode(null)}
+          mode={pinModalMode}
+          onSuccess={() => { setPinModalMode(null); setIsPrivate(true); }}
+        />
+      )}
     </div>
   );
 }
