@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { useForm, useFieldArray } from "react-hook-form";
@@ -62,7 +61,6 @@ export default function CreateHabit() {
     name: "options"
   });
 
-  const [emojiCategory, setEmojiCategory] = useState(0);
 
   const onSubmit = (values: FormValues) => {
     // Validate only one positive, one negative
@@ -124,39 +122,38 @@ export default function CreateHabit() {
                     <FormItem>
                       <FormLabel>Icono</FormLabel>
                       <FormControl>
-                        <div>
-                          <div className="flex gap-1.5 flex-wrap mb-3">
-                            {EMOJI_CATEGORIES.map((cat, i) => (
-                              <button
-                                key={cat.label}
-                                type="button"
-                                onClick={() => setEmojiCategory(i)}
-                                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                                  emojiCategory === i
-                                    ? 'bg-primary text-white shadow-sm'
-                                    : 'bg-gray-100 text-muted-foreground hover:bg-gray-200'
-                                }`}
-                              >
-                                <span>{cat.icon}</span> {cat.label}
-                              </button>
+                        <div className="border border-border rounded-2xl overflow-hidden">
+                          <div className="h-56 overflow-y-auto p-3 space-y-3 bg-gray-50">
+                            {EMOJI_CATEGORIES.map((cat) => (
+                              <div key={cat.label}>
+                                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-1.5 px-0.5">
+                                  {cat.icon} {cat.label}
+                                </p>
+                                <div className="grid grid-cols-8 gap-1">
+                                  {cat.emojis.map(em => (
+                                    <button
+                                      key={em}
+                                      type="button"
+                                      onClick={() => field.onChange(em)}
+                                      className={`text-xl h-9 rounded-lg flex items-center justify-center transition-all ${
+                                        field.value === em
+                                          ? 'bg-white border-2 border-primary shadow-sm scale-110'
+                                          : 'hover:bg-white/80 border-2 border-transparent'
+                                      }`}
+                                    >
+                                      {em}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
                             ))}
                           </div>
-                          <div className="grid grid-cols-8 gap-1.5">
-                            {EMOJI_CATEGORIES[emojiCategory].emojis.map(em => (
-                              <button
-                                key={em}
-                                type="button"
-                                onClick={() => field.onChange(em)}
-                                className={`text-xl h-10 rounded-xl flex items-center justify-center transition-all ${
-                                  field.value === em
-                                    ? 'bg-primary/10 border-2 border-primary scale-110'
-                                    : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100 hover:scale-105'
-                                }`}
-                              >
-                                {em}
-                              </button>
-                            ))}
-                          </div>
+                          {field.value && (
+                            <div className="px-3 py-2 bg-white border-t border-border flex items-center gap-2">
+                              <span className="text-xl">{field.value}</span>
+                              <span className="text-xs text-muted-foreground">Icono seleccionado</span>
+                            </div>
+                          )}
                         </div>
                       </FormControl>
                       <FormMessage />
