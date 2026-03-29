@@ -55,8 +55,8 @@ function computeMonthStats(
       : []
   );
 
-  // Effective days = calendar days minus exempt days
-  const effectiveDays = lastDayToCheck - exemptDays.size;
+  // Denominator = total days in month minus exempt days (never just elapsed days)
+  const effectiveDays = daysInMonth - exemptDays.size;
 
   const optionStreaks = options.map((opt, idx) => {
     // Exempt option itself is excluded from streak display

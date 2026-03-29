@@ -190,6 +190,15 @@ export default function HabitDetail() {
   const yearStart = new Date(currentYear, 0, 1);
   const totalYearDays = Math.floor((today.getTime() - yearStart.getTime()) / 86400000) + 1;
 
+  // Count exempt (excluded) days this year — removed from stat denominators
+  const exemptYearCount = useMemo(() => {
+    if (!habit) return 0;
+    const exemptIdx = habit.options.findIndex((o: any) => o.isExempt);
+    if (exemptIdx < 0) return 0;
+    const yearStr = `${currentYear}-`;
+    return habit.logs.filter((l: any) => l.optionIndex === exemptIdx && l.date.startsWith(yearStr)).length;
+  }, [habit, currentYear]);
+
 
   if (isLoading || !habit) {
     return (
@@ -266,7 +275,8 @@ export default function HabitDetail() {
                       {habit.options.map((opt: any, idx: number) => {
                         if (opt.isExempt) return null;
                         const stat = streaks[idx];
-                        const pct = Math.round((stat.totalCount / totalYearDays) * 100);
+                        const effectiveYearDays = Math.max(totalYearDays - exemptYearCount, 1);
+                        const pct = Math.round((stat.totalCount / effectiveYearDays) * 100);
                         const streakLabel = opt.isNegative ? 'peor racha' : 'mejor racha';
                         return (
                           <div key={idx}>
@@ -278,7 +288,7 @@ export default function HabitDetail() {
                               <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: opt.color }} />
                             </div>
                             <p className="text-[10px] text-muted-foreground">
-                              {stat.totalCount} de {totalYearDays} días
+                              {stat.totalCount} de {effectiveYearDays} días{exemptYearCount > 0 ? ` · ${exemptYearCount} excl.` : ''}
                               {stat.maxStreak >= 2 && <span> · {streakLabel}: {stat.maxStreak}d</span>}
                             </p>
                           </div>
@@ -380,7 +390,8 @@ function MonthBlock({ month, year, habit, onLog, onClear }: { month: number, yea
   // And current streak (only if this is the current month).
   const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year;
   const lastDayToCount = isCurrentMonth ? today.getDate() : daysInMonth;
-  const effectiveDays = lastDayToCount - exemptCount;
+  // Denominator is always the full month (not elapsed days) minus excluded days
+  const effectiveDays = daysInMonth - exemptCount;
 
   return (
     <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-border flex flex-col">
@@ -388,7 +399,7 @@ function MonthBlock({ month, year, habit, onLog, onClear }: { month: number, yea
         <h3 className="font-bold text-base sm:text-lg capitalize">{format(date, 'MMMM', { locale: es })}</h3>
         <span className="text-xs font-semibold text-muted-foreground bg-gray-100 px-2 py-1 rounded-md">
           {monthLogs.filter((l: any) => !exemptDaysSet.has(l.date)).length}/{effectiveDays > 0 ? effectiveDays : daysInMonth}
-          {exemptCount > 0 && <span className="ml-1 text-slate-400">· {exemptCount} exc.</span>}
+          {exemptCount > 0 && <span className="ml-1 text-slate-400">· {exemptCount} excl.</span>}
         </span>
       </div>
 
@@ -397,7 +408,6 @@ function MonthBlock({ month, year, habit, onLog, onClear }: { month: number, yea
           if (opt.isExempt) return null; // never show exempt option in stats pills
           const count = monthLogs.filter((l:any) => l.optionIndex === i).length;
           const pct = effectiveDays > 0 ? Math.round((count / effectiveDays) * 100) : 0;
-          if (count === 0) return null;
           return (
             <span key={i} className="text-xs font-semibold px-2 py-0.5 rounded-sm" style={{ color: opt.color, backgroundColor: `${opt.color}15` }}>
               {opt.label} {pct}%

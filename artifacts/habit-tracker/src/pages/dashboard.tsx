@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
@@ -49,7 +49,7 @@ function applyOrder(habits: { id: string }[], order: string[]): { id: string }[]
   return [...sorted, ...rest];
 }
 
-function LockedCard({ onUnlock, onDelete }: { onUnlock: () => void; onDelete: () => void }) {
+function LockedCard({ onUnlock, onDelete, habitNumber }: { onUnlock: () => void; onDelete: () => void; habitNumber: number }) {
   const [showMenu, setShowMenu] = useState(false);
 
   return (
@@ -64,7 +64,7 @@ function LockedCard({ onUnlock, onDelete }: { onUnlock: () => void; onDelete: ()
           <div className="flex items-center gap-2.5 min-w-0">
             <span className="text-2xl leading-none shrink-0">🔒</span>
             <span className="text-[15px] font-bold text-foreground leading-tight truncate">
-              Hábito privado
+              Hábito privado {habitNumber}
             </span>
           </div>
           <button
@@ -124,12 +124,14 @@ function SortableCard({
   habitId,
   isPrivate,
   isUnlocked,
+  habitNumber,
   onDeleteClick,
   onUnlockRequest,
 }: {
   habitId: string;
   isPrivate: boolean;
   isUnlocked: boolean;
+  habitNumber: number;
   onDeleteClick: (id: string) => void;
   onUnlockRequest: () => void;
 }) {
@@ -156,6 +158,7 @@ function SortableCard({
         <LockedCard
           onUnlock={onUnlockRequest}
           onDelete={() => onDeleteClick(habitId)}
+          habitNumber={habitNumber}
         />
       </div>
     );
@@ -178,7 +181,7 @@ function SortableCard({
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
-  const { isUnlocked, lock } = usePinContext();
+  const { isHabitUnlocked, unlockHabit, lockAll } = usePinContext();
   const { data: habits, isLoading } = useListHabits();
   const queryClient = useQueryClient();
   const deleteHabit = useDeleteHabit();
@@ -186,6 +189,28 @@ export default function Dashboard() {
   const [orderedIds, setOrderedIds] = useState<string[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [pinModalOpen, setPinModalOpen] = useState(false);
+  const [pinTargetId, setPinTargetId] = useState<string | null>(null);
+
+  // Year progress
+  const now = new Date();
+  const yearStart = new Date(now.getFullYear(), 0, 1);
+  const yearEnd = new Date(now.getFullYear(), 11, 31);
+  const totalDaysInYear = Math.round((yearEnd.getTime() - yearStart.getTime()) / 86400000) + 1;
+  const daysElapsed = Math.round((now.getTime() - yearStart.getTime()) / 86400000) + 1;
+  const yearProgress = Math.round((daysElapsed / totalDaysInYear) * 100);
+
+  // Number private habits by creation order in the list
+  const privateHabitsMap = useMemo(() => {
+    const map = new Map<string, number>();
+    let count = 0;
+    (habits ?? []).forEach(h => {
+      if ((h as any).isPrivate) {
+        count++;
+        map.set(h.id, count);
+      }
+    });
+    return map;
+  }, [habits]);
 
   useEffect(() => {
     if (habits) {
@@ -232,8 +257,8 @@ export default function Dashboard() {
     );
   }
 
-  const habitsWithMeta = habits as (typeof habits extends (infer T)[] | undefined ? T & { isPrivate?: boolean } : never)[] | undefined;
-  const hasPrivate = habitsWithMeta?.some(h => (h as any).isPrivate) ?? false;
+  const hasPrivate = habits?.some(h => (h as any).isPrivate) ?? false;
+  const hasAnyLocked = hasPrivate && habits!.some(h => (h as any).isPrivate && !isHabitUnlocked(h.id));
   const orderedHabits = habits ? applyOrder(habits, orderedIds) : [];
 
   return (
@@ -254,28 +279,16 @@ export default function Dashboard() {
             <span className="text-sm font-medium text-foreground hidden sm:block">
               Hola, {user?.name.split(" ")[0]}
             </span>
-            {hasPrivate && (
-              isUnlocked ? (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={lock}
-                  title="Bloquear hábitos privados"
-                  className="text-primary hover:text-primary/80 rounded-full"
-                >
-                  <Unlock className="w-5 h-5" />
-                </Button>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setPinModalOpen(true)}
-                  title="Ver hábitos privados"
-                  className="text-muted-foreground hover:text-primary rounded-full"
-                >
-                  <Lock className="w-5 h-5" />
-                </Button>
-              )
+            {hasPrivate && !hasAnyLocked && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={lockAll}
+                title="Bloquear hábitos privados"
+                className="text-primary hover:text-primary/80 rounded-full"
+              >
+                <Unlock className="w-5 h-5" />
+              </Button>
             )}
             <PushToggle />
             <Button variant="ghost" size="icon" onClick={logout} title="Cerrar Sesión" className="text-muted-foreground hover:text-red-500 rounded-full">
@@ -286,7 +299,7 @@ export default function Dashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground">Tu progreso</h1>
             <p className="text-muted-foreground mt-1 text-base sm:text-lg">
@@ -296,6 +309,22 @@ export default function Dashboard() {
               })()}
             </p>
           </div>
+
+          {/* Year progress bar */}
+          <div className="flex-1 sm:max-w-xs sm:mx-6">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[11px] font-bold text-muted-foreground tracking-wider uppercase">{now.getFullYear()}</span>
+              <span className="text-[11px] font-bold text-primary">{yearProgress}%</span>
+            </div>
+            <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-primary to-purple-400 transition-all duration-700"
+                style={{ width: `${yearProgress}%` }}
+              />
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1 text-right">{daysElapsed} de {totalDaysInYear} días</p>
+          </div>
+
           <Link href="/habits/new">
             <Button className="rounded-xl h-12 px-6 shadow-md shadow-primary/20 hover:shadow-lg hover:-translate-y-0.5 transition-all text-base w-full sm:w-auto">
               <Plus className="w-5 h-5 mr-2" />
@@ -330,23 +359,31 @@ export default function Dashboard() {
           >
             <SortableContext items={orderedIds} strategy={rectSortingStrategy}>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                {orderedHabits.map((habit) => (
-                  <SortableCard
-                    key={habit.id}
-                    habitId={habit.id}
-                    isPrivate={(habit as any).isPrivate ?? false}
-                    isUnlocked={isUnlocked}
-                    onDeleteClick={setConfirmId}
-                    onUnlockRequest={() => setPinModalOpen(true)}
-                  />
-                ))}
+                {orderedHabits.map((habit) => {
+                  const isPrivate = (habit as any).isPrivate ?? false;
+                  const habitNum = privateHabitsMap.get(habit.id) ?? 1;
+                  return (
+                    <SortableCard
+                      key={habit.id}
+                      habitId={habit.id}
+                      isPrivate={isPrivate}
+                      isUnlocked={isHabitUnlocked(habit.id)}
+                      habitNumber={habitNum}
+                      onDeleteClick={setConfirmId}
+                      onUnlockRequest={() => {
+                        setPinTargetId(habit.id);
+                        setPinModalOpen(true);
+                      }}
+                    />
+                  );
+                })}
               </div>
             </SortableContext>
             <DragOverlay>
               {activeId ? (
                 <div className="rotate-2 scale-105 opacity-90 shadow-2xl rounded-3xl">
-                  {(orderedHabits.find(h => h.id === activeId) as any)?.isPrivate && !isUnlocked
-                    ? <LockedCard onUnlock={() => {}} onDelete={() => {}} />
+                  {(orderedHabits.find(h => h.id === activeId) as any)?.isPrivate && !isHabitUnlocked(activeId)
+                    ? <LockedCard onUnlock={() => {}} onDelete={() => {}} habitNumber={privateHabitsMap.get(activeId) ?? 1} />
                     : <HabitCard habitId={activeId} onDeleteClick={() => {}} />
                   }
                 </div>
@@ -360,6 +397,10 @@ export default function Dashboard() {
         open={pinModalOpen}
         onClose={() => setPinModalOpen(false)}
         mode="unlock"
+        onSuccess={() => {
+          if (pinTargetId) unlockHabit(pinTargetId);
+          setPinTargetId(null);
+        }}
       />
 
       <AnimatePresence>

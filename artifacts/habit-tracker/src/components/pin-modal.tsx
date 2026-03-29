@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock, Eye, EyeOff, Mail, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { usePinContext } from "@/contexts/pin-context";
+
 
 const BASE_URL = import.meta.env.BASE_URL ?? "/";
 
@@ -29,8 +29,6 @@ export function PinModal({ open, onClose, mode, onSuccess }: PinModalProps) {
   const [showDigits, setShowDigits] = useState(false);
   const [sentEmail, setSentEmail] = useState("");
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const { unlock } = usePinContext();
-
   useEffect(() => {
     if (open) {
       setScreen("pin");
@@ -144,7 +142,6 @@ export function PinModal({ open, onClose, mode, onSuccess }: PinModalProps) {
       });
       const data = await res.json();
       if (data.valid) {
-        unlock();
         onSuccess?.();
         onClose();
       } else {

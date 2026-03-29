@@ -311,7 +311,7 @@ export default function CreateHabit() {
                               }}
                               className={`text-xs h-8 transition-all ${isEx ? 'bg-slate-500 text-white border-slate-500 hover:bg-slate-600' : 'border-dashed'}`}
                             >
-                              ⊘ Exceptuado
+                              ⊘ Excluido
                             </Button>
                           </div>
                           {isEx && (
