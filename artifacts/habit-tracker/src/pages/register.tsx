@@ -14,6 +14,7 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 
 const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+const BASE_URL = import.meta.env.BASE_URL ?? "/";
 
 const registerSchema = z.object({
   name: z.string().min(2, "Tu nombre debe tener al menos 2 caracteres"),
@@ -74,9 +75,13 @@ export default function Register() {
 
   const handleGoogleRegister = async () => {
     setGoogleLoading(true);
+    const base = BASE_URL.endsWith("/") ? BASE_URL : `${BASE_URL}/`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: {
+        redirectTo: `${window.location.origin}${base}auth/callback`,
+        skipBrowserRedirect: false,
+      },
     });
     if (error) {
       toast({ title: "Error con Google", description: "No se pudo continuar con Google", variant: "destructive" });
