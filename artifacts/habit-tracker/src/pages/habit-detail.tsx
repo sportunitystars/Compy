@@ -421,10 +421,11 @@ export default function HabitDetail() {
                 </div>
                 <button
                   onClick={handleExitSelect}
-                  className="p-1 rounded-lg hover:bg-gray-200 text-muted-foreground transition-colors"
-                  title="Cancelar selección"
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-gray-200 text-muted-foreground transition-colors text-xs font-medium"
+                  aria-label="Cancelar selección"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-3.5 h-3.5" />
+                  Cancelar
                 </button>
               </div>
 
@@ -515,18 +516,17 @@ function MonthBlock({ month, year, habit, onLog, onClear, isSelectMode, selected
             {monthLogs.filter((l: any) => !exemptDaysSet.has(l.date)).length}/{effectiveDays > 0 ? effectiveDays : daysInMonth}
             {exemptCount > 0 && <span className="ml-1 text-slate-400">· {exemptCount} excl.</span>}
           </span>
-          {!monthIsAllFuture && (
-            <button
-              onClick={onToggleSelectMode}
-              className={`text-[11px] font-semibold px-2 py-1 rounded-md transition-colors ${
-                isSelectMode
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-muted-foreground hover:text-primary hover:bg-primary/8'
-              }`}
-            >
-              {isSelectMode ? 'Cancelar' : 'Seleccionar'}
-            </button>
-          )}
+          <button
+            onClick={onToggleSelectMode}
+            disabled={monthIsAllFuture && !isSelectMode}
+            className={`text-[11px] font-semibold px-2 py-1 rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+              isSelectMode
+                ? 'bg-primary/10 text-primary'
+                : 'text-muted-foreground hover:text-primary hover:bg-primary/8'
+            }`}
+          >
+            {isSelectMode ? 'Cancelar' : 'Seleccionar'}
+          </button>
         </div>
       </div>
 
