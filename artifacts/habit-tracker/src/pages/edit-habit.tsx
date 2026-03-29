@@ -144,46 +144,7 @@ export default function EditHabit() {
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-border">
               <h2 className="text-lg font-bold mb-6">Información Básica</h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-8">
-                <FormField
-                  control={form.control}
-                  name="emoji"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Icono</FormLabel>
-                      <FormControl>
-                        <div className="border border-border rounded-2xl overflow-hidden">
-                          <div className="h-48 overflow-y-auto p-2 bg-gray-50">
-                            <div className="grid grid-cols-10 gap-1">
-                              {EMOJI_CATEGORIES.flatMap(cat => cat.emojis).map((em, idx) => (
-                                <button
-                                  key={idx}
-                                  type="button"
-                                  onClick={() => field.onChange(em)}
-                                  className={`text-xl h-9 rounded-lg flex items-center justify-center transition-all ${
-                                    field.value === em
-                                      ? 'bg-white border-2 border-primary shadow-sm scale-110'
-                                      : 'hover:bg-white/70 border-2 border-transparent'
-                                  }`}
-                                >
-                                  {em}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                          <div className="px-3 py-2 bg-white border-t border-border flex items-center gap-2 min-h-[40px]">
-                            {field.value
-                              ? <><span className="text-xl">{field.value}</span><span className="text-xs text-muted-foreground">Seleccionado</span></>
-                              : <span className="text-xs text-muted-foreground">Toca un ícono para seleccionar</span>
-                            }
-                          </div>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
+              <div className="space-y-6">
                 <FormField
                   control={form.control}
                   name="name"
@@ -196,6 +157,45 @@ export default function EditHabit() {
                           className="h-14 text-lg rounded-xl bg-gray-50/50"
                           {...field}
                         />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="emoji"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Icono</FormLabel>
+                      <FormControl>
+                        <div className="border border-border rounded-2xl overflow-hidden">
+                          <div className="h-52 overflow-y-auto p-3 bg-gray-50">
+                            <div className="grid grid-cols-8 gap-2">
+                              {EMOJI_CATEGORIES.flatMap(cat => cat.emojis).map((em, idx) => (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  onClick={() => field.onChange(em)}
+                                  className={`text-2xl h-11 rounded-xl flex items-center justify-center transition-all ${
+                                    field.value === em
+                                      ? 'bg-white border-2 border-primary shadow-sm scale-110'
+                                      : 'hover:bg-white/70 border-2 border-transparent'
+                                  }`}
+                                >
+                                  {em}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="px-3 py-2 bg-white border-t border-border flex items-center gap-2 min-h-[40px]">
+                            {field.value
+                              ? <><span className="text-2xl">{field.value}</span><span className="text-xs text-muted-foreground">Seleccionado</span></>
+                              : <span className="text-xs text-muted-foreground">Toca un ícono para seleccionar</span>
+                            }
+                          </div>
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
