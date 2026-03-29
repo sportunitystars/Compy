@@ -192,7 +192,7 @@ export function HabitCard({ habitId, onDeleteClick }: HabitCardProps) {
   return (
     <div className="relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
 
-      <a href={`/habits/${habit.id}`} className="block px-5 pt-4 pb-4">
+      <a href={`/habits/${habit.id}`} className="block px-5 pt-4 pb-4 pr-8 sm:pr-5 sm:pl-8">
 
         {/* Row 1: emoji + name (with dropdown) + month picker */}
         <div className="flex items-center justify-between gap-2 mb-3">
@@ -215,7 +215,7 @@ export function HabitCard({ habitId, onDeleteClick }: HabitCardProps) {
                   <h3 className="text-[15px] font-bold text-foreground leading-tight truncate group-hover/name:text-primary transition-colors">
                     {habit.name}
                   </h3>
-                  <MoreHorizontal className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0 group-hover/name:text-primary transition-colors" />
+                  <MoreHorizontal className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0 group-hover/name:text-primary transition-colors" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-40" onClick={(e) => e.stopPropagation()}>

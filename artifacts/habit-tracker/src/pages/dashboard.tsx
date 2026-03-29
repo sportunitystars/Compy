@@ -57,7 +57,7 @@ function LockedCard({ onUnlock, onDelete }: { onUnlock: () => void; onDelete: ()
       className="relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 overflow-visible cursor-pointer"
       onClick={onUnlock}
     >
-      <div className="px-5 pt-4 pb-4">
+      <div className="px-5 pt-4 pb-4 pr-8 sm:pr-5 sm:pl-8">
 
         {/* Row 1: lock icon + name + menu — mirrors HabitCard header */}
         <div className="flex items-center justify-between gap-2 mb-3">
@@ -70,7 +70,7 @@ function LockedCard({ onUnlock, onDelete }: { onUnlock: () => void; onDelete: ()
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-            className="p-1 rounded-lg hover:bg-gray-100 text-muted-foreground/40 transition-colors shrink-0"
+            className="p-1 rounded-lg hover:bg-gray-100 text-muted-foreground/60 transition-colors shrink-0"
           >
             <MoreHorizontal className="w-3.5 h-3.5" />
           </button>
@@ -145,11 +145,10 @@ function SortableCard({
   if (isPrivate && !isUnlocked) {
     return (
       <div ref={setNodeRef} style={style} {...attributes} className="relative">
-        {/* drag handle */}
         <button
           type="button"
           {...listeners}
-          className="touch-none absolute top-2 right-8 z-10 p-1 text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing"
+          className="touch-none absolute top-2 right-2 sm:right-auto sm:left-2 z-10 p-1 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing"
           aria-label="Arrastrar"
         >
           <GripVertical className="w-4 h-4" />
@@ -164,11 +163,10 @@ function SortableCard({
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} className="relative">
-      {/* drag handle — esquina superior izquierda, no bloquea scroll */}
       <button
         type="button"
         {...listeners}
-        className="touch-none absolute top-2 left-2 z-10 p-1 text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing"
+        className="touch-none absolute top-2 right-2 sm:right-auto sm:left-2 z-10 p-1 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing"
         aria-label="Arrastrar"
       >
         <GripVertical className="w-4 h-4" />

@@ -64,6 +64,7 @@ export default function CreateHabit() {
     if (!isPrivate) {
       const hasPinAlready = await checkPinStatus();
       if (!hasPinAlready) {
+        setIsPrivate(true);
         setPinModalMode("set");
         return;
       }
@@ -108,7 +109,7 @@ export default function CreateHabit() {
       {
         onSuccess: (data) => {
           queryClient.invalidateQueries({ queryKey: getListHabitsQueryKey() });
-          toast({ title: "Hábito creado exitosamente" });
+          toast({ title: "Hábito creado exitosamente", duration: 2000 });
           setLocation(`/habits/${data.id}`);
         },
         onError: () => {
@@ -263,7 +264,7 @@ export default function CreateHabit() {
                       )}
                     />
 
-                    <div className="flex flex-row sm:flex-col gap-2 pt-1 sm:pt-6">
+                    <div className="flex flex-wrap sm:flex-col gap-1.5 pt-1 sm:pt-6">
                       <Button
                         type="button"
                         variant={form.watch(`options.${index}.isPositive`) ? "default" : "outline"}
@@ -372,7 +373,7 @@ export default function CreateHabit() {
       {pinModalMode && (
         <PinModal
           open={true}
-          onClose={() => setPinModalMode(null)}
+          onClose={() => { setPinModalMode(null); setIsPrivate(false); }}
           mode={pinModalMode}
           onSuccess={() => { setPinModalMode(null); setIsPrivate(true); }}
         />
