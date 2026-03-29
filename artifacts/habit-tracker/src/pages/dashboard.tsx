@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
@@ -6,11 +6,82 @@ import { es } from "date-fns/locale";
 import { Plus, CheckCircle2, ShieldCheck, LogOut, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+} from "@dnd-kit/core";
+import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  rectSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
 import { useListHabits, useDeleteHabit } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { HabitCard } from "@/components/habit-card";
 import { PushToggle } from "@/components/push-toggle";
+
+const ORDER_STORAGE_KEY = "compy_habit_order";
+
+function loadOrder(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem(ORDER_STORAGE_KEY) ?? "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveOrder(ids: string[]) {
+  localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(ids));
+}
+
+function applyOrder(habits: { id: string }[], order: string[]): { id: string }[] {
+  if (!order.length) return habits;
+  const map = new Map(habits.map(h => [h.id, h]));
+  const sorted = order.filter(id => map.has(id)).map(id => map.get(id)!);
+  const rest = habits.filter(h => !order.includes(h.id));
+  return [...sorted, ...rest];
+}
+
+function SortableCard({
+  habitId,
+  onDeleteClick,
+  isDraggingOver,
+}: {
+  habitId: string;
+  onDeleteClick: (id: string) => void;
+  isDraggingOver: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: habitId });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0 : 1,
+    zIndex: isDragging ? 10 : undefined,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes}>
+      <div
+        {...listeners}
+        className="touch-none cursor-grab active:cursor-grabbing"
+      >
+        <HabitCard habitId={habitId} onDeleteClick={onDeleteClick} />
+      </div>
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -18,6 +89,38 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
   const deleteHabit = useDeleteHabit();
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [orderedIds, setOrderedIds] = useState<string[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (habits) {
+      const saved = loadOrder();
+      const ordered = applyOrder(habits, saved);
+      setOrderedIds(ordered.map(h => h.id));
+    }
+  }, [habits]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } })
+  );
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  }, []);
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+    if (!over || active.id === over.id) return;
+    setOrderedIds(prev => {
+      const oldIdx = prev.indexOf(active.id as string);
+      const newIdx = prev.indexOf(over.id as string);
+      const next = arrayMove(prev, oldIdx, newIdx);
+      saveOrder(next);
+      return next;
+    });
+  }, []);
 
   async function handleDelete(id: string) {
     await deleteHabit.mutateAsync({ habitId: id });
@@ -33,6 +136,8 @@ export default function Dashboard() {
       </div>
     );
   }
+
+  const orderedHabits = habits ? applyOrder(habits, orderedIds) : [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -101,21 +206,33 @@ export default function Dashboard() {
             </Link>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {habits.map((habit, i) => (
-              <motion.div
-                key={habit.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-              >
-                <HabitCard
-                  habitId={habit.id}
-                  onDeleteClick={setConfirmId}
-                />
-              </motion.div>
-            ))}
-          </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext items={orderedIds} strategy={rectSortingStrategy}>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {orderedHabits.map((habit) => (
+                  <SortableCard
+                    key={habit.id}
+                    habitId={habit.id}
+                    onDeleteClick={setConfirmId}
+                    isDraggingOver={activeId !== null && activeId !== habit.id}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+
+            <DragOverlay>
+              {activeId ? (
+                <div className="rotate-2 scale-105 opacity-90 shadow-2xl rounded-3xl">
+                  <HabitCard habitId={activeId} onDeleteClick={() => {}} />
+                </div>
+              ) : null}
+            </DragOverlay>
+          </DndContext>
         )}
       </main>
 
