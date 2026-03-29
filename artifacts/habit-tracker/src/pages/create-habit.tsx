@@ -199,7 +199,7 @@ export default function CreateHabit() {
                         <FormItem>
                           <FormLabel className="text-xs text-muted-foreground uppercase tracking-wider">Color</FormLabel>
                           <FormControl>
-                            <div className="flex flex-wrap gap-2 w-full sm:w-[240px]">
+                            <div className="flex flex-wrap gap-2 w-full">
                               {PALETTE.map(c => (
                                 <button
                                   key={c}

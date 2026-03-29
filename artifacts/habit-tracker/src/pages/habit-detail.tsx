@@ -202,15 +202,15 @@ export default function HabitDetail() {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <header className="bg-white sticky top-0 z-20 border-b border-border/50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Link href="/">
-            <Button variant="ghost" size="sm" className="mb-4 -ml-2 text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="w-4 h-4 mr-2" /> Volver
-            </Button>
-          </Link>
-          
-          <div className="flex items-center gap-4">
-            <div className="text-4xl">{habit.emoji}</div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <Link href="/">
+              <Button variant="ghost" size="sm" className="-ml-2 text-muted-foreground hover:text-foreground shrink-0">
+                <ArrowLeft className="w-4 h-4 sm:mr-1" />
+                <span className="hidden sm:inline">Volver</span>
+              </Button>
+            </Link>
+            <div className="text-2xl sm:text-4xl shrink-0">{habit.emoji}</div>
             {isEditingName ? (
               <Input 
                 autoFocus
@@ -218,15 +218,15 @@ export default function HabitDetail() {
                 onChange={e => setEditName(e.target.value)}
                 onBlur={handleUpdateName}
                 onKeyDown={e => e.key === 'Enter' && handleUpdateName()}
-                className="text-2xl font-bold font-display h-auto py-1 max-w-sm"
+                className="text-lg sm:text-2xl font-bold font-display h-auto py-1 min-w-0"
               />
             ) : (
-              <h1 className="text-2xl sm:text-3xl font-display font-bold flex items-center gap-2 group cursor-pointer" onClick={() => {
+              <h1 className="text-xl sm:text-3xl font-display font-bold flex items-center gap-2 group cursor-pointer min-w-0 truncate" onClick={() => {
                 setEditName(habit.name);
                 setIsEditingName(true);
               }}>
-                {habit.name}
-                <Edit2 className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                <span className="truncate">{habit.name}</span>
+                <Edit2 className="w-3.5 h-3.5 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
               </h1>
             )}
           </div>
@@ -259,7 +259,7 @@ export default function HabitDetail() {
                 <div className="p-5 space-y-5">
                   {/* YEAR STATS */}
                   <div>
-                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-3">
+                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-3 leading-relaxed">
                       Año {currentYear} · {totalYearDays} días transcurridos · {Math.round((totalYearDays / 365) * 100)}% del año
                     </p>
                     <div className="space-y-4">
@@ -383,9 +383,9 @@ function MonthBlock({ month, year, habit, onLog, onClear }: { month: number, yea
   const effectiveDays = lastDayToCount - exemptCount;
 
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-border flex flex-col">
+    <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-border flex flex-col">
       <div className="flex justify-between items-baseline mb-3">
-        <h3 className="font-bold text-lg capitalize">{format(date, 'MMMM', { locale: es })}</h3>
+        <h3 className="font-bold text-base sm:text-lg capitalize">{format(date, 'MMMM', { locale: es })}</h3>
         <span className="text-xs font-semibold text-muted-foreground bg-gray-100 px-2 py-1 rounded-md">
           {monthLogs.filter((l: any) => !exemptDaysSet.has(l.date)).length}/{effectiveDays > 0 ? effectiveDays : daysInMonth}
           {exemptCount > 0 && <span className="ml-1 text-slate-400">· {exemptCount} exc.</span>}
@@ -449,7 +449,7 @@ function MonthBlock({ month, year, habit, onLog, onClear }: { month: number, yea
                   }
                 }
               }}
-              className="aspect-square rounded-md flex flex-col items-center justify-center text-xs font-medium transition-all hover:scale-110 active:scale-90 shadow-sm"
+              className="aspect-square min-h-[2rem] rounded-md flex flex-col items-center justify-center text-xs font-medium transition-all hover:scale-110 active:scale-90 shadow-sm"
               style={isExemptDay ? {
                 backgroundColor: `${opt!.color}18`,
                 color: opt!.color,

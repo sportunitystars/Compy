@@ -60,8 +60,8 @@ export default function Dashboard() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-display font-bold text-foreground">Tu progreso</h1>
-            <p className="text-muted-foreground mt-1 text-lg">
+            <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground">Tu progreso</h1>
+            <p className="text-muted-foreground mt-1 text-base sm:text-lg">
               {(() => {
                 const raw = format(new Date(), "EEE, d 'de' MMMM", { locale: es });
                 return raw
