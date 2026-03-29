@@ -109,18 +109,20 @@ export async function sendPinResetEmail(userEmail: string, userName: string, cod
     await transporter.sendMail({
       from: FROM,
       to: userEmail,
-      subject: `${APP_NAME} — Código para restablecer tu PIN`,
+      subject: `${APP_NAME} — Tu PIN temporal`,
       html: `
         <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:40px 20px;">
           <h2 style="color:#111;">Hola${userName ? `, ${userName}` : ""}</h2>
           <p style="color:#444;line-height:1.7;">
-            Recibimos una solicitud para restablecer tu PIN de <strong>${APP_NAME}</strong>.
-            Usa el siguiente código (válido por 15 minutos):
+            Tu PIN anterior fue reemplazado. Usa este PIN temporal para desbloquear tus hábitos privados en <strong>${APP_NAME}</strong>:
           </p>
           <div style="text-align:center;margin:32px 0;">
-            <span style="font-size:36px;font-weight:bold;letter-spacing:12px;color:#4f46e5;background:#f0f0ff;padding:16px 24px;border-radius:12px;">${code}</span>
+            <span style="font-size:48px;font-weight:bold;letter-spacing:16px;color:#4f46e5;background:#f0f0ff;padding:20px 32px;border-radius:16px;">${code}</span>
           </div>
-          <p style="color:#888;font-size:13px;">Si no solicitaste este cambio, ignora este correo. Tu PIN actual permanece sin cambios.</p>
+          <p style="color:#444;line-height:1.7;">
+            Una vez dentro, puedes cambiarlo por uno que recuerdes mejor desde la configuración del hábito.
+          </p>
+          <p style="color:#888;font-size:13px;margin-top:16px;">Si no solicitaste este cambio, contacta al administrador.</p>
         </div>
       `,
     });

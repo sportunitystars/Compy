@@ -81,88 +81,30 @@ router.get("/pin/status", requireActive, async (req, res): Promise<void> => {
   }
 });
 
-// ── Forgot PIN — send reset code via email ────────────────────────────────────
+// ── Forgot PIN — generate temp 4-digit PIN and email it directly ──────────────
 router.post("/pin/forgot", requireActive, async (req, res): Promise<void> => {
   const user = req.user!;
 
   try {
-    // Generate 6-digit code
-    const code = String(randomInt(100000, 999999));
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    // Generate a random 4-digit PIN (1000–9999)
+    const tempPin = String(randomInt(1000, 9999));
 
-    // Store code (invalidate old ones)
-    await pool.query(
-      `DELETE FROM pin_reset_codes WHERE supabase_user_id = $1`,
-      [user.id]
-    );
-    await pool.query(
-      `INSERT INTO pin_reset_codes (supabase_user_id, code, expires_at)
-       VALUES ($1, $2, $3)`,
-      [user.id, code, expiresAt]
-    );
-
-    // Send email
-    await sendPinResetEmail(user.email, user.name, code);
-
-    res.json({ ok: true, email: user.email });
-  } catch (err) {
-    req.log.error({ err }, "Failed to send PIN reset code");
-    res.status(500).json({ error: "Error al enviar el código" });
-  }
-});
-
-// ── Reset PIN with code ───────────────────────────────────────────────────────
-router.post("/pin/reset-with-code", requireActive, async (req, res): Promise<void> => {
-  const { code, newPin } = req.body;
-
-  if (!code || !/^\d{6}$/.test(String(code))) {
-    res.status(400).json({ error: "Código inválido" });
-    return;
-  }
-  if (!newPin || !/^\d{4}$/.test(String(newPin))) {
-    res.status(400).json({ error: "El nuevo PIN debe ser de 4 dígitos" });
-    return;
-  }
-
-  const userId = req.user!.id;
-
-  try {
-    const result = await pool.query(
-      `SELECT id, expires_at, used FROM pin_reset_codes
-       WHERE supabase_user_id = $1 AND code = $2
-       ORDER BY created_at DESC LIMIT 1`,
-      [userId, String(code)]
-    );
-
-    if (!result.rows.length) {
-      res.status(400).json({ error: "Código incorrecto" });
-      return;
-    }
-
-    const row = result.rows[0];
-    if (row.used) {
-      res.status(400).json({ error: "Este código ya fue utilizado" });
-      return;
-    }
-    if (new Date(row.expires_at) < new Date()) {
-      res.status(400).json({ error: "El código expiró. Solicita uno nuevo." });
-      return;
-    }
-
-    // Mark code as used and set new PIN
-    await pool.query(`UPDATE pin_reset_codes SET used = true WHERE id = $1`, [row.id]);
-    const pinHash = hashPin(String(newPin));
+    // Set it immediately as the user's current PIN
+    const pinHash = hashPin(tempPin);
     await pool.query(
       `INSERT INTO user_pins (supabase_user_id, pin_hash)
        VALUES ($1, $2)
        ON CONFLICT (supabase_user_id) DO UPDATE SET pin_hash = $2`,
-      [userId, pinHash]
+      [user.id, pinHash]
     );
 
-    res.json({ ok: true });
+    // Email the 4-digit PIN to the user
+    await sendPinResetEmail(user.email, user.name, tempPin);
+
+    res.json({ ok: true, email: user.email });
   } catch (err) {
-    req.log.error({ err }, "Failed to reset PIN with code");
-    res.status(500).json({ error: "Error al restablecer el PIN" });
+    req.log.error({ err }, "Failed to send temporary PIN");
+    res.status(500).json({ error: "Error al enviar el PIN temporal" });
   }
 });
 
