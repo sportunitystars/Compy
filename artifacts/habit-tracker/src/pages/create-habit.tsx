@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { useForm, useFieldArray } from "react-hook-form";
@@ -16,19 +17,13 @@ const PALETTE = [
   "#ec4899", "#14b8a6", "#f97316", "#6b7280", "#1e293b"
 ];
 
-const EMOJIS = [
-  // Salud y cuerpo
-  "💧", "🏃‍♂️", "🏋️‍♂️", "🧘‍♀️", "🚴‍♂️", "🤸‍♀️", "🏊‍♂️", "🚶‍♂️", "💊", "🩺", "🦷", "😴", "💤", "🛌", "❤️", "🫁",
-  // Alimentación
-  "🍎", "🥗", "🥦", "🍳", "🥤", "☕", "🍵", "🫖", "🚭", "🍺", "🍬", "🥩", "🫐", "🥑", "🍋", "🫚",
-  // Mente y bienestar
-  "🧠", "📓", "📖", "✍️", "🎯", "🙏", "🌅", "🌞", "🌙", "⭐", "🔥", "✅", "🎉", "💡", "🧩", "🪷",
-  // Dinero y trabajo
-  "💸", "💰", "📊", "💻", "📱", "⏰", "📅", "📋", "🗒️", "📧", "🔑", "🏆", "🎓", "📚", "🖊️", "🗂️",
-  // Arte y creatividad
-  "🎨", "🎸", "🎹", "🎵", "🎬", "📷", "✂️", "🧶", "🪡", "🎭", "🖼️", "🎲", "🃏", "🎮", "🧸", "🌿",
-  // Hogar y relaciones
-  "🏠", "🌱", "🐕", "🐈", "👨‍👩‍👧", "💬", "🤝", "📞", "💌", "🧹", "🛁", "🌳", "🌻", "🫂", "❄️", "☀️",
+const EMOJI_CATEGORIES = [
+  { label: "Salud", icon: "💪", emojis: ["💧", "🏃‍♂️", "🏋️‍♂️", "🧘‍♀️", "🚴‍♂️", "🤸‍♀️", "🏊‍♂️", "🚶‍♂️", "💊", "🩺", "🦷", "😴", "💤", "🛌", "❤️", "🫁"] },
+  { label: "Comida", icon: "🍽️", emojis: ["🍎", "🥗", "🥦", "🍳", "🥤", "☕", "🍵", "🫖", "🚭", "🍺", "🍬", "🥩", "🫐", "🥑", "🍋", "🫚"] },
+  { label: "Mente", icon: "🧠", emojis: ["🧠", "📓", "📖", "✍️", "🎯", "🙏", "🌅", "🌞", "🌙", "⭐", "🔥", "✅", "🎉", "💡", "🧩", "🪷"] },
+  { label: "Trabajo", icon: "💼", emojis: ["💸", "💰", "📊", "💻", "📱", "⏰", "📅", "📋", "🗒️", "📧", "🔑", "🏆", "🎓", "📚", "🖊️", "🗂️"] },
+  { label: "Arte", icon: "🎨", emojis: ["🎨", "🎸", "🎹", "🎵", "🎬", "📷", "✂️", "🧶", "🪡", "🎭", "🖼️", "🎲", "🃏", "🎮", "🧸", "🌿"] },
+  { label: "Hogar", icon: "🏠", emojis: ["🏠", "🌱", "🐕", "🐈", "👨‍👩‍👧", "💬", "🤝", "📞", "💌", "🧹", "🛁", "🌳", "🌻", "🫂", "❄️", "☀️"] },
 ];
 
 const createHabitSchema = z.object({
@@ -66,6 +61,8 @@ export default function CreateHabit() {
     control: form.control,
     name: "options"
   });
+
+  const [emojiCategory, setEmojiCategory] = useState(0);
 
   const onSubmit = (values: FormValues) => {
     // Validate only one positive, one negative
@@ -127,21 +124,39 @@ export default function CreateHabit() {
                     <FormItem>
                       <FormLabel>Icono</FormLabel>
                       <FormControl>
-                        <div className="grid grid-cols-4 gap-2">
-                          {EMOJIS.map(em => (
-                            <button
-                              key={em}
-                              type="button"
-                              onClick={() => field.onChange(em)}
-                              className={`text-2xl h-12 rounded-xl flex items-center justify-center transition-all ${
-                                field.value === em 
-                                  ? 'bg-primary/10 border-2 border-primary scale-110' 
-                                  : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100 hover:scale-105'
-                              }`}
-                            >
-                              {em}
-                            </button>
-                          ))}
+                        <div>
+                          <div className="flex gap-1.5 flex-wrap mb-3">
+                            {EMOJI_CATEGORIES.map((cat, i) => (
+                              <button
+                                key={cat.label}
+                                type="button"
+                                onClick={() => setEmojiCategory(i)}
+                                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                                  emojiCategory === i
+                                    ? 'bg-primary text-white shadow-sm'
+                                    : 'bg-gray-100 text-muted-foreground hover:bg-gray-200'
+                                }`}
+                              >
+                                <span>{cat.icon}</span> {cat.label}
+                              </button>
+                            ))}
+                          </div>
+                          <div className="grid grid-cols-8 gap-1.5">
+                            {EMOJI_CATEGORIES[emojiCategory].emojis.map(em => (
+                              <button
+                                key={em}
+                                type="button"
+                                onClick={() => field.onChange(em)}
+                                className={`text-xl h-10 rounded-xl flex items-center justify-center transition-all ${
+                                  field.value === em
+                                    ? 'bg-primary/10 border-2 border-primary scale-110'
+                                    : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100 hover:scale-105'
+                                }`}
+                              >
+                                {em}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       </FormControl>
                       <FormMessage />
