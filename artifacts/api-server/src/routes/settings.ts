@@ -56,8 +56,12 @@ router.get("/settings/stream", async (req, res): Promise<void> => {
   });
 });
 
-// ── Public REST endpoint (fallback / initial load) — no auth required ────────
+// ── Public REST endpoint — no auth required, no caching ─────────────────────
 router.get("/settings/public", async (req, res): Promise<void> => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.set("Pragma", "no-cache");
+  res.set("Expires", "0");
+  res.set("Surrogate-Control", "no-store");
   try {
     const result = await pool.query(
       `SELECT value FROM app_settings WHERE key = 'free_slots_used'`
