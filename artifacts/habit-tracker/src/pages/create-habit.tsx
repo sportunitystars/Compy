@@ -233,7 +233,7 @@ export default function CreateHabit() {
                         <FormItem className="flex-1">
                           <FormLabel className="text-xs text-muted-foreground uppercase tracking-wider">Etiqueta</FormLabel>
                           <FormControl>
-                            <Input className="h-11 bg-white" {...inputField} />
+                            <Input className="h-11 bg-white w-full" {...inputField} />
                           </FormControl>
                         </FormItem>
                       )}
@@ -284,7 +284,7 @@ export default function CreateHabit() {
                               className="text-xs h-8 border-2 transition-all"
                               style={isPos ? { backgroundColor: currentColor, borderColor: currentColor, color: "#fff" } : undefined}
                             >
-                              ✅ Se cumplió
+                              Se cumplió
                             </Button>
                             <Button
                               type="button"
@@ -298,7 +298,7 @@ export default function CreateHabit() {
                               className="text-xs h-8 border-2 transition-all"
                               style={isNeg ? { backgroundColor: currentColor, borderColor: currentColor, color: "#fff" } : undefined}
                             >
-                              ❌ No se cumplió
+                              No se cumplió
                             </Button>
                             <Button
                               type="button"
