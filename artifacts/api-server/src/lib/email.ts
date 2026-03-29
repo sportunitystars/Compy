@@ -8,6 +8,11 @@ const APP_NAME = "Compy";
 const APP_URL = process.env.APP_URL || "https://compy.replit.app";
 const FROM = `${APP_NAME} <${GMAIL_USER}>`;
 
+function logoBlock() {
+  return `<img src="${APP_URL}/logo-email.png" width="80" height="80" alt="Compy"
+    style="border-radius:20px;display:block;margin:0 auto 16px;border:0;outline:none;" />`;
+}
+
 function getTransporter() {
   if (!GMAIL_USER || !GMAIL_PASS) {
     logger.warn("GMAIL_USER or GMAIL_APP_PASSWORD not set — emails will be skipped");
@@ -75,12 +80,7 @@ export async function sendPendingEmail(userEmail: string, userName: string, pass
       html: `
         <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:40px 20px;">
           <div style="text-align:center;margin-bottom:28px;">
-            <div style="width:64px;height:64px;background:#4f46e5;border-radius:20px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;">
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="12" cy="12" r="9" stroke="white" stroke-width="2"/>
-                <path d="M8 12l3 3 5-5" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
+            ${logoBlock()}
             <h2 style="color:#111;margin:0;">Hola${userName ? `, ${userName}` : ""} — estás en la lista.</h2>
           </div>
 
@@ -141,7 +141,10 @@ export async function sendPinResetEmail(userEmail: string, userName: string, cod
       subject: `${APP_NAME} — Tu PIN temporal`,
       html: `
         <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:40px 20px;">
-          <h2 style="color:#111;">Hola${userName ? `, ${userName}` : ""}</h2>
+          <div style="text-align:center;margin-bottom:28px;">
+            ${logoBlock()}
+            <h2 style="color:#111;margin:0;">Hola${userName ? `, ${userName}` : ""}</h2>
+          </div>
           <p style="color:#444;line-height:1.7;">
             Tu PIN anterior fue reemplazado. Usa este PIN temporal para desbloquear tus hábitos privados en <strong>${APP_NAME}</strong>:
           </p>
@@ -172,7 +175,10 @@ export async function sendApprovalEmail(userEmail: string, userName: string): Pr
       subject: `${APP_NAME} — Ya tienes acceso`,
       html: `
         <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:40px 20px;">
-          <h2 style="color:#111;">Hola${userName ? `, ${userName}` : ""} — ya puedes entrar.</h2>
+          <div style="text-align:center;margin-bottom:28px;">
+            ${logoBlock()}
+            <h2 style="color:#111;margin:0;">Hola${userName ? `, ${userName}` : ""} — ya puedes entrar.</h2>
+          </div>
           <p style="color:#444;line-height:1.7;">
             Tu solicitud ha sido aprobada. Haz clic en el botón para acceder a <strong>${APP_NAME}</strong>:
           </p>
