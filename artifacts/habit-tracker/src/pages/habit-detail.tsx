@@ -262,22 +262,22 @@ export default function HabitDetail() {
                     <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-3">
                       Año {currentYear} · {totalYearDays} días transcurridos · {Math.round((totalYearDays / 365) * 100)}% del año
                     </p>
-                    <div className="space-y-2">
+                    <div className="space-y-4">
                       {habit.options.map((opt: any, idx: number) => {
                         if (opt.isExempt) return null;
                         const stat = streaks[idx];
                         const pct = Math.round((stat.totalCount / totalYearDays) * 100);
                         const streakLabel = opt.isNegative ? 'peor racha' : 'mejor racha';
                         return (
-                          <div key={idx} className="rounded-xl px-4 py-3" style={{ backgroundColor: `${opt.color}0d`, borderLeft: `3px solid ${opt.color}` }}>
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm font-semibold text-foreground">{opt.label}</span>
-                              <span className="text-sm font-bold" style={{ color: opt.color }}>{pct}%</span>
+                          <div key={idx}>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-xs font-medium text-foreground">{opt.label}</span>
+                              <span className="text-xs font-semibold" style={{ color: opt.color }}>{pct}%</span>
                             </div>
-                            <div className="h-2 rounded-full bg-black/5 overflow-hidden mb-1.5">
+                            <div className="h-1 rounded-full bg-black/6 overflow-hidden mb-1">
                               <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: opt.color }} />
                             </div>
-                            <p className="text-[11px] text-muted-foreground">
+                            <p className="text-[10px] text-muted-foreground">
                               {stat.totalCount} de {totalYearDays} días
                               {stat.maxStreak >= 2 && <span> · {streakLabel}: {stat.maxStreak}d</span>}
                             </p>
