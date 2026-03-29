@@ -192,9 +192,9 @@ export default function Landing() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="relative bg-white rounded-3xl p-7 border border-gray-100 shadow-sm flex flex-col items-center text-center md:items-start md:text-left"
+                className="relative bg-white rounded-3xl p-7 pt-10 md:pt-7 border border-gray-100 shadow-sm flex flex-col items-center text-center md:items-start md:text-left"
               >
-                <span className="absolute -top-3 -left-3 w-9 h-9 bg-primary text-white text-sm font-black rounded-xl flex items-center justify-center shadow-md">
+                <span className="absolute -top-4 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:-top-3 md:-left-3 w-9 h-9 bg-primary text-white text-sm font-black rounded-xl flex items-center justify-center shadow-md">
                   {step.num}
                 </span>
                 <span className="text-4xl mb-4 block">{step.emoji}</span>
