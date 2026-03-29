@@ -27,3 +27,10 @@ timeoutMs = 20000
 
 [nix]
 channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+VAPID_PUBLIC_KEY = "BJc1yXjzLWBsYtZCloCkxfcED3QYlfnhM3G9KF4RdyhJsmhpTbELTL-XI7rqSi-ccxnPJY5QAu4vvtqVm_yRqG4"
+VAPID_PRIVATE_KEY = "SVH-7oIqMzJgAIEvvajhe3TlHrSG5rplO-uI4SMWnI0"
+VAPID_SUBJECT = "mailto:admin@compy.app"

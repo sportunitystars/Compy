@@ -10,6 +10,7 @@ import { useListHabits, useDeleteHabit } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { HabitCard } from "@/components/habit-card";
+import { PushToggle } from "@/components/push-toggle";
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -41,15 +42,16 @@ export default function Dashboard() {
             <CheckCircle2 className="w-6 h-6 text-primary" />
             <span className="font-display font-bold text-xl tracking-tight">Mis Hábitos</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             {user?.role === "admin" && (
-              <Link href="/admin" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+              <Link href="/admin" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 hidden sm:flex">
                 <ShieldCheck className="w-4 h-4" /> Panel Admin
               </Link>
             )}
             <span className="text-sm font-medium text-foreground hidden sm:block">
               Hola, {user?.name.split(" ")[0]}
             </span>
+            <PushToggle />
             <Button variant="ghost" size="icon" onClick={logout} title="Cerrar Sesión" className="text-muted-foreground hover:text-red-500 rounded-full">
               <LogOut className="w-5 h-5" />
             </Button>

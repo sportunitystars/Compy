@@ -1,6 +1,8 @@
 import { Router, type IRouter } from "express";
 import { supabaseAdmin } from "../lib/supabase";
 import { requireActive } from "../lib/auth";
+import { sendPush } from "../lib/webpush";
+import { format } from "date-fns";
 
 const router: IRouter = Router();
 
@@ -151,6 +153,80 @@ router.put("/habits/:habitId/logs/:date", requireActive, async (req, res): Promi
   }
 
   res.json(formatLog(data));
+
+  // ── Check for negative streak and send push notification (async, don't await) ─
+  (async () => {
+    try {
+      const { data: habit } = await supabaseAdmin
+        .from("habits").select("options").eq("id", habitId).single();
+      if (!habit) return;
+
+      const options: any[] = habit.options ?? [];
+      const opt = options[optionIndex];
+      if (!opt?.isNegative) return;
+
+      // Fetch all logs for this habit this year to calculate streak
+      const currentYear = new Date().getFullYear();
+      const { data: allLogs } = await supabaseAdmin
+        .from("habit_logs")
+        .select("date, value")
+        .eq("habit_id", habitId)
+        .gte("date", `${currentYear}-01-01`);
+
+      const logsByDate = new Map<string, number>();
+      for (const l of (allLogs ?? [])) logsByDate.set(l.date, parseInt(l.value, 10));
+
+      const exemptIdx = options.findIndex((o: any) => o.isExempt);
+      let streak = 0;
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      let checkDate = new Date(today);
+
+      for (let guard = 0; guard < 400; guard++) {
+        const ds = format(checkDate, "yyyy-MM-dd");
+        const logged = logsByDate.get(ds);
+        if (logged === exemptIdx && exemptIdx >= 0) {
+          checkDate.setDate(checkDate.getDate() - 1);
+          continue;
+        }
+        if (logged === optionIndex) {
+          streak++;
+          checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+
+      if (streak < 5) return;
+
+      // Fetch all user subscriptions
+      const { data: subs } = await supabaseAdmin
+        .from("push_subscriptions")
+        .select("*")
+        .eq("user_id", req.user!.id);
+
+      if (!subs || subs.length === 0) return;
+
+      const label = opt.label ?? "No";
+      const body = streak < 10
+        ? `Llevas ${streak} días seguidos marcando "${label}". ¿Puedes cambiar hoy?`
+        : `${streak} días de racha en "${label}". Un pequeño paso hoy puede romper este patrón.`;
+
+      for (const sub of subs) {
+        try {
+          await sendPush(
+            { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth_key },
+            { title: "Compy · Racha a revisar", body, tag: `streak-${habitId}` }
+          );
+        } catch (pushErr: any) {
+          if (pushErr?.statusCode === 410) {
+            await supabaseAdmin.from("push_subscriptions").delete().eq("id", sub.id);
+          }
+        }
+      }
+    } catch (err) {
+      req.log.error({ err }, "Push notification error after log upsert");
+    }
+  })();
 });
 
 // ── Delete log ────────────────────────────────────────────────────────────────
