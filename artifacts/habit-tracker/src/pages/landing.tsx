@@ -15,7 +15,7 @@ function getApiUrl(path: string) {
 const TOTAL_SLOTS = 100;
 
 async function fetchPublicSettings(): Promise<{ freeSlotsUsed: number }> {
-  const res = await fetch(getApiUrl("/settings/public"));
+  const res = await fetch(getApiUrl(`/settings/public?_=${Date.now()}`));
   if (!res.ok) return { freeSlotsUsed: 0 };
   return res.json();
 }

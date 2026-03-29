@@ -36,12 +36,12 @@ export default function AdminDashboard() {
   const { data: settingsData } = useQuery({
     queryKey: ["public-settings"],
     queryFn: async () => {
-      const res = await fetch(getApiUrl("/settings/public"));
+      const res = await fetch(getApiUrl(`/settings/public?_=${Date.now()}`));
       if (!res.ok) return { freeSlotsUsed: 0 };
       return res.json() as Promise<{ freeSlotsUsed: number }>;
     },
-    refetchInterval: 30_000,
-    staleTime: 15_000,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const slotsUsed = settingsData?.freeSlotsUsed ?? 0;

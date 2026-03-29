@@ -5,6 +5,7 @@ import router from "./routes";
 import { logger } from "./lib/logger";
 
 const app: Express = express();
+app.disable("etag"); // Prevent 304 Not Modified on API responses
 
 app.use(
   pinoHttp({
