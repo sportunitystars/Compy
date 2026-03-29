@@ -57,24 +57,26 @@ function LockedCard({ onUnlock, onDelete }: { onUnlock: () => void; onDelete: ()
       className="relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 overflow-visible cursor-pointer"
       onClick={onUnlock}
     >
-      <div className="px-5 py-5">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Lock className="w-4.5 h-4.5 text-primary" />
-            </div>
-            <span className="text-sm font-semibold text-muted-foreground">Hábito privado</span>
+      <div className="px-5 pt-4 pb-4">
+
+        {/* Row 1: lock icon + name + menu — mirrors HabitCard header */}
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="text-2xl leading-none shrink-0">🔒</span>
+            <span className="text-[15px] font-bold text-foreground leading-tight truncate">
+              Hábito privado
+            </span>
           </div>
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-            className="p-1.5 rounded-lg hover:bg-gray-100 text-muted-foreground transition-colors"
+            className="p-1 rounded-lg hover:bg-gray-100 text-muted-foreground/40 transition-colors shrink-0"
           >
-            <MoreHorizontal className="w-4 h-4" />
+            <MoreHorizontal className="w-3.5 h-3.5" />
           </button>
           {showMenu && (
             <div
-              className="absolute right-2 top-12 bg-white border border-border rounded-xl shadow-lg z-20 py-1 w-40"
+              className="absolute right-2 top-10 bg-white border border-border rounded-xl shadow-lg z-20 py-1 w-40"
               onClick={(e) => e.stopPropagation()}
             >
               <button
@@ -82,7 +84,7 @@ function LockedCard({ onUnlock, onDelete }: { onUnlock: () => void; onDelete: ()
                 onClick={() => { setShowMenu(false); onUnlock(); }}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 text-foreground"
               >
-                <Lock className="w-4 h-4" /> Desbloquear
+                <Unlock className="w-4 h-4" /> Desbloquear
               </button>
               <div className="border-t border-border my-1" />
               <button
@@ -96,14 +98,22 @@ function LockedCard({ onUnlock, onDelete }: { onUnlock: () => void; onDelete: ()
           )}
         </div>
 
-        <div className="flex flex-col items-center justify-center py-8 gap-3">
-          <div className="w-16 h-16 rounded-2xl bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center">
-            <Lock className="w-7 h-7 text-gray-300" />
-          </div>
-          <div className="text-center">
-            <p className="text-sm font-medium text-gray-400">Bloqueado</p>
-            <p className="text-xs text-gray-300 mt-0.5">Toca para ingresar PIN</p>
-          </div>
+        {/* Row 2: blurred placeholder badges — mirrors the options badges row */}
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {["██████", "████████"].map((_, i) => (
+            <span
+              key={i}
+              className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-100 select-none"
+            >
+              ██████
+            </span>
+          ))}
+        </div>
+
+        {/* Row 3: footer — mirrors streak / calendar row */}
+        <div className="flex items-center justify-between pt-0.5">
+          <span className="text-xs font-semibold text-gray-200 select-none">████████</span>
+          <span className="text-xs text-gray-200 select-none">———</span>
         </div>
       </div>
     </div>
