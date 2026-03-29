@@ -1,14 +1,14 @@
 import { Link } from "wouter";
 import { format } from "date-fns";
 import { ShieldCheck, ArrowLeft, Loader2, Check, X, Trash2, RefreshCw, Save } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import { useListUsers, useApproveUser, useRejectUser, useDeleteUser } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getListUsersQueryKey } from "@workspace/api-client-react";
 
 const BASE_URL = import.meta.env.BASE_URL ?? "/";
@@ -29,19 +29,29 @@ export default function AdminDashboard() {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState("all");
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; name: string } | null>(null);
-  const [slotsUsed, setSlotsUsed] = useState<number>(0);
   const [slotsInput, setSlotsInput] = useState<string>("0");
   const [savingSlots, setSavingSlots] = useState(false);
+  const inputSyncedRef = useRef(false);
+
+  const { data: settingsData } = useQuery({
+    queryKey: ["public-settings"],
+    queryFn: async () => {
+      const res = await fetch(getApiUrl("/settings/public"));
+      if (!res.ok) return { freeSlotsUsed: 0 };
+      return res.json() as Promise<{ freeSlotsUsed: number }>;
+    },
+    refetchInterval: 30_000,
+    staleTime: 15_000,
+  });
+
+  const slotsUsed = settingsData?.freeSlotsUsed ?? 0;
 
   useEffect(() => {
-    fetch(getApiUrl("/settings/public"))
-      .then(r => r.json())
-      .then(d => {
-        setSlotsUsed(d.freeSlotsUsed ?? 0);
-        setSlotsInput(String(d.freeSlotsUsed ?? 0));
-      })
-      .catch(() => {});
-  }, []);
+    if (settingsData && !inputSyncedRef.current) {
+      setSlotsInput(String(settingsData.freeSlotsUsed ?? 0));
+      inputSyncedRef.current = true;
+    }
+  }, [settingsData]);
 
   const handleSaveSlots = async () => {
     const val = parseInt(slotsInput, 10);
@@ -58,7 +68,7 @@ export default function AdminDashboard() {
       });
       const data = await res.json();
       if (data.ok) {
-        setSlotsUsed(val);
+        queryClient.invalidateQueries({ queryKey: ["public-settings"] });
         toast({ title: "✅ Contador actualizado", description: `Ahora muestra ${val} de 100 accesos tomados.` });
       } else {
         toast({ title: "Error", description: data.error || "No se pudo guardar", variant: "destructive" });

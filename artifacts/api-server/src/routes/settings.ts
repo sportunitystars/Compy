@@ -11,7 +11,8 @@ router.get("/settings/public", async (req, res): Promise<void> => {
     const result = await pool.query(
       `SELECT value FROM app_settings WHERE key = 'free_slots_used'`
     );
-    const freeSlotsUsed = result.rows.length > 0 ? parseInt(result.rows[0].value, 10) : 0;
+    const raw = result.rows.length > 0 ? parseInt(result.rows[0].value, 10) : 0;
+    const freeSlotsUsed = isNaN(raw) || raw < 0 ? 0 : Math.min(raw, 100);
     res.json({ freeSlotsUsed });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch public settings");

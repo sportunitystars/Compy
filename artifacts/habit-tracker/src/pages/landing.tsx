@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { CheckCircle2, ArrowRight, Lock, Bell, BarChart2, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { useQuery } from "@tanstack/react-query";
 
 const BASE_URL = import.meta.env.BASE_URL ?? "/";
 function getApiUrl(path: string) {
@@ -12,6 +13,12 @@ function getApiUrl(path: string) {
 }
 
 const TOTAL_SLOTS = 100;
+
+async function fetchPublicSettings(): Promise<{ freeSlotsUsed: number }> {
+  const res = await fetch(getApiUrl("/settings/public"));
+  if (!res.ok) return { freeSlotsUsed: 0 };
+  return res.json();
+}
 
 const FEATURES = [
   {
@@ -53,20 +60,21 @@ const STEPS = [
 export default function Landing() {
   const { user, isLoading } = useAuth();
   const [, setLocation] = useLocation();
-  const [freeSlotsUsed, setFreeSlotsUsed] = useState<number | null>(null);
+
+  const { data: settingsData } = useQuery({
+    queryKey: ["public-settings"],
+    queryFn: fetchPublicSettings,
+    refetchInterval: 30_000,
+    staleTime: 15_000,
+  });
+
+  const freeSlotsUsed = settingsData?.freeSlotsUsed ?? null;
 
   useEffect(() => {
     if (!isLoading && user) {
       setLocation("/dashboard");
     }
   }, [user, isLoading]);
-
-  useEffect(() => {
-    fetch(getApiUrl("/settings/public"))
-      .then((r) => r.json())
-      .then((d) => setFreeSlotsUsed(d.freeSlotsUsed ?? 0))
-      .catch(() => setFreeSlotsUsed(0));
-  }, []);
 
   const remaining = freeSlotsUsed !== null ? TOTAL_SLOTS - freeSlotsUsed : null;
   const pct = freeSlotsUsed !== null ? Math.min((freeSlotsUsed / TOTAL_SLOTS) * 100, 100) : 0;
