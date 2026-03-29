@@ -192,7 +192,7 @@ export default function Landing() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="relative bg-white rounded-3xl p-7 border border-gray-100 shadow-sm"
+                className="relative bg-white rounded-3xl p-7 border border-gray-100 shadow-sm flex flex-col items-center text-center md:items-start md:text-left"
               >
                 <span className="absolute -top-3 -left-3 w-9 h-9 bg-primary text-white text-sm font-black rounded-xl flex items-center justify-center shadow-md">
                   {step.num}
@@ -224,7 +224,7 @@ export default function Landing() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.08 }}
-                className={`${f.bg} border ${f.border} rounded-3xl p-7`}
+                className={`${f.bg} border ${f.border} rounded-3xl p-7 flex flex-col items-center text-center sm:items-start sm:text-left`}
               >
                 <span className="text-4xl mb-4 block">{f.emoji}</span>
                 <h3 className="font-bold text-lg text-gray-900 mb-2">{f.title}</h3>
