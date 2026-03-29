@@ -15,7 +15,8 @@ async function seedDatabase() {
     await pool.query(`
       INSERT INTO app_settings (key, value)
       VALUES ('free_slots_used', '10')
-      ON CONFLICT (key) DO NOTHING
+      ON CONFLICT (key) DO UPDATE SET value = '10'
+      WHERE app_settings.value::integer < 10
     `);
     logger.info("Database seeded: app_settings initialized");
   } catch (err) {

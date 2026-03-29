@@ -32,11 +32,11 @@ router.get("/settings/stream", async (req, res): Promise<void> => {
     const result = await pool.query(
       `SELECT value FROM app_settings WHERE key = 'free_slots_used'`
     );
-    const raw = result.rows.length > 0 ? parseInt(result.rows[0].value, 10) : 0;
-    const freeSlotsUsed = isNaN(raw) || raw < 0 ? 0 : Math.min(raw, 100);
+    const raw = result.rows.length > 0 ? parseInt(result.rows[0].value, 10) : 10;
+    const freeSlotsUsed = isNaN(raw) || raw < 10 ? 10 : Math.min(raw, 100);
     res.write(`data: ${JSON.stringify({ freeSlotsUsed })}\n\n`);
   } catch {
-    res.write(`data: ${JSON.stringify({ freeSlotsUsed: 0 })}\n\n`);
+    res.write(`data: ${JSON.stringify({ freeSlotsUsed: 10 })}\n\n`);
   }
 
   sseClients.add(res);
@@ -66,12 +66,12 @@ router.get("/settings/public", async (req, res): Promise<void> => {
     const result = await pool.query(
       `SELECT value FROM app_settings WHERE key = 'free_slots_used'`
     );
-    const raw = result.rows.length > 0 ? parseInt(result.rows[0].value, 10) : 0;
-    const freeSlotsUsed = isNaN(raw) || raw < 0 ? 0 : Math.min(raw, 100);
+    const raw = result.rows.length > 0 ? parseInt(result.rows[0].value, 10) : 10;
+    const freeSlotsUsed = isNaN(raw) || raw < 10 ? 10 : Math.min(raw, 100);
     res.json({ freeSlotsUsed });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch public settings");
-    res.json({ freeSlotsUsed: 0 });
+    res.json({ freeSlotsUsed: 10 });
   }
 });
 

@@ -15,9 +15,14 @@ function getApiUrl(path: string) {
 const TOTAL_SLOTS = 100;
 
 async function fetchPublicSettings(): Promise<{ freeSlotsUsed: number }> {
-  const res = await fetch(getApiUrl(`/settings/public?_=${Date.now()}`));
-  if (!res.ok) return { freeSlotsUsed: 0 };
-  return res.json();
+  try {
+    const res = await fetch(getApiUrl(`/settings/public?_=${Date.now()}`));
+    if (!res.ok) return { freeSlotsUsed: 10 };
+    const data = await res.json();
+    return { freeSlotsUsed: Math.max(10, data.freeSlotsUsed ?? 10) };
+  } catch {
+    return { freeSlotsUsed: 10 };
+  }
 }
 
 const FEATURES = [
@@ -70,7 +75,7 @@ export default function Landing() {
     refetchOnMount: true,
   });
 
-  const freeSlotsUsed = settingsData?.freeSlotsUsed ?? null;
+  const freeSlotsUsed = settingsData?.freeSlotsUsed ?? 10;
 
   useEffect(() => {
     if (!isLoading && user) {
@@ -78,8 +83,8 @@ export default function Landing() {
     }
   }, [user, isLoading]);
 
-  const remaining = freeSlotsUsed !== null ? TOTAL_SLOTS - freeSlotsUsed : null;
-  const pct = freeSlotsUsed !== null ? Math.min((freeSlotsUsed / TOTAL_SLOTS) * 100, 100) : 0;
+  const remaining = TOTAL_SLOTS - freeSlotsUsed;
+  const pct = Math.min((freeSlotsUsed / TOTAL_SLOTS) * 100, 100);
 
   return (
     <div className="min-h-screen bg-white overflow-x-hidden">
@@ -271,16 +276,11 @@ export default function Landing() {
             <div className="bg-white/20 rounded-2xl p-6 mb-8 backdrop-blur-sm">
               <div className="flex justify-between text-sm font-semibold mb-3">
                 <span>
-                  {freeSlotsUsed !== null ? (
-                    <><strong className="text-2xl text-white">{freeSlotsUsed}</strong> <span className="text-violet-200">de 100 tomados</span></>
-                  ) : (
-                    <span className="text-violet-300">Cargando...</span>
-                  )}
+                  <strong className="text-2xl text-white">{freeSlotsUsed}</strong>{" "}
+                  <span className="text-violet-200">de 100 tomadas</span>
                 </span>
                 <span className="text-violet-200">
-                  {remaining !== null ? (
-                    <><strong className="text-white">{remaining}</strong> disponibles</>
-                  ) : null}
+                  <strong className="text-white">{remaining}</strong> disponibles
                 </span>
               </div>
               <div className="h-4 bg-white/20 rounded-full overflow-hidden">
