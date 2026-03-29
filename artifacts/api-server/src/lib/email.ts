@@ -176,7 +176,7 @@ export async function sendApprovalEmail(userEmail: string, userName: string): Pr
           <p style="color:#444;line-height:1.7;">
             Tu solicitud ha sido aprobada. Haz clic en el botón para acceder a <strong>${APP_NAME}</strong>:
           </p>
-          <a href="${APP_URL}/login"
+          <a href="${APP_URL}/dashboard"
              style="display:inline-block;margin-top:20px;padding:12px 24px;background:#10b981;color:#fff;text-decoration:none;font-weight:600;border-radius:8px;">
             Acceder ahora →
           </a>
