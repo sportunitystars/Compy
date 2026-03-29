@@ -153,37 +153,30 @@ export default function EditHabit() {
                       <FormLabel>Icono</FormLabel>
                       <FormControl>
                         <div className="border border-border rounded-2xl overflow-hidden">
-                          <div className="h-56 overflow-y-auto p-3 space-y-3 bg-gray-50">
-                            {EMOJI_CATEGORIES.map((cat) => (
-                              <div key={cat.label}>
-                                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-1.5 px-0.5">
-                                  {cat.icon} {cat.label}
-                                </p>
-                                <div className="grid grid-cols-8 gap-1">
-                                  {cat.emojis.map(em => (
-                                    <button
-                                      key={em}
-                                      type="button"
-                                      onClick={() => field.onChange(em)}
-                                      className={`text-xl h-9 rounded-lg flex items-center justify-center transition-all ${
-                                        field.value === em
-                                          ? 'bg-white border-2 border-primary shadow-sm scale-110'
-                                          : 'hover:bg-white/80 border-2 border-transparent'
-                                      }`}
-                                    >
-                                      {em}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                          {field.value && (
-                            <div className="px-3 py-2 bg-white border-t border-border flex items-center gap-2">
-                              <span className="text-xl">{field.value}</span>
-                              <span className="text-xs text-muted-foreground">Icono seleccionado</span>
+                          <div className="h-48 overflow-y-auto p-2 bg-gray-50">
+                            <div className="grid grid-cols-10 gap-1">
+                              {EMOJI_CATEGORIES.flatMap(cat => cat.emojis).map((em, idx) => (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  onClick={() => field.onChange(em)}
+                                  className={`text-xl h-9 rounded-lg flex items-center justify-center transition-all ${
+                                    field.value === em
+                                      ? 'bg-white border-2 border-primary shadow-sm scale-110'
+                                      : 'hover:bg-white/70 border-2 border-transparent'
+                                  }`}
+                                >
+                                  {em}
+                                </button>
+                              ))}
                             </div>
-                          )}
+                          </div>
+                          <div className="px-3 py-2 bg-white border-t border-border flex items-center gap-2 min-h-[40px]">
+                            {field.value
+                              ? <><span className="text-xl">{field.value}</span><span className="text-xs text-muted-foreground">Seleccionado</span></>
+                              : <span className="text-xs text-muted-foreground">Toca un ícono para seleccionar</span>
+                            }
+                          </div>
                         </div>
                       </FormControl>
                       <FormMessage />
