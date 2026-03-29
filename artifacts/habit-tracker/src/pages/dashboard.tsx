@@ -195,8 +195,8 @@ export default function Dashboard() {
   const now = new Date();
   const yearStart = new Date(now.getFullYear(), 0, 1);
   const yearEnd = new Date(now.getFullYear(), 11, 31);
-  const totalDaysInYear = Math.round((yearEnd.getTime() - yearStart.getTime()) / 86400000) + 1;
-  const daysElapsed = Math.round((now.getTime() - yearStart.getTime()) / 86400000) + 1;
+  const totalDaysInYear = Math.floor((yearEnd.getTime() - yearStart.getTime()) / 86400000) + 1;
+  const daysElapsed = Math.floor((now.getTime() - yearStart.getTime()) / 86400000) + 1;
   const yearProgress = Math.round((daysElapsed / totalDaysInYear) * 100);
 
   // Number private habits by creation order in the list
@@ -299,38 +299,55 @@ export default function Dashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground">Tu progreso</h1>
-            <p className="text-muted-foreground mt-1 text-base sm:text-lg">
-              {(() => {
-                const raw = format(new Date(), "EEE, d 'de' MMMM", { locale: es });
-                return raw.replace(/\./g, "").replace(/^\w/, c => c.toUpperCase()).replace(/de (\w)/, (_, c) => `de ${c.toUpperCase()}`);
-              })()}
-            </p>
+        {/* Desktop: three-column row (title | bar | button). Mobile: title+bar row, then button */}
+        <div className="mb-8">
+          <div className="flex items-start justify-between gap-4 sm:gap-0 sm:flex-row sm:items-center">
+            {/* Title + date */}
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground">Tu progreso</h1>
+              <p className="text-muted-foreground mt-1 text-base sm:text-lg">
+                {(() => {
+                  const raw = format(new Date(), "EEE, d 'de' MMMM", { locale: es });
+                  return raw.replace(/\./g, "").replace(/^\w/, c => c.toUpperCase()).replace(/de (\w)/, (_, c) => `de ${c.toUpperCase()}`);
+                })()}
+              </p>
+            </div>
+
+            {/* Year progress bar */}
+            <div className="w-36 shrink-0 sm:flex-1 sm:w-auto sm:max-w-xs sm:mx-6">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[11px] font-bold text-muted-foreground tracking-wider uppercase">{now.getFullYear()}</span>
+                <span className="text-[11px] font-bold text-primary">{yearProgress}%</span>
+              </div>
+              <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-primary to-purple-400 transition-all duration-700"
+                  style={{ width: `${yearProgress}%` }}
+                />
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1 text-right">{daysElapsed} de {totalDaysInYear} días</p>
+            </div>
+
+            {/* Nuevo Hábito — visible only on sm+ in the same row */}
+            <div className="hidden sm:block shrink-0">
+              <Link href="/habits/new">
+                <Button className="rounded-xl h-12 px-6 shadow-md shadow-primary/20 hover:shadow-lg hover:-translate-y-0.5 transition-all text-base">
+                  <Plus className="w-5 h-5 mr-2" />
+                  Nuevo Hábito
+                </Button>
+              </Link>
+            </div>
           </div>
 
-          {/* Year progress bar */}
-          <div className="flex-1 sm:max-w-xs sm:mx-6">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] font-bold text-muted-foreground tracking-wider uppercase">{now.getFullYear()}</span>
-              <span className="text-[11px] font-bold text-primary">{yearProgress}%</span>
-            </div>
-            <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-primary to-purple-400 transition-all duration-700"
-                style={{ width: `${yearProgress}%` }}
-              />
-            </div>
-            <p className="text-[10px] text-muted-foreground mt-1 text-right">{daysElapsed} de {totalDaysInYear} días</p>
+          {/* Nuevo Hábito — full width below on mobile */}
+          <div className="mt-4 sm:hidden">
+            <Link href="/habits/new">
+              <Button className="rounded-xl h-12 px-6 shadow-md shadow-primary/20 hover:shadow-lg hover:-translate-y-0.5 transition-all text-base w-full">
+                <Plus className="w-5 h-5 mr-2" />
+                Nuevo Hábito
+              </Button>
+            </Link>
           </div>
-
-          <Link href="/habits/new">
-            <Button className="rounded-xl h-12 px-6 shadow-md shadow-primary/20 hover:shadow-lg hover:-translate-y-0.5 transition-all text-base w-full sm:w-auto">
-              <Plus className="w-5 h-5 mr-2" />
-              Nuevo Hábito
-            </Button>
-          </Link>
         </div>
 
         {!habits || habits.length === 0 ? (
