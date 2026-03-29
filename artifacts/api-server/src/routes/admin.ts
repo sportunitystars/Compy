@@ -47,7 +47,6 @@ router.post("/admin/users/:userId/approve", requireAdmin, async (req, res): Prom
     return;
   }
 
-  // Send approval email
   await sendApprovalEmail(data.email, data.name);
 
   res.json(formatProfile(data));
@@ -69,6 +68,9 @@ router.post("/admin/users/:userId/reject", requireAdmin, async (req, res): Promi
     return;
   }
 
+  // Revoke all active sessions immediately so the user is forced to re-authenticate
+  await supabaseAdmin.auth.admin.signOut(userId, "global");
+
   await sendRejectionEmail(data.email, data.name);
 
   res.json(formatProfile(data));
@@ -77,6 +79,9 @@ router.post("/admin/users/:userId/reject", requireAdmin, async (req, res): Promi
 // ── Delete user permanently ────────────────────────────────────────────────────
 router.delete("/admin/users/:userId", requireAdmin, async (req, res): Promise<void> => {
   const userId = req.params.userId as string;
+
+  // Revoke all active sessions before deleting so tokens are invalidated immediately
+  await supabaseAdmin.auth.admin.signOut(userId, "global");
 
   // Delete from Supabase Auth — cascades to profiles table automatically
   const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);

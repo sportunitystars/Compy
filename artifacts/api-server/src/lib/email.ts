@@ -8,11 +8,6 @@ const APP_NAME = "Compy";
 const APP_URL = process.env.APP_URL || "https://compy.replit.app";
 const FROM = `${APP_NAME} <${GMAIL_USER}>`;
 
-function logoBlock() {
-  return `<img src="${APP_URL}/logo-email.png" width="80" height="80" alt="Compy"
-    style="border-radius:20px;display:block;margin:0 auto 16px;border:0;outline:none;" />`;
-}
-
 function getTransporter() {
   if (!GMAIL_USER || !GMAIL_PASS) {
     logger.warn("GMAIL_USER or GMAIL_APP_PASSWORD not set — emails will be skipped");
@@ -79,10 +74,7 @@ export async function sendPendingEmail(userEmail: string, userName: string, pass
       subject: `${APP_NAME} — Solicitud recibida ✓`,
       html: `
         <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:40px 20px;">
-          <div style="text-align:center;margin-bottom:28px;">
-            ${logoBlock()}
-            <h2 style="color:#111;margin:0;">Hola${userName ? `, ${userName}` : ""} — estás en la lista.</h2>
-          </div>
+          <h2 style="color:#111;">Hola${userName ? `, ${userName}` : ""} — estás en la lista.</h2>
 
           <p style="color:#444;line-height:1.7;margin-bottom:8px;">
             Hemos recibido tu solicitud de acceso a <strong>${APP_NAME}</strong>.
@@ -141,10 +133,7 @@ export async function sendPinResetEmail(userEmail: string, userName: string, cod
       subject: `${APP_NAME} — Tu PIN temporal`,
       html: `
         <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:40px 20px;">
-          <div style="text-align:center;margin-bottom:28px;">
-            ${logoBlock()}
-            <h2 style="color:#111;margin:0;">Hola${userName ? `, ${userName}` : ""}</h2>
-          </div>
+          <h2 style="color:#111;">Hola${userName ? `, ${userName}` : ""}</h2>
           <p style="color:#444;line-height:1.7;">
             Tu PIN anterior fue reemplazado. Usa este PIN temporal para desbloquear tus hábitos privados en <strong>${APP_NAME}</strong>:
           </p>
@@ -175,10 +164,7 @@ export async function sendApprovalEmail(userEmail: string, userName: string): Pr
       subject: `${APP_NAME} — Ya tienes acceso`,
       html: `
         <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:40px 20px;">
-          <div style="text-align:center;margin-bottom:28px;">
-            ${logoBlock()}
-            <h2 style="color:#111;margin:0;">Hola${userName ? `, ${userName}` : ""} — ya puedes entrar.</h2>
-          </div>
+          <h2 style="color:#111;">Hola${userName ? `, ${userName}` : ""} — ya puedes entrar.</h2>
           <p style="color:#444;line-height:1.7;">
             Tu solicitud ha sido aprobada. Haz clic en el botón para acceder a <strong>${APP_NAME}</strong>:
           </p>
