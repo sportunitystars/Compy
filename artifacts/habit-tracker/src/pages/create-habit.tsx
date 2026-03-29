@@ -8,7 +8,8 @@ import { ArrowLeft, Check, Plus, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useCreateHabit } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCreateHabit, getListHabitsQueryKey } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 
 const PALETTE = [
@@ -42,6 +43,7 @@ type FormValues = z.infer<typeof createHabitSchema>;
 export default function CreateHabit() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const createMutation = useCreateHabit();
 
   const form = useForm<FormValues>({
@@ -80,6 +82,7 @@ export default function CreateHabit() {
       { data: values },
       {
         onSuccess: (data) => {
+          queryClient.invalidateQueries({ queryKey: getListHabitsQueryKey() });
           toast({ title: "Hábito creado exitosamente" });
           setLocation(`/habits/${data.id}`);
         },
