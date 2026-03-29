@@ -18,6 +18,7 @@ import EditHabit from "@/pages/edit-habit";
 import HabitDetail from "@/pages/habit-detail";
 import AdminDashboard from "@/pages/admin";
 import { PendingScreen, RejectedScreen } from "@/pages/pending";
+import { InstallPrompt } from "@/components/install-prompt";
 import { Loader2 } from "lucide-react";
 
 function ProtectedRoute({ component: Component, ...rest }: any) {
@@ -77,6 +78,7 @@ export default function App() {
           </AuthProvider>
         </WouterRouter>
         <Toaster />
+        <InstallPrompt />
       </TooltipProvider>
     </QueryClientProvider>
   );
