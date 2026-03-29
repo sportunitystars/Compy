@@ -98,7 +98,7 @@ export default function CreateHabit() {
     if (posCount > 1 || negCount > 1) {
       toast({
         title: "Revisa las opciones",
-        description: "Solo puede haber una opción positiva (🔥) y una negativa (⚡)",
+        description: "Solo puede haber una opción 'Se cumplió' y una 'No se cumplió'",
         variant: "destructive"
       });
       return;
@@ -264,56 +264,64 @@ export default function CreateHabit() {
                       )}
                     />
 
-                    <div className="flex flex-wrap sm:flex-col gap-1.5 pt-1 sm:pt-6">
-                      <Button
-                        type="button"
-                        variant={form.watch(`options.${index}.isPositive`) ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => {
-                          const isPos = form.watch(`options.${index}.isPositive`);
-                          if (!isPos) {
-                            fields.forEach((_, i) => form.setValue(`options.${i}.isPositive`, false));
-                          }
-                          form.setValue(`options.${index}.isPositive`, !isPos);
-                          if (!isPos) { form.setValue(`options.${index}.isNegative`, false); form.setValue(`options.${index}.isExempt`, false); }
-                        }}
-                        className={`text-xs h-8 ${form.watch(`options.${index}.isPositive`) ? 'bg-green-500 hover:bg-green-600' : ''}`}
-                      >
-                        🔥 Positivo
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={form.watch(`options.${index}.isNegative`) ? "destructive" : "outline"}
-                        size="sm"
-                        onClick={() => {
-                          const isNeg = form.watch(`options.${index}.isNegative`);
-                          if (!isNeg) {
-                            fields.forEach((_, i) => form.setValue(`options.${i}.isNegative`, false));
-                          }
-                          form.setValue(`options.${index}.isNegative`, !isNeg);
-                          if (!isNeg) { form.setValue(`options.${index}.isPositive`, false); form.setValue(`options.${index}.isExempt`, false); }
-                        }}
-                        className="text-xs h-8"
-                      >
-                        ⚡ Negativo
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          const isEx = form.watch(`options.${index}.isExempt`);
-                          if (!isEx) {
-                            fields.forEach((_, i) => form.setValue(`options.${i}.isExempt`, false));
-                          }
-                          form.setValue(`options.${index}.isExempt`, !isEx);
-                          if (!isEx) { form.setValue(`options.${index}.isPositive`, false); form.setValue(`options.${index}.isNegative`, false); }
-                        }}
-                        className={`text-xs h-8 transition-all ${form.watch(`options.${index}.isExempt`) ? 'bg-slate-500 text-white border-slate-500 hover:bg-slate-600' : 'border-dashed'}`}
-                      >
-                        ⊘ Exceptuado
-                      </Button>
-                    </div>
+                    {(() => {
+                      const currentColor = form.watch(`options.${index}.color`);
+                      const isPos = form.watch(`options.${index}.isPositive`);
+                      const isNeg = form.watch(`options.${index}.isNegative`);
+                      const isEx = form.watch(`options.${index}.isExempt`);
+                      return (
+                        <div className="flex flex-col gap-1.5 pt-1 sm:pt-6">
+                          <div className="flex flex-wrap sm:flex-col gap-1.5">
+                            <Button
+                              type="button"
+                              variant={isPos ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => {
+                                if (!isPos) fields.forEach((_, i) => form.setValue(`options.${i}.isPositive`, false));
+                                form.setValue(`options.${index}.isPositive`, !isPos);
+                                if (!isPos) { form.setValue(`options.${index}.isNegative`, false); form.setValue(`options.${index}.isExempt`, false); }
+                              }}
+                              className="text-xs h-8 border-2 transition-all"
+                              style={isPos ? { backgroundColor: currentColor, borderColor: currentColor, color: "#fff" } : undefined}
+                            >
+                              ✅ Se cumplió
+                            </Button>
+                            <Button
+                              type="button"
+                              variant={isNeg ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => {
+                                if (!isNeg) fields.forEach((_, i) => form.setValue(`options.${i}.isNegative`, false));
+                                form.setValue(`options.${index}.isNegative`, !isNeg);
+                                if (!isNeg) { form.setValue(`options.${index}.isPositive`, false); form.setValue(`options.${index}.isExempt`, false); }
+                              }}
+                              className="text-xs h-8 border-2 transition-all"
+                              style={isNeg ? { backgroundColor: currentColor, borderColor: currentColor, color: "#fff" } : undefined}
+                            >
+                              ❌ No se cumplió
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                if (!isEx) fields.forEach((_, i) => form.setValue(`options.${i}.isExempt`, false));
+                                form.setValue(`options.${index}.isExempt`, !isEx);
+                                if (!isEx) { form.setValue(`options.${index}.isPositive`, false); form.setValue(`options.${index}.isNegative`, false); }
+                              }}
+                              className={`text-xs h-8 transition-all ${isEx ? 'bg-slate-500 text-white border-slate-500 hover:bg-slate-600' : 'border-dashed'}`}
+                            >
+                              ⊘ Exceptuado
+                            </Button>
+                          </div>
+                          {isEx && (
+                            <p className="text-[11px] text-slate-500 bg-slate-50 rounded-xl px-2.5 py-2 leading-snug">
+                              ℹ️ Para días que no cuentan, como <strong>vacaciones</strong> o días libres.
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {fields.length > 2 && (
                       <Button

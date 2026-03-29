@@ -2,7 +2,7 @@
   "name": "Compy",
   "short_name": "Compy",
   "description": "Construye hábitos que realmente duran",
-  "start_url": "/",
+  "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#7c3aed",
