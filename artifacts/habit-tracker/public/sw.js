@@ -11,8 +11,8 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(payload.title ?? "Compy", {
       body: payload.body ?? "",
-      icon: "/icon-192.png",
-      badge: "/icon-192.png",
+      icon: "/icon-transparent.png",
+      badge: "/icon-transparent.png",
       tag: payload.tag ?? "compy-push",
       renotify: true,
     })

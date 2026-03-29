@@ -1,10 +1,19 @@
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { queryClient } from "@/lib/query-client";
 
 export function PendingScreen() {
   const { logout } = useAuth();
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">

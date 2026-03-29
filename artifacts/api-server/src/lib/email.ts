@@ -75,8 +75,11 @@ export async function sendPendingEmail(userEmail: string, userName: string, pass
       html: `
         <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:40px 20px;">
           <div style="text-align:center;margin-bottom:28px;">
-            <div style="width:56px;height:56px;background:#4f46e5;border-radius:16px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;">
-              <span style="font-size:28px;">✅</span>
+            <div style="width:64px;height:64px;background:#4f46e5;border-radius:20px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="9" stroke="white" stroke-width="2"/>
+                <path d="M8 12l3 3 5-5" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
             </div>
             <h2 style="color:#111;margin:0;">Hola${userName ? `, ${userName}` : ""} — estás en la lista.</h2>
           </div>

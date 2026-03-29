@@ -69,7 +69,7 @@ export default function AdminDashboard() {
       const data = await res.json();
       if (data.ok) {
         queryClient.invalidateQueries({ queryKey: ["public-settings"] });
-        toast({ title: "✅ Contador actualizado", description: `Ahora muestra ${val} de 100 accesos tomados.` });
+        toast({ title: "✅ Contador actualizado", description: `Ahora muestra ${val} de 100 accesos tomados.`, duration: 2000 });
       } else {
         toast({ title: "Error", description: data.error || "No se pudo guardar", variant: "destructive" });
       }
@@ -93,7 +93,7 @@ export default function AdminDashboard() {
       { userId: id },
       {
         onSuccess: () => {
-          toast({ title: "Usuario aprobado" });
+          toast({ title: "Usuario aprobado", duration: 2000 });
           queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
         }
       }
@@ -105,7 +105,7 @@ export default function AdminDashboard() {
       { userId: id },
       {
         onSuccess: () => {
-          toast({ title: "Usuario rechazado", description: "Se envió email de notificación al usuario." });
+          toast({ title: "Usuario rechazado", description: "Se envió email de notificación al usuario.", duration: 2000 });
           queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
         }
       }
@@ -122,7 +122,7 @@ export default function AdminDashboard() {
       { userId: confirmDelete.id },
       {
         onSuccess: () => {
-          toast({ title: "Usuario eliminado", description: "El usuario fue eliminado permanentemente." });
+          toast({ title: "Usuario eliminado", description: "El usuario fue eliminado permanentemente.", duration: 2000 });
           queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
           setConfirmDelete(null);
         },

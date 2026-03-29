@@ -4,6 +4,8 @@ import { X, Share, Plus } from "lucide-react";
 
 const STORAGE_KEY = "compy_install_dismissed";
 
+const ALLOWED_PATHS = ["/", "/dashboard", "/register"];
+
 function isIOS() {
   return (
     /iphone|ipad|ipod/i.test(navigator.userAgent) ||
@@ -36,13 +38,20 @@ function markDismissed() {
   } catch {}
 }
 
+function isAllowedPage() {
+  const base = import.meta.env.BASE_URL?.replace(/\/$/, "") || "";
+  const raw = window.location.pathname;
+  const path = base ? raw.replace(base, "") || "/" : raw;
+  return ALLOWED_PATHS.some((p) => path === p || path.startsWith(p + "?"));
+}
+
 export function InstallPrompt() {
   const [show, setShow] = useState(false);
   const [mode, setMode] = useState<"android" | "ios" | null>(null);
   const deferredPrompt = useRef<any>(null);
 
   useEffect(() => {
-    if (isStandalone() || wasDismissed()) return;
+    if (isStandalone() || wasDismissed() || !isAllowedPage()) return;
 
     if (isIOS()) {
       setTimeout(() => {
@@ -55,6 +64,7 @@ export function InstallPrompt() {
     const handler = (e: Event) => {
       e.preventDefault();
       deferredPrompt.current = e;
+      if (!isAllowedPage()) return;
       setTimeout(() => {
         setMode("android");
         setShow(true);

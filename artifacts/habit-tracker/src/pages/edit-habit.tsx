@@ -125,7 +125,7 @@ export default function EditHabit() {
       { habitId: id, data: { ...values, isPrivate } as any },
       {
         onSuccess: () => {
-          toast({ title: "Hábito actualizado" });
+          toast({ title: "Hábito actualizado", duration: 2000 });
           queryClient.invalidateQueries({ queryKey: ["/api/habits"] });
           queryClient.invalidateQueries({ queryKey: [`/api/habits/${id}`] });
           setLocation(`/habits/${id}`);

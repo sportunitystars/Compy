@@ -12,7 +12,7 @@ export function PushToggle() {
   const handleClick = async () => {
     if (state === "granted") {
       await unsubscribe();
-      toast({ title: "Notificaciones desactivadas" });
+      toast({ title: "Notificaciones desactivadas", duration: 2000 });
     } else if (state === "denied") {
       toast({
         title: "Notificaciones bloqueadas",
@@ -22,7 +22,7 @@ export function PushToggle() {
     } else {
       const ok = await subscribe();
       if (ok) {
-        toast({ title: "¡Notificaciones activadas!", description: "Te avisaremos cuando tengas una racha negativa activa." });
+        toast({ title: "¡Notificaciones activadas!", description: "Te avisaremos cuando tengas una racha negativa activa.", duration: 2000 });
       } else if (Notification.permission === "denied") {
         toast({
           title: "Permiso denegado",
