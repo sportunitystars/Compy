@@ -15,7 +15,7 @@ export { vapidPublicKey };
 
 export async function sendPush(
   subscription: { endpoint: string; p256dh: string; auth: string },
-  payload: { title: string; body: string; tag?: string }
+  payload: { title: string; body: string; tag?: string; sound?: boolean }
 ): Promise<void> {
   if (!vapidPublicKey || !vapidPrivateKey) return;
 

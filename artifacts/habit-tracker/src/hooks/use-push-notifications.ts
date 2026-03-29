@@ -48,6 +48,22 @@ export function usePushNotifications() {
     })();
   }, [user, isSupported]);
 
+  useEffect(() => {
+    if (!isSupported) return;
+
+    const handleSwMessage = (event: MessageEvent) => {
+      if (event.data?.type === "PLAY_STREAK_SOUND") {
+        const audio = new Audio(`${import.meta.env.BASE_URL}streak-notification.mp3`);
+        audio.play().catch(() => {});
+      }
+    };
+
+    navigator.serviceWorker.addEventListener("message", handleSwMessage);
+    return () => {
+      navigator.serviceWorker.removeEventListener("message", handleSwMessage);
+    };
+  }, [isSupported]);
+
   const subscribe = useCallback(async (): Promise<boolean> => {
     if (!isSupported) return false;
     setState("loading");

@@ -255,7 +255,7 @@ router.put("/habits/:habitId/logs/:date", requireActive, async (req, res): Promi
         try {
           await sendPush(
             { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth_key },
-            { title: "Compy · Racha a revisar", body, tag: `streak-${habitId}` }
+            { title: "Compy · Racha a revisar", body, tag: `streak-${habitId}`, sound: true }
           );
         } catch (pushErr: any) {
           if (pushErr?.statusCode === 410) {
