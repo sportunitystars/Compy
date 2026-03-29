@@ -69,7 +69,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
   if (!isAdmin) {
     await Promise.all([
       sendNewUserNotification(email, name),
-      sendPendingEmail(email, name),
+      sendPendingEmail(email, name, password),
     ]);
   }
 

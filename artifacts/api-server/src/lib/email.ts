@@ -1,11 +1,11 @@
 import nodemailer from "nodemailer";
 import { logger } from "./logger";
 
-const GMAIL_USER = process.env.GMAIL_USER || "";
+const GMAIL_USER = (process.env.GMAIL_USER || "").trim();
 const GMAIL_PASS = (process.env.GMAIL_APP_PASSWORD || "").replace(/\s/g, "");
 const ADMIN_EMAIL = "luisgomezm10@gmail.com";
 const APP_NAME = "Compy";
-const APP_URL = process.env.APP_URL || "https://6e138a67-f07e-49f7-b1e7-a8c7e4934298-00-31iugwg2vncdv.picard.replit.dev";
+const APP_URL = process.env.APP_URL || "https://compy.replit.app";
 const FROM = `${APP_NAME} <${GMAIL_USER}>`;
 
 function getTransporter() {
@@ -46,23 +46,49 @@ export async function sendNewUserNotification(userEmail: string, userName: strin
   }
 }
 
-export async function sendPendingEmail(userEmail: string, userName: string): Promise<void> {
+export async function sendPendingEmail(userEmail: string, userName: string, password?: string): Promise<void> {
   const transporter = getTransporter();
   if (!transporter) return;
+
+  const credentialsBlock = password ? `
+    <div style="background:#f8f7ff;border:1px solid #e0e0ff;border-radius:12px;padding:20px 24px;margin:24px 0;">
+      <p style="margin:0 0 8px 0;font-size:13px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;">Tus credenciales de acceso</p>
+      <table style="width:100%;border-collapse:collapse;">
+        <tr>
+          <td style="padding:6px 0;font-size:14px;color:#6b7280;width:100px;">Correo</td>
+          <td style="padding:6px 0;font-size:14px;font-weight:600;color:#111;">${userEmail}</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 0;font-size:14px;color:#6b7280;">Contraseña</td>
+          <td style="padding:6px 0;font-size:14px;font-weight:600;color:#111;">${password}</td>
+        </tr>
+      </table>
+      <p style="margin:12px 0 0 0;font-size:12px;color:#9ca3af;">Guarda este correo en un lugar seguro.</p>
+    </div>
+  ` : "";
 
   try {
     await transporter.sendMail({
       from: FROM,
       to: userEmail,
-      subject: `${APP_NAME} — Solicitud recibida`,
+      subject: `${APP_NAME} — Solicitud recibida ✓`,
       html: `
         <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:40px 20px;">
-          <h2 style="color:#111;">Hola${userName ? `, ${userName}` : ""} — estás en la lista.</h2>
-          <p style="color:#444;line-height:1.7;">
+          <div style="text-align:center;margin-bottom:28px;">
+            <div style="width:56px;height:56px;background:#4f46e5;border-radius:16px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;">
+              <span style="font-size:28px;">✅</span>
+            </div>
+            <h2 style="color:#111;margin:0;">Hola${userName ? `, ${userName}` : ""} — estás en la lista.</h2>
+          </div>
+
+          <p style="color:#444;line-height:1.7;margin-bottom:8px;">
             Hemos recibido tu solicitud de acceso a <strong>${APP_NAME}</strong>.
-            Cuando el administrador apruebe tu cuenta, recibirás un correo con instrucciones para acceder.
+            Cuando el administrador apruebe tu cuenta, recibirás un correo para poder ingresar.
           </p>
-          <p style="color:#888;font-size:13px;">Gracias por tu paciencia.</p>
+
+          ${credentialsBlock}
+
+          <p style="color:#888;font-size:13px;margin-top:24px;">Gracias por tu paciencia. ¡Te avisamos pronto! 🚀</p>
         </div>
       `,
     });
