@@ -265,7 +265,7 @@ export default function HabitDetail() {
                   {/* YEAR STATS */}
                   <div>
                     <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-3">
-                      Año {currentYear} · {totalYearDays} días transcurridos
+                      Año {currentYear} · {totalYearDays} días transcurridos · {Math.round((totalYearDays / 365) * 100)}% del año
                     </p>
                     <div className="space-y-3">
                       {habit.options.map((opt: any, idx: number) => {
