@@ -156,12 +156,12 @@ export default function Landing() {
               { emoji: "📚", name: "Leer", tags: ["Sí · 85%", "No · 15%"], color: "bg-emerald-100 text-emerald-700", color2: "bg-rose-100 text-rose-700" },
               { emoji: "💧", name: "Agua", tags: ["Completé · 90%", "Parcial · 10%"], color: "bg-cyan-100 text-cyan-700", color2: "bg-orange-100 text-orange-700" },
             ].map((card, i) => (
-              <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-md px-5 py-4 w-52 text-left">
-                <div className="flex items-center gap-2 mb-3">
+              <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-md px-5 py-4 w-52 text-center sm:text-left">
+                <div className="flex items-center gap-2 mb-3 justify-center sm:justify-start">
                   <span className="text-2xl">{card.emoji}</span>
                   <span className="font-bold text-sm">{card.name}</span>
                 </div>
-                <div className="flex gap-1.5 flex-wrap mb-3">
+                <div className="flex gap-1.5 flex-wrap mb-3 justify-center sm:justify-start">
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${card.color}`}>{card.tags[0]}</span>
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${card.color2}`}>{card.tags[1]}</span>
                 </div>
