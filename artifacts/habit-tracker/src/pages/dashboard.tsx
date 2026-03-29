@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Plus, CheckCircle2, ShieldCheck, LogOut, Trash2, Lock, Unlock, MoreHorizontal } from "lucide-react";
+import { Plus, CheckCircle2, ShieldCheck, LogOut, Trash2, Lock, Unlock, MoreHorizontal, GripVertical } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import {
@@ -144,7 +144,16 @@ function SortableCard({
 
   if (isPrivate && !isUnlocked) {
     return (
-      <div ref={setNodeRef} style={style} {...attributes} className="touch-none">
+      <div ref={setNodeRef} style={style} {...attributes} className="relative">
+        {/* drag handle */}
+        <button
+          type="button"
+          {...listeners}
+          className="touch-none absolute top-2 right-8 z-10 p-1 text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing"
+          aria-label="Arrastrar"
+        >
+          <GripVertical className="w-4 h-4" />
+        </button>
         <LockedCard
           onUnlock={onUnlockRequest}
           onDelete={() => onDeleteClick(habitId)}
@@ -154,10 +163,17 @@ function SortableCard({
   }
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes}>
-      <div {...listeners} className="touch-none cursor-grab active:cursor-grabbing">
-        <HabitCard habitId={habitId} onDeleteClick={onDeleteClick} />
-      </div>
+    <div ref={setNodeRef} style={style} {...attributes} className="relative">
+      {/* drag handle — esquina superior izquierda, no bloquea scroll */}
+      <button
+        type="button"
+        {...listeners}
+        className="touch-none absolute top-2 left-2 z-10 p-1 text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing"
+        aria-label="Arrastrar"
+      >
+        <GripVertical className="w-4 h-4" />
+      </button>
+      <HabitCard habitId={habitId} onDeleteClick={onDeleteClick} />
     </div>
   );
 }
@@ -232,8 +248,9 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
             {user?.role === "admin" && (
-              <Link href="/admin" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 hidden sm:flex">
-                <ShieldCheck className="w-4 h-4" /> Panel Admin
+              <Link href="/admin" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+                <ShieldCheck className="w-4 h-4" />
+                <span className="hidden sm:inline">Panel Admin</span>
               </Link>
             )}
             <span className="text-sm font-medium text-foreground hidden sm:block">
