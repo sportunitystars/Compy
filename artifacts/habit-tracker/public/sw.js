@@ -12,7 +12,7 @@ self.addEventListener("push", (event) => {
     self.registration.showNotification(payload.title ?? "Compy", {
       body: payload.body ?? "",
       icon: "/icon-transparent.png",
-      badge: "/icon-transparent.png",
+      badge: "/notification-badge.png",
       tag: payload.tag ?? "compy-push",
       renotify: true,
     })
