@@ -159,12 +159,12 @@ export default function CreateHabit() {
                               ))}
                             </div>
                           </div>
-                          <div className="px-3 py-2.5 bg-white border-t border-border flex items-center gap-2 min-h-[44px]">
-                            {field.value
-                              ? <><span className="text-2xl">{field.value}</span><span className="text-sm font-medium text-foreground">Ícono seleccionado</span></>
-                              : <span className="text-sm text-muted-foreground italic">Selecciona el ícono de tu hábito...</span>
-                            }
-                          </div>
+                          {field.value && (
+                            <div className="px-3 py-2.5 bg-white border-t border-border flex items-center gap-2">
+                              <span className="text-2xl">{field.value}</span>
+                              <span className="text-sm font-medium text-foreground">Ícono seleccionado</span>
+                            </div>
+                          )}
                         </div>
                       </FormControl>
                       <FormMessage />
