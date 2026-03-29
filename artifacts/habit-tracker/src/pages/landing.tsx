@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { CheckCircle2, ArrowRight, Lock, Bell, BarChart2, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const BASE_URL = import.meta.env.BASE_URL ?? "/";
 function getApiUrl(path: string) {
@@ -60,16 +60,38 @@ const STEPS = [
 export default function Landing() {
   const { user, isLoading } = useAuth();
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
 
+  // Initial fetch + background polling as fallback
   const { data: settingsData } = useQuery({
     queryKey: ["public-settings"],
     queryFn: fetchPublicSettings,
-    refetchInterval: 10_000,
-    staleTime: 5_000,
-    refetchOnWindowFocus: true,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
 
   const freeSlotsUsed = settingsData?.freeSlotsUsed ?? null;
+
+  // SSE: receive instant updates from server whenever admin changes the counter
+  useEffect(() => {
+    const base = BASE_URL.endsWith("/") ? BASE_URL.slice(0, -1) : BASE_URL;
+    const source = new EventSource(`${base}/api/settings/stream`);
+
+    source.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data) as { freeSlotsUsed: number };
+        if (typeof data.freeSlotsUsed === "number") {
+          queryClient.setQueryData(["public-settings"], { freeSlotsUsed: data.freeSlotsUsed });
+        }
+      } catch { /* ignore malformed messages */ }
+    };
+
+    source.onerror = () => {
+      // SSE connection dropped; browser will auto-reconnect
+    };
+
+    return () => source.close();
+  }, [queryClient]);
 
   useEffect(() => {
     if (!isLoading && user) {
