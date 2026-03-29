@@ -64,8 +64,9 @@ export default function Landing() {
   const { data: settingsData } = useQuery({
     queryKey: ["public-settings"],
     queryFn: fetchPublicSettings,
-    refetchInterval: 30_000,
-    staleTime: 15_000,
+    refetchInterval: 10_000,
+    staleTime: 5_000,
+    refetchOnWindowFocus: true,
   });
 
   const freeSlotsUsed = settingsData?.freeSlotsUsed ?? null;
@@ -85,15 +86,19 @@ export default function Landing() {
       {/* ── NAV ── */}
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => setLocation("/")}
+            className="flex items-center gap-2.5 cursor-pointer"
+          >
             <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center shadow-md">
               <CheckCircle2 className="w-4.5 h-4.5 text-white" />
             </div>
             <span className="font-bold text-xl tracking-tight">Compy</span>
-          </div>
+          </button>
           <Button
             size="sm"
-            className="rounded-full px-5 gap-1.5"
+            className="rounded-full px-5 gap-1.5 cursor-pointer"
             onClick={() => setLocation("/login")}
           >
             Entrar <ArrowRight className="w-3.5 h-3.5" />
@@ -129,7 +134,7 @@ export default function Landing() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Button
                 size="lg"
-                className="rounded-2xl px-8 h-14 text-base gap-2 shadow-lg shadow-primary/30 hover:shadow-primary/40 transition-shadow"
+                className="rounded-2xl px-8 h-14 text-base gap-2 shadow-lg shadow-primary/30 hover:shadow-primary/40 transition-shadow cursor-pointer"
                 onClick={() => setLocation("/login")}
               >
                 Quiero mi acceso gratis <ArrowRight className="w-5 h-5" />
@@ -279,10 +284,10 @@ export default function Landing() {
               </div>
               <div className="h-4 bg-white/20 rounded-full overflow-hidden">
                 <motion.div
+                  key={pct}
                   className="h-full bg-white rounded-full"
                   initial={{ width: 0 }}
-                  whileInView={{ width: `${pct}%` }}
-                  viewport={{ once: true }}
+                  animate={{ width: `${pct}%` }}
                   transition={{ duration: 1.2, ease: "easeOut" }}
                 />
               </div>
@@ -301,7 +306,7 @@ export default function Landing() {
             <Button
               size="lg"
               variant="secondary"
-              className="rounded-2xl px-10 h-14 text-base font-bold gap-2 shadow-xl hover:shadow-2xl transition-shadow"
+              className="rounded-2xl px-10 h-14 text-base font-bold gap-2 shadow-xl hover:shadow-2xl transition-shadow cursor-pointer"
               onClick={() => setLocation("/login")}
             >
               Asegurar mi lugar gratis <ArrowRight className="w-5 h-5" />
@@ -326,7 +331,7 @@ export default function Landing() {
           <button
             type="button"
             onClick={() => setLocation("/login")}
-            className="text-primary hover:underline text-sm font-semibold"
+            className="text-primary hover:underline text-sm font-semibold cursor-pointer"
           >
             Ingresar a la app →
           </button>
