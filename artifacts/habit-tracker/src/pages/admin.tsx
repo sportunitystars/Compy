@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { format } from "date-fns";
-import { ShieldCheck, ArrowLeft, Loader2, Check, X, Trash2, RefreshCw } from "lucide-react";
-import { useState } from "react";
+import { ShieldCheck, ArrowLeft, Loader2, Check, X, Trash2, RefreshCw, Save } from "lucide-react";
+import { useState, useEffect } from "react";
 
 import { useListUsers, useApproveUser, useRejectUser, useDeleteUser } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -10,6 +10,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListUsersQueryKey } from "@workspace/api-client-react";
+
+const BASE_URL = import.meta.env.BASE_URL ?? "/";
+function getApiUrl(path: string) {
+  const base = BASE_URL.endsWith("/") ? BASE_URL.slice(0, -1) : BASE_URL;
+  return `${base}/api${path}`;
+}
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -23,6 +29,46 @@ export default function AdminDashboard() {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState("all");
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; name: string } | null>(null);
+  const [slotsUsed, setSlotsUsed] = useState<number>(0);
+  const [slotsInput, setSlotsInput] = useState<string>("0");
+  const [savingSlots, setSavingSlots] = useState(false);
+
+  useEffect(() => {
+    fetch(getApiUrl("/settings/public"))
+      .then(r => r.json())
+      .then(d => {
+        setSlotsUsed(d.freeSlotsUsed ?? 0);
+        setSlotsInput(String(d.freeSlotsUsed ?? 0));
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleSaveSlots = async () => {
+    const val = parseInt(slotsInput, 10);
+    if (isNaN(val) || val < 0 || val > 100) {
+      toast({ title: "Valor inválido", description: "Ingresa un número entre 0 y 100", variant: "destructive" });
+      return;
+    }
+    setSavingSlots(true);
+    try {
+      const res = await fetch(getApiUrl("/admin/settings"), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: "free_slots_used", value: String(val) }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setSlotsUsed(val);
+        toast({ title: "✅ Contador actualizado", description: `Ahora muestra ${val} de 100 accesos tomados.` });
+      } else {
+        toast({ title: "Error", description: data.error || "No se pudo guardar", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Error de conexión", variant: "destructive" });
+    } finally {
+      setSavingSlots(false);
+    }
+  };
 
   if (user?.role !== "admin") {
     return (
@@ -122,7 +168,7 @@ export default function AdminDashboard() {
 
       <header className="bg-white sticky top-0 z-20 border-b border-border shadow-sm">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center gap-4">
-          <Link href="/">
+          <Link href="/dashboard">
             <Button variant="ghost" size="icon" className="rounded-full">
               <ArrowLeft className="w-5 h-5" />
             </Button>
@@ -145,6 +191,55 @@ export default function AdminDashboard() {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        {/* ── FOMO counter card ── */}
+        <div className="bg-white border border-border rounded-2xl p-6 shadow-sm mb-8">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center shrink-0">
+              <span className="text-xl">🔥</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-bold text-foreground mb-1">Contador de accesos gratuitos (Landing)</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Este número se muestra en la landing page como "X de 100 accesos tomados". Actualízalo manualmente cuando aprueben nuevos usuarios.
+              </p>
+
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={slotsInput}
+                    onChange={e => setSlotsInput(e.target.value)}
+                    className="w-24 h-10 border border-border rounded-xl px-3 text-center font-bold text-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                  />
+                </div>
+                <span className="text-muted-foreground text-sm font-medium">de 100</span>
+                <Button
+                  size="sm"
+                  className="gap-1.5 rounded-xl"
+                  onClick={handleSaveSlots}
+                  disabled={savingSlots}
+                >
+                  {savingSlots ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  Guardar
+                </Button>
+              </div>
+
+              {/* Mini progress bar */}
+              <div className="mt-3">
+                <div className="h-2 bg-gray-100 rounded-full overflow-hidden w-full max-w-xs">
+                  <div
+                    className="h-full bg-primary rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min((slotsUsed / 100) * 100, 100)}%` }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">{100 - slotsUsed} accesos disponibles</p>
+              </div>
+            </div>
+          </div>
+        </div>
         
         <Tabs defaultValue="all" onValueChange={setFilter} className="w-full">
           <TabsList className="mb-6 bg-white border border-border h-12 rounded-xl p-1 shadow-sm">

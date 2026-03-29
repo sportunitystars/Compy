@@ -34,7 +34,7 @@ export default function Register() {
   });
 
   useEffect(() => {
-    if (user) setLocation("/");
+    if (user) setLocation("/dashboard");
   }, [user]);
 
   const onSubmit = async (values: z.infer<typeof registerSchema>) => {

@@ -126,7 +126,7 @@ export default function CreateHabit() {
     <div className="min-h-screen bg-gray-50 pb-20">
       <header className="bg-white sticky top-0 z-10 border-b border-border/50">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-4">
-          <Link href="/">
+          <Link href="/dashboard">
             <Button variant="ghost" size="icon" className="rounded-full">
               <ArrowLeft className="w-5 h-5" />
             </Button>

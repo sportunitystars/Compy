@@ -45,8 +45,8 @@ export default function AuthCallback() {
       await queryClient.invalidateQueries({ queryKey: ["getMe"] });
 
       // Clean URL and redirect
-      window.history.replaceState({}, "", "/");
-      setLocation("/");
+      window.history.replaceState({}, "", "/dashboard");
+      setLocation("/dashboard");
     };
 
     // Small delay so Supabase JS can process the URL fragment

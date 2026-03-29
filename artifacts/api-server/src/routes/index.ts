@@ -5,6 +5,7 @@ import habitsRouter from "./habits";
 import adminRouter from "./admin";
 import pushRouter from "./push";
 import pinRouter from "./pin";
+import settingsRouter from "./settings";
 
 const router: IRouter = Router();
 
@@ -14,5 +15,6 @@ router.use(habitsRouter);
 router.use(adminRouter);
 router.use(pushRouter);
 router.use(pinRouter);
+router.use(settingsRouter);
 
 export default router;

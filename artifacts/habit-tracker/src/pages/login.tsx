@@ -31,7 +31,7 @@ export default function Login() {
   });
 
   useEffect(() => {
-    if (user) setLocation("/");
+    if (user) setLocation("/dashboard");
   }, [user]);
 
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {

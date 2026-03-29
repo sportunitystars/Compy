@@ -11,6 +11,7 @@ import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import AuthCallback from "@/pages/auth-callback";
+import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import CreateHabit from "@/pages/create-habit";
 import EditHabit from "@/pages/edit-habit";
@@ -48,11 +49,12 @@ function ProtectedRoute({ component: Component, ...rest }: any) {
 function Router() {
   return (
     <Switch>
+      <Route path="/" component={Landing} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/auth/callback" component={AuthCallback} />
 
-      <Route path="/" component={() => <ProtectedRoute component={Dashboard} />} />
+      <Route path="/dashboard" component={() => <ProtectedRoute component={Dashboard} />} />
       <Route path="/habits/new" component={() => <ProtectedRoute component={CreateHabit} />} />
       <Route path="/habits/:id/edit" component={() => <ProtectedRoute component={EditHabit} />} />
       <Route path="/habits/:id" component={() => <ProtectedRoute component={HabitDetail} />} />

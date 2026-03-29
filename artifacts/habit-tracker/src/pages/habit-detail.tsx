@@ -204,7 +204,7 @@ export default function HabitDetail() {
       <header className="bg-white sticky top-0 z-20 border-b border-border/50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
           <div className="flex items-center gap-2 sm:gap-4">
-            <Link href="/">
+            <Link href="/dashboard">
               <Button variant="ghost" size="sm" className="-ml-2 text-muted-foreground hover:text-foreground shrink-0">
                 <ArrowLeft className="w-4 h-4 sm:mr-1" />
                 <span className="hidden sm:inline">Volver</span>
