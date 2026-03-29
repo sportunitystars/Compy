@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Plus, CheckCircle2, ShieldCheck, LogOut, Trash2, Lock, Unlock } from "lucide-react";
+import { Plus, CheckCircle2, ShieldCheck, LogOut, Trash2, Lock, Unlock, MoreHorizontal } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import {
@@ -49,13 +49,63 @@ function applyOrder(habits: { id: string }[], order: string[]): { id: string }[]
   return [...sorted, ...rest];
 }
 
-function LockedCard() {
+function LockedCard({ onUnlock, onDelete }: { onUnlock: () => void; onDelete: () => void }) {
+  const [showMenu, setShowMenu] = useState(false);
+
   return (
-    <div className="rounded-3xl bg-gray-900 border border-gray-800 h-52 flex flex-col items-center justify-center gap-3 select-none">
-      <div className="w-12 h-12 rounded-2xl bg-gray-800 flex items-center justify-center">
-        <Lock className="w-6 h-6 text-gray-500" />
+    <div
+      className="relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 overflow-visible cursor-pointer"
+      onClick={onUnlock}
+    >
+      <div className="px-5 py-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Lock className="w-4.5 h-4.5 text-primary" />
+            </div>
+            <span className="text-sm font-semibold text-muted-foreground">Hábito privado</span>
+          </div>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
+            className="p-1.5 rounded-lg hover:bg-gray-100 text-muted-foreground transition-colors"
+          >
+            <MoreHorizontal className="w-4 h-4" />
+          </button>
+          {showMenu && (
+            <div
+              className="absolute right-2 top-12 bg-white border border-border rounded-xl shadow-lg z-20 py-1 w-40"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={() => { setShowMenu(false); onUnlock(); }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 text-foreground"
+              >
+                <Lock className="w-4 h-4" /> Desbloquear
+              </button>
+              <div className="border-t border-border my-1" />
+              <button
+                type="button"
+                onClick={() => { setShowMenu(false); onDelete(); }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-red-50 text-red-600"
+              >
+                <Trash2 className="w-4 h-4" /> Eliminar
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-col items-center justify-center py-8 gap-3">
+          <div className="w-16 h-16 rounded-2xl bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center">
+            <Lock className="w-7 h-7 text-gray-300" />
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-medium text-gray-400">Bloqueado</p>
+            <p className="text-xs text-gray-300 mt-0.5">Toca para ingresar PIN</p>
+          </div>
+        </div>
       </div>
-      <p className="text-gray-500 text-sm font-medium">Hábito privado</p>
     </div>
   );
 }
@@ -65,11 +115,13 @@ function SortableCard({
   isPrivate,
   isUnlocked,
   onDeleteClick,
+  onUnlockRequest,
 }: {
   habitId: string;
   isPrivate: boolean;
   isUnlocked: boolean;
   onDeleteClick: (id: string) => void;
+  onUnlockRequest: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: habitId });
@@ -82,8 +134,11 @@ function SortableCard({
 
   if (isPrivate && !isUnlocked) {
     return (
-      <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="touch-none cursor-grab active:cursor-grabbing">
-        <LockedCard />
+      <div ref={setNodeRef} style={style} {...attributes} className="touch-none">
+        <LockedCard
+          onUnlock={onUnlockRequest}
+          onDelete={() => onDeleteClick(habitId)}
+        />
       </div>
     );
   }
@@ -257,6 +312,7 @@ export default function Dashboard() {
                     isPrivate={(habit as any).isPrivate ?? false}
                     isUnlocked={isUnlocked}
                     onDeleteClick={setConfirmId}
+                    onUnlockRequest={() => setPinModalOpen(true)}
                   />
                 ))}
               </div>

@@ -101,6 +101,35 @@ export async function sendRejectionEmail(userEmail: string, userName: string): P
   }
 }
 
+export async function sendPinResetEmail(userEmail: string, userName: string, code: string): Promise<void> {
+  const transporter = getTransporter();
+  if (!transporter) return;
+
+  try {
+    await transporter.sendMail({
+      from: FROM,
+      to: userEmail,
+      subject: `${APP_NAME} — Código para restablecer tu PIN`,
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:40px 20px;">
+          <h2 style="color:#111;">Hola${userName ? `, ${userName}` : ""}</h2>
+          <p style="color:#444;line-height:1.7;">
+            Recibimos una solicitud para restablecer tu PIN de <strong>${APP_NAME}</strong>.
+            Usa el siguiente código (válido por 15 minutos):
+          </p>
+          <div style="text-align:center;margin:32px 0;">
+            <span style="font-size:36px;font-weight:bold;letter-spacing:12px;color:#4f46e5;background:#f0f0ff;padding:16px 24px;border-radius:12px;">${code}</span>
+          </div>
+          <p style="color:#888;font-size:13px;">Si no solicitaste este cambio, ignora este correo. Tu PIN actual permanece sin cambios.</p>
+        </div>
+      `,
+    });
+    logger.info({ userEmail }, "PIN reset email sent");
+  } catch (err) {
+    logger.error({ err }, "Failed to send PIN reset email");
+  }
+}
+
 export async function sendApprovalEmail(userEmail: string, userName: string): Promise<void> {
   const transporter = getTransporter();
   if (!transporter) return;
