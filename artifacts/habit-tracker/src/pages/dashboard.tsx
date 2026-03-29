@@ -324,24 +324,6 @@ export default function Dashboard() {
             </Link>
           </motion.div>
         ) : (
-          <>
-          {/* Mobile: horizontal scroll row */}
-          <div className="flex md:hidden overflow-x-auto gap-4 pb-4 -mx-4 px-4 snap-x snap-mandatory scrollbar-hide">
-            {orderedHabits.map((habit) => (
-              <div key={habit.id} className="shrink-0 w-[260px] snap-start">
-                {(habit as any).isPrivate && !isUnlocked ? (
-                  <LockedCard
-                    onUnlock={() => setPinModalOpen(true)}
-                    onDelete={() => setConfirmId(habit.id)}
-                  />
-                ) : (
-                  <HabitCard habitId={habit.id} onDeleteClick={setConfirmId} />
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Desktop: sortable grid */}
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -349,7 +331,7 @@ export default function Dashboard() {
             onDragEnd={handleDragEnd}
           >
             <SortableContext items={orderedIds} strategy={rectSortingStrategy}>
-              <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {orderedHabits.map((habit) => (
                   <SortableCard
                     key={habit.id}
@@ -366,14 +348,13 @@ export default function Dashboard() {
               {activeId ? (
                 <div className="rotate-2 scale-105 opacity-90 shadow-2xl rounded-3xl">
                   {(orderedHabits.find(h => h.id === activeId) as any)?.isPrivate && !isUnlocked
-                    ? <LockedCard />
+                    ? <LockedCard onUnlock={() => {}} onDelete={() => {}} />
                     : <HabitCard habitId={activeId} onDeleteClick={() => {}} />
                   }
                 </div>
               ) : null}
             </DragOverlay>
           </DndContext>
-          </>
         )}
       </main>
 
