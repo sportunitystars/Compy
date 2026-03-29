@@ -48,7 +48,7 @@ export default function CreateHabit() {
     resolver: zodResolver(createHabitSchema),
     defaultValues: {
       name: "",
-      emoji: "💧",
+      emoji: "",
       options: [
         { label: "Sí", color: "#22c55e", isPositive: true, isNegative: false, isExempt: false },
         { label: "No", color: "#ef4444", isPositive: false, isNegative: true, isExempt: false }
@@ -159,10 +159,10 @@ export default function CreateHabit() {
                               ))}
                             </div>
                           </div>
-                          <div className="px-3 py-2 bg-white border-t border-border flex items-center gap-2 min-h-[40px]">
+                          <div className="px-3 py-2.5 bg-white border-t border-border flex items-center gap-2 min-h-[44px]">
                             {field.value
-                              ? <><span className="text-2xl">{field.value}</span><span className="text-xs text-muted-foreground">Seleccionado</span></>
-                              : <span className="text-xs text-muted-foreground">Toca un ícono para seleccionar</span>
+                              ? <><span className="text-2xl">{field.value}</span><span className="text-sm font-medium text-foreground">Ícono seleccionado</span></>
+                              : <span className="text-sm text-muted-foreground italic">Selecciona el ícono de tu hábito...</span>
                             }
                           </div>
                         </div>
