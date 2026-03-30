@@ -221,7 +221,7 @@ export default function HabitDetail() {
     return calculateStreaks(habit.logs, habit.options);
   }, [habit]);
 
-  const today = useMemo(() => { const d = new Date(); d.setHours(0,0,0,0); return d; }, []);
+  const today = (() => { const d = new Date(); d.setHours(0,0,0,0); return d; })();
   const currentYear = today.getFullYear();
   const yearStart = new Date(currentYear, 0, 1);
   const totalYearDays = Math.floor((today.getTime() - yearStart.getTime()) / 86400000) + 1;
