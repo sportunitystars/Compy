@@ -221,10 +221,15 @@ export default function HabitDetail() {
     return calculateStreaks(habit.logs, habit.options);
   }, [habit]);
 
-  const today = (() => { const d = new Date(); d.setHours(0,0,0,0); return d; })();
+  const today = new Date();
   const currentYear = today.getFullYear();
-  const yearStart = new Date(currentYear, 0, 1);
-  const totalYearDays = Math.floor((today.getTime() - yearStart.getTime()) / 86400000) + 1;
+  // Use Date.UTC to avoid DST off-by-one: local midnight differences are not
+  // always exactly 86400000 ms when daylight saving time changes mid-year.
+  const totalYearDays =
+    Math.floor(
+      (Date.UTC(currentYear, today.getMonth(), today.getDate()) -
+       Date.UTC(currentYear, 0, 1)) / 86400000
+    ) + 1;
 
   const exemptYearCount = useMemo(() => {
     if (!habit) return 0;

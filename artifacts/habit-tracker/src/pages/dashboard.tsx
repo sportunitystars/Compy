@@ -191,12 +191,15 @@ export default function Dashboard() {
   const [pinModalOpen, setPinModalOpen] = useState(false);
   const [pinTargetId, setPinTargetId] = useState<string | null>(null);
 
-  // Year progress
+  // Year progress — use Date.UTC to avoid DST off-by-one errors
   const now = new Date();
-  const yearStart = new Date(now.getFullYear(), 0, 1);
-  const yearEnd = new Date(now.getFullYear(), 11, 31);
-  const totalDaysInYear = Math.floor((yearEnd.getTime() - yearStart.getTime()) / 86400000) + 1;
-  const daysElapsed = Math.floor((now.getTime() - yearStart.getTime()) / 86400000) + 1;
+  const nowYear = now.getFullYear();
+  const totalDaysInYear =
+    Math.floor((Date.UTC(nowYear, 11, 31) - Date.UTC(nowYear, 0, 1)) / 86400000) + 1;
+  const daysElapsed =
+    Math.floor(
+      (Date.UTC(nowYear, now.getMonth(), now.getDate()) - Date.UTC(nowYear, 0, 1)) / 86400000
+    ) + 1;
   const yearProgress = Math.round((daysElapsed / totalDaysInYear) * 100);
 
   // Number private habits by creation order in the list
