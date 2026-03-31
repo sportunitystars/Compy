@@ -90,14 +90,14 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-white to-pink-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
         className="w-full max-w-md"
       >
-        <div className="bg-white rounded-3xl shadow-xl shadow-purple-100/50 p-8 border border-purple-50">
+        <div className="bg-white rounded-2xl p-8 border-2 border-gray-900" style={{ boxShadow: "6px 6px 0 0 #1e293b" }}>
           <div className="flex flex-col items-center mb-8">
             <div className="h-16 w-16 bg-gradient-to-br from-primary to-pink-500 rounded-2xl flex items-center justify-center shadow-lg shadow-primary/25 -rotate-3 mb-3">
               <CheckCircle2 className="w-8 h-8 text-white rotate-3" />

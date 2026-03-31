@@ -50,16 +50,16 @@
 }
 
 :root {
-  --background: 210 40% 98%;
+  --background: 210 30% 96%;
   --foreground: 222 47% 11%;
   
   --card: 0 0% 100%;
   --card-foreground: 222 47% 11%;
-  --card-border: 214 32% 91%;
+  --card-border: 214 32% 85%;
   
   --popover: 0 0% 100%;
   --popover-foreground: 222 47% 11%;
-  --popover-border: 214 32% 91%;
+  --popover-border: 214 32% 85%;
   
   --primary: 262 83% 58%;
   --primary-foreground: 210 40% 98%;
@@ -76,8 +76,8 @@
   --destructive: 0 84% 60%;
   --destructive-foreground: 210 40% 98%;
   
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
+  --border: 214 32% 85%;
+  --input: 214 32% 85%;
   --ring: 262 83% 58%;
   
   --radius: 1rem;
@@ -94,6 +94,29 @@
     font-family: var(--font-display);
     @apply font-bold tracking-tight;
   }
+}
+
+/* Bold outlined card utility */
+.card-bold {
+  background: white;
+  border: 2px solid #1e293b;
+  box-shadow: 4px 4px 0 0 #1e293b;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+.card-bold:hover {
+  box-shadow: 6px 6px 0 0 #1e293b;
+  transform: translate(-1px, -1px);
+}
+
+.card-bold-sm {
+  background: white;
+  border: 2px solid #1e293b;
+  box-shadow: 3px 3px 0 0 #1e293b;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+.card-bold-sm:hover {
+  box-shadow: 5px 5px 0 0 #1e293b;
+  transform: translate(-1px, -1px);
 }
 
 /* Hide scrollbar utility */

@@ -110,14 +110,14 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="w-full max-w-md"
       >
-        <div className="bg-white rounded-3xl shadow-xl shadow-indigo-100/50 p-8 border border-indigo-50">
+        <div className="bg-white rounded-2xl p-8 border-2 border-gray-900" style={{ boxShadow: '6px 6px 0 0 #1e293b' }}>
 
           {/* Logo */}
           <div className="flex flex-col items-center mb-8">

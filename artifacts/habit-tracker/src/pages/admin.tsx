@@ -82,7 +82,7 @@ export default function AdminDashboard() {
 
   if (user?.role !== "admin") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <p className="text-red-500 font-bold">Acceso Denegado</p>
       </div>
     );
@@ -137,7 +137,7 @@ export default function AdminDashboard() {
   const filteredUsers = users?.filter(u => filter === "all" || u.status === filter) || [];
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-background pb-20">
 
       {/* Confirm delete modal */}
       {confirmDelete && (

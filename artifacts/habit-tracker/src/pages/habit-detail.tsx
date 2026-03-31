@@ -241,7 +241,7 @@ export default function HabitDetail() {
 
   if (isLoading || !habit) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -250,7 +250,7 @@ export default function HabitDetail() {
   const selectionActive = selectMonth !== null;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-background pb-20">
       <header className="bg-white sticky top-0 z-20 border-b border-border/50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
           <div className="flex items-center gap-2 sm:gap-4">

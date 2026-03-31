@@ -80,7 +80,7 @@ function LockedCard({ onUnlock, onDelete, habitNumber }: { onUnlock: () => void;
 
   return (
     <div
-      className="relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 overflow-visible cursor-pointer"
+      className="relative bg-white rounded-2xl border-2 border-gray-900 overflow-visible cursor-pointer" style={{ boxShadow: '4px 4px 0 0 #1e293b' }}
       onClick={onUnlock}
     >
       <div className="px-5 pt-4 pb-4 pr-8 sm:pr-5 sm:pl-8">
@@ -288,7 +288,7 @@ export default function Dashboard() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-background p-6 flex flex-col items-center justify-center">
         <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
         <p className="mt-4 text-muted-foreground font-medium animate-pulse">Cargando tus hábitos...</p>
       </div>
@@ -300,8 +300,8 @@ export default function Dashboard() {
   const orderedHabits = habits ? applyOrder(habits, orderedIds) : [];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white sticky top-0 z-10 border-b border-border/50 shadow-sm">
+    <div className="min-h-screen bg-background">
+      <header className="bg-white sticky top-0 z-10 border-b-2 border-gray-900/10 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
@@ -430,7 +430,7 @@ export default function Dashboard() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-3xl p-12 text-center border border-border shadow-sm"
+            className="bg-white rounded-2xl p-12 text-center border-2 border-gray-900" style={{ boxShadow: '4px 4px 0 0 #1e293b' }}
           >
             <div className="w-20 h-20 bg-indigo-50 text-primary rounded-full flex items-center justify-center mx-auto mb-6">
               <Plus className="w-10 h-10" />

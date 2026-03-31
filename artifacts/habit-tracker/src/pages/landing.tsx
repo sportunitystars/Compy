@@ -30,29 +30,25 @@ const FEATURES = [
     emoji: "🎨",
     title: "Hábitos a tu medida",
     desc: "Crea hábitos con opciones de color y nombres propios. ¿Corriste o caminaste? ¡Tú decides cómo registrarlo!",
-    bg: "bg-violet-50",
-    border: "border-violet-100",
+    iconBg: "bg-violet-500",
   },
   {
     emoji: "🔒",
     title: "Hábitos privados",
     desc: "Protege con PIN los hábitos que son solo tuyos. Nadie más puede verlos aunque compartas la pantalla.",
-    bg: "bg-rose-50",
-    border: "border-rose-100",
+    iconBg: "bg-rose-500",
   },
   {
     emoji: "🔥",
     title: "Rachas motivadoras",
     desc: "Cada día que registras suma a tu racha. Visualiza tu progreso del mes de un vistazo y mantén el impulso.",
-    bg: "bg-orange-50",
-    border: "border-orange-100",
+    iconBg: "bg-orange-500",
   },
   {
     emoji: "🔔",
     title: "Notificaciones push",
     desc: "Recibe recordatorios para no olvidar ningún día. Las notificaciones llegan aunque la app esté cerrada.",
-    bg: "bg-blue-50",
-    border: "border-blue-100",
+    iconBg: "bg-blue-500",
   },
 ];
 
@@ -81,10 +77,10 @@ export default function Landing() {
   const pct = Math.min((freeSlotsUsed / TOTAL_SLOTS) * 100, 100);
 
   return (
-    <div className="min-h-screen bg-white [overflow-x:clip]">
+    <div className="min-h-screen bg-background [overflow-x:clip]">
 
       {/* ── NAV ── */}
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b-2 border-gray-900/10">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <button
             type="button"
@@ -104,7 +100,7 @@ export default function Landing() {
               <Button
                 size="sm"
                 variant="outline"
-                className="rounded-full px-4 gap-1.5 cursor-pointer"
+                className="rounded-full px-4 gap-1.5 cursor-pointer border-2 border-gray-900 hover:bg-gray-50"
                 onClick={() => setLocation("/dashboard")}
               >
                 Mi dashboard <ArrowRight className="w-3.5 h-3.5" />
@@ -121,7 +117,7 @@ export default function Landing() {
           ) : (
             <Button
               size="sm"
-              className="rounded-full px-5 gap-1.5 cursor-pointer"
+              className="rounded-full px-5 gap-1.5 cursor-pointer font-semibold"
               onClick={() => setLocation("/login")}
             >
               Entrar <ArrowRight className="w-3.5 h-3.5" />
@@ -132,7 +128,7 @@ export default function Landing() {
 
       {/* ── HERO ── */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-violet-50 via-white to-indigo-50 -z-10" />
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-50 via-background to-indigo-50 -z-10" />
         <div className="absolute top-20 right-10 w-72 h-72 bg-violet-200 rounded-full opacity-20 blur-3xl -z-10" />
         <div className="absolute bottom-10 left-10 w-48 h-48 bg-indigo-200 rounded-full opacity-20 blur-3xl -z-10" />
 
@@ -142,7 +138,7 @@ export default function Landing() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <span className="inline-flex items-center gap-2 bg-primary/10 text-primary text-sm font-semibold px-4 py-1.5 rounded-full mb-6">
+            <span className="inline-flex items-center gap-2 bg-primary/10 text-primary text-sm font-semibold px-4 py-1.5 rounded-full mb-6 border border-primary/20">
               🎉 ¡Primeras 100 cuentas son gratis!
             </span>
             <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight text-gray-900 leading-[1.1] mb-6">
@@ -158,7 +154,7 @@ export default function Landing() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Button
                 size="lg"
-                className="rounded-2xl px-8 h-14 text-base gap-2 shadow-lg shadow-primary/30 hover:shadow-primary/40 transition-shadow cursor-pointer"
+                className="rounded-2xl px-8 h-14 text-base gap-2 font-bold shadow-lg shadow-primary/30 hover:shadow-primary/40 transition-shadow cursor-pointer"
                 onClick={() => setLocation("/login")}
               >
                 Quiero mi acceso gratis <ArrowRight className="w-5 h-5" />
@@ -179,7 +175,7 @@ export default function Landing() {
               { emoji: "📚", name: "Leer", tags: ["Sí · 85%", "No · 15%"], color: "bg-emerald-100 text-emerald-700", color2: "bg-rose-100 text-rose-700" },
               { emoji: "💧", name: "Agua", tags: ["Completé · 90%", "Parcial · 10%"], color: "bg-cyan-100 text-cyan-700", color2: "bg-orange-100 text-orange-700" },
             ].map((card, i) => (
-              <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-md px-5 py-4 w-52 text-center sm:text-left">
+              <div key={i} className="card-bold rounded-2xl px-5 py-4 w-52 text-center sm:text-left">
                 <div className="flex items-center gap-2 mb-3 justify-center sm:justify-start">
                   <span className="text-2xl">{card.emoji}</span>
                   <span className="font-bold text-sm">{card.name}</span>
@@ -198,7 +194,7 @@ export default function Landing() {
       </section>
 
       {/* ── CÓMO FUNCIONA ── */}
-      <section className="py-24 bg-gray-50">
+      <section className="py-24 bg-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-14">
             <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-3">
@@ -207,7 +203,7 @@ export default function Landing() {
             <p className="text-gray-500 text-lg">Sin curva de aprendizaje. Empiezas en 2 minutos.</p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-6">
             {STEPS.map((step, i) => (
               <motion.div
                 key={i}
@@ -215,7 +211,7 @@ export default function Landing() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="relative bg-white rounded-3xl p-7 pt-10 md:pt-7 border border-gray-100 shadow-sm flex flex-col items-center text-center md:items-start md:text-left"
+                className="card-bold rounded-2xl p-7 pt-10 md:pt-7 relative flex flex-col items-center text-center md:items-start md:text-left"
               >
                 <span className="absolute -top-4 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:-top-3 md:-left-3 w-9 h-9 bg-primary text-white text-sm font-black rounded-xl flex items-center justify-center shadow-md">
                   {step.num}
@@ -230,7 +226,7 @@ export default function Landing() {
       </section>
 
       {/* ── FEATURES ── */}
-      <section className="py-24">
+      <section className="py-24 bg-background">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-14">
             <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-3">
@@ -247,11 +243,13 @@ export default function Landing() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.08 }}
-                className={`${f.bg} border ${f.border} rounded-3xl p-7 flex flex-col items-center text-center sm:items-start sm:text-left`}
+                className="card-bold rounded-2xl p-7 flex flex-col items-center text-center sm:items-start sm:text-left"
               >
-                <span className="text-4xl mb-4 block">{f.emoji}</span>
+                <div className={`w-12 h-12 ${f.iconBg} rounded-full flex items-center justify-center mb-4 shrink-0`}>
+                  <span className="text-2xl leading-none">{f.emoji}</span>
+                </div>
                 <h3 className="font-bold text-lg text-gray-900 mb-2">{f.title}</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">{f.desc}</p>
+                <p className="text-gray-500 text-sm leading-relaxed">{f.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -264,9 +262,9 @@ export default function Landing() {
               { icon: <Lock className="w-5 h-5" />, label: "Hábitos privados con PIN" },
               { icon: <Bell className="w-5 h-5" />, label: "Recordatorios push" },
             ].map((item, i) => (
-              <div key={i} className="flex items-center gap-2.5 bg-gray-50 rounded-2xl px-4 py-3 border border-gray-100">
+              <div key={i} className="flex items-center gap-2.5 bg-white rounded-xl px-4 py-3 border-2 border-gray-900 shadow-[2px_2px_0_0_#1e293b]">
                 <span className="text-primary shrink-0">{item.icon}</span>
-                <span className="text-sm font-medium text-gray-700">{item.label}</span>
+                <span className="text-sm font-semibold text-gray-700">{item.label}</span>
               </div>
             ))}
           </div>
@@ -291,7 +289,7 @@ export default function Landing() {
             </p>
 
             {/* Progress bar */}
-            <div className="bg-white/20 rounded-2xl p-6 mb-8 backdrop-blur-sm">
+            <div className="bg-white/20 rounded-2xl p-6 mb-8 backdrop-blur-sm border-2 border-white/30">
               <div className="flex justify-between text-sm font-semibold mb-3">
                 <span>
                   <strong className="text-2xl text-white">{freeSlotsUsed}</strong>{" "}

@@ -124,7 +124,7 @@ export default function CreateHabit() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-background pb-20">
       <header className="bg-white sticky top-0 z-10 border-b border-border/50">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-4">
           <Link href="/dashboard">
@@ -140,7 +140,7 @@ export default function CreateHabit() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-border">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-2xl p-6 sm:p-8 border-2 border-gray-900" style={{ boxShadow: "3px 3px 0 0 #1e293b" }}>
               <h2 className="text-lg font-bold mb-6">Información Básica</h2>
               
               <div className="space-y-6">
@@ -203,7 +203,7 @@ export default function CreateHabit() {
               </div>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-border">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white rounded-2xl p-6 sm:p-8 border-2 border-gray-900" style={{ boxShadow: "3px 3px 0 0 #1e293b" }}>
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className="text-lg font-bold">Opciones de Registro</h2>
@@ -339,7 +339,7 @@ export default function CreateHabit() {
               </div>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-border">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white rounded-2xl p-6 sm:p-8 border-2 border-gray-900" style={{ boxShadow: "3px 3px 0 0 #1e293b" }}>
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-bold">Privacidad</h2>

@@ -16,11 +16,11 @@ export function PendingScreen() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="max-w-md w-full bg-white rounded-3xl p-8 text-center shadow-xl shadow-black/5"
+        className="max-w-md w-full bg-white rounded-2xl p-8 text-center border-2 border-gray-900" style={{ boxShadow: "5px 5px 0 0 #1e293b" }}
       >
         <img 
           src={`${import.meta.env.BASE_URL}images/pending-illustration.png`} 
@@ -43,11 +43,11 @@ export function RejectedScreen() {
   const { logout } = useAuth();
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="max-w-md w-full bg-white rounded-3xl p-8 text-center shadow-xl shadow-black/5"
+        className="max-w-md w-full bg-white rounded-2xl p-8 text-center border-2 border-gray-900" style={{ boxShadow: "5px 5px 0 0 #1e293b" }}
       >
         <img 
           src={`${import.meta.env.BASE_URL}images/rejected-illustration.png`} 

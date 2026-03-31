@@ -167,7 +167,7 @@ export function HabitCard({ habitId, onDeleteClick }: HabitCardProps) {
 
   if (isLoading || !habit) {
     return (
-      <div className="bg-white rounded-2xl p-6 border border-border h-40 animate-pulse">
+      <div className="bg-white rounded-2xl p-6 border-2 border-gray-200 h-40 animate-pulse">
         <div className="h-4 bg-gray-100 rounded w-1/2 mb-3" />
         <div className="h-3 bg-gray-100 rounded w-1/3" />
       </div>
@@ -190,7 +190,7 @@ export function HabitCard({ habitId, onDeleteClick }: HabitCardProps) {
   const isCurrentMonth = selectedMonth === now.getMonth() && selectedYear === now.getFullYear();
 
   return (
-    <div className="relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
+    <div className="relative bg-white rounded-2xl border-2 border-gray-900 overflow-hidden" style={{ boxShadow: '4px 4px 0 0 #1e293b' }}>
 
       <div
         className="block px-5 pt-4 pb-4 pr-8 sm:pr-5 sm:pl-8 cursor-pointer"
