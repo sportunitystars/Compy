@@ -395,7 +395,8 @@ export default function EditHabit() {
                 type="submit"
                 size="lg"
                 disabled={updateMutation.isPending}
-                className="w-full sm:w-auto px-10 h-14 rounded-xl text-lg shadow-lg shadow-primary/25"
+                className="w-full sm:w-auto px-10 h-14 rounded-full text-lg font-bold border-2 border-gray-900"
+                style={{ boxShadow: '4px 4px 0 0 #1e293b' }}
               >
                 {updateMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : "Guardar Cambios"}
               </Button>
