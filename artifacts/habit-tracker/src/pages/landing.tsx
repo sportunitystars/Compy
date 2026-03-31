@@ -117,7 +117,8 @@ export default function Landing() {
           ) : (
             <Button
               size="sm"
-              className="rounded-full px-5 gap-1.5 cursor-pointer font-semibold"
+              className="rounded-full px-5 gap-1.5 cursor-pointer font-semibold border-2 border-gray-900"
+              style={{ boxShadow: '2px 2px 0 0 #1e293b' }}
               onClick={() => setLocation("/login")}
             >
               Entrar <ArrowRight className="w-3.5 h-3.5" />
@@ -154,7 +155,8 @@ export default function Landing() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Button
                 size="lg"
-                className="rounded-2xl px-8 h-14 text-base gap-2 font-bold shadow-lg shadow-primary/30 hover:shadow-primary/40 transition-shadow cursor-pointer"
+                className="rounded-full px-8 h-14 text-base gap-2 font-bold cursor-pointer border-2 border-gray-900"
+                style={{ boxShadow: '4px 4px 0 0 #1e293b' }}
                 onClick={() => setLocation("/login")}
               >
                 Quiero mi acceso gratis <ArrowRight className="w-5 h-5" />
@@ -323,7 +325,8 @@ export default function Landing() {
             <Button
               size="lg"
               variant="secondary"
-              className="rounded-2xl px-10 h-14 text-base font-bold gap-2 shadow-xl hover:shadow-2xl transition-shadow cursor-pointer"
+              className="rounded-full px-10 h-14 text-base font-bold gap-2 cursor-pointer border-2 border-gray-900 bg-white text-gray-900 hover:bg-gray-50"
+              style={{ boxShadow: '4px 4px 0 0 #1e293b' }}
               onClick={() => setLocation("/login")}
             >
               Asegurar mi lugar gratis <ArrowRight className="w-5 h-5" />

@@ -219,7 +219,8 @@ export default function Login() {
                     )} />
 
                     <Button type="submit" disabled={loading}
-                      className="w-full h-12 rounded-xl font-semibold text-lg transition-all shadow-md shadow-primary/25 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer">
+                      className="w-full h-12 rounded-full font-semibold text-lg cursor-pointer border-2 border-gray-900"
+                      style={{ boxShadow: '3px 3px 0 0 #1e293b' }}>
                       {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Entrar <ArrowRight className="w-5 h-5 ml-2" /></>}
                     </Button>
                   </form>
@@ -275,7 +276,8 @@ export default function Login() {
                         )} />
 
                         <Button type="submit" disabled={resetLoading}
-                          className="w-full h-12 rounded-xl font-semibold text-base gap-2 cursor-pointer">
+                          className="w-full h-12 rounded-full font-semibold text-base gap-2 cursor-pointer border-2 border-gray-900"
+                          style={{ boxShadow: '3px 3px 0 0 #1e293b' }}>
                           {resetLoading
                             ? <Loader2 className="w-5 h-5 animate-spin" />
                             : <><Mail className="w-5 h-5" /> Enviar enlace</>

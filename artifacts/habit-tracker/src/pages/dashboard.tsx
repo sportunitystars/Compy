@@ -368,9 +368,9 @@ export default function Dashboard() {
                 <span className="text-[11px] font-bold text-muted-foreground tracking-wider uppercase">{now.getFullYear()}</span>
                 <span className="text-[11px] font-bold text-primary">{yearProgress}%</span>
               </div>
-              <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+              <div className="h-3.5 rounded-full bg-gray-200 overflow-hidden border border-gray-300">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-primary to-purple-400 transition-all duration-700"
+                  className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70 transition-all duration-700"
                   style={{ width: `${yearProgress}%` }}
                 />
               </div>
@@ -396,9 +396,9 @@ export default function Dashboard() {
                 <span className="text-[11px] font-bold text-muted-foreground tracking-wider uppercase">{now.getFullYear()}</span>
                 <span className="text-[11px] font-bold text-primary">{yearProgress}%</span>
               </div>
-              <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+              <div className="h-3.5 rounded-full bg-gray-200 overflow-hidden border border-gray-300">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-primary to-purple-400 transition-all duration-700"
+                  className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70 transition-all duration-700"
                   style={{ width: `${yearProgress}%` }}
                 />
               </div>
@@ -407,7 +407,7 @@ export default function Dashboard() {
             {/* Nuevo Hábito — right */}
             <div className="ml-auto">
               <Link href="/habits/new">
-                <Button className="rounded-xl h-12 px-6 shadow-md shadow-primary/20 hover:shadow-lg hover:-translate-y-0.5 transition-all text-base">
+                <Button className="rounded-full h-12 px-6 transition-all text-base font-bold border-2 border-gray-900" style={{ boxShadow: "3px 3px 0 0 #1e293b" }}>
                   <Plus className="w-5 h-5 mr-2" />
                   Nuevo Hábito
                 </Button>
@@ -440,7 +440,7 @@ export default function Dashboard() {
               Comienza a construir una mejor versión de ti mismo creando tu primer hábito a seguir.
             </p>
             <Link href="/habits/new">
-              <Button size="lg" className="rounded-xl h-14 px-8 text-lg">Crear mi primer hábito</Button>
+              <Button size="lg" className="rounded-full h-14 px-8 text-lg font-bold border-2 border-gray-900" style={{ boxShadow: "3px 3px 0 0 #1e293b" }}>Crear mi primer hábito</Button>
             </Link>
           </motion.div>
         ) : (

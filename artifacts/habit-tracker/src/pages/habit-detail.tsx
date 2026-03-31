@@ -286,9 +286,9 @@ export default function HabitDetail() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
 
         {/* YEARLY SUMMARY TOGGLE */}
-        <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl overflow-hidden border-2 border-gray-900" style={{ boxShadow: '4px 4px 0 0 #1e293b' }}>
           <button
-            className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50/80 transition-colors"
+            className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50/50 transition-colors"
             onClick={() => setShowSummary(!showSummary)}
           >
             <div className="flex items-baseline gap-2">
@@ -374,7 +374,7 @@ export default function HabitDetail() {
               if (!title) return null;
 
               return (
-                <div key={idx} className="rounded-2xl px-4 py-3" style={{ backgroundColor: `${opt.color}12`, border: `1px solid ${opt.color}28` }}>
+                <div key={idx} className="rounded-2xl px-4 py-3" style={{ backgroundColor: `${opt.color}15`, border: `2px solid ${opt.color}60`, boxShadow: `3px 3px 0 0 ${opt.color}40` }}>
                   <p className="font-bold text-sm leading-snug" style={{ color: opt.color }}>{title}</p>
                   <p className="text-xs mt-0.5 text-muted-foreground">{sub}</p>
                 </div>
@@ -510,8 +510,11 @@ function MonthBlock({ month, year, habit, onLog, onClear, isSelectMode, selected
 
   return (
     <div
-      className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border flex flex-col transition-all duration-200"
-      style={{ borderColor: isSelectMode ? 'rgb(124 58 237 / 0.4)' : undefined }}
+      className="bg-white rounded-2xl p-4 sm:p-5 flex flex-col border-2 transition-all duration-200"
+      style={{
+        borderColor: isSelectMode ? 'rgb(124 58 237 / 0.8)' : '#1e293b',
+        boxShadow: isSelectMode ? '4px 4px 0 0 rgb(124 58 237 / 0.5)' : '4px 4px 0 0 #1e293b',
+      }}
     >
       {/* Month header */}
       <div className="flex justify-between items-center mb-3 gap-2">
@@ -570,7 +573,7 @@ function MonthBlock({ month, year, habit, onLog, onClear, isSelectMode, selected
 
           if (isFuture) {
             return (
-              <div key={i} className="aspect-square rounded-md bg-gray-50/50 flex items-center justify-center text-gray-300 text-xs cursor-not-allowed">
+              <div key={i} className="aspect-square rounded-full bg-gray-100 flex items-center justify-center text-gray-300 text-xs cursor-not-allowed">
                 {i + 1}
               </div>
             );
@@ -582,7 +585,7 @@ function MonthBlock({ month, year, habit, onLog, onClear, isSelectMode, selected
                 key={i}
                 title={dateStr}
                 onClick={() => onToggleDate(dateStr)}
-                className="aspect-square min-h-[2rem] rounded-md flex flex-col items-center justify-center text-xs font-medium transition-all active:scale-90 relative"
+                className="aspect-square min-h-[2rem] rounded-full flex flex-col items-center justify-center text-xs font-medium transition-all active:scale-90 relative"
                 style={isExemptDay ? {
                   backgroundColor: isSelected ? `${opt!.color}40` : `${opt!.color}18`,
                   color: opt!.color,
@@ -628,7 +631,7 @@ function MonthBlock({ month, year, habit, onLog, onClear, isSelectMode, selected
                   }
                 }
               }}
-              className="aspect-square min-h-[2rem] rounded-md flex flex-col items-center justify-center text-xs font-medium transition-all hover:scale-110 active:scale-90 shadow-sm"
+              className="aspect-square min-h-[2rem] rounded-full flex flex-col items-center justify-center text-xs font-bold transition-all hover:scale-110 active:scale-90"
               style={isExemptDay ? {
                 backgroundColor: `${opt!.color}18`,
                 color: opt!.color,

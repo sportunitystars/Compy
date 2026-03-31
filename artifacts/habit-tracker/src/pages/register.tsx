@@ -163,7 +163,8 @@ export default function Register() {
               )} />
 
               <Button type="submit" disabled={loading}
-                className="w-full h-12 mt-2 rounded-xl font-semibold text-lg transition-all shadow-md shadow-primary/25 hover:shadow-lg hover:-translate-y-0.5">
+                className="w-full h-12 mt-2 rounded-full font-semibold text-lg border-2 border-gray-900"
+                style={{ boxShadow: '3px 3px 0 0 #1e293b' }}>
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><UserPlus className="w-5 h-5 mr-2" />Registrarse</>}
               </Button>
             </form>
