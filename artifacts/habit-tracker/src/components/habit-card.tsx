@@ -192,7 +192,10 @@ export function HabitCard({ habitId, onDeleteClick }: HabitCardProps) {
   return (
     <div className="relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
 
-      <a href={`/habits/${habit.id}`} className="block px-5 pt-4 pb-4 pr-8 sm:pr-5 sm:pl-8">
+      <div
+        className="block px-5 pt-4 pb-4 pr-8 sm:pr-5 sm:pl-8 cursor-pointer"
+        onClick={() => navigate(`/habits/${habit.id}`)}
+      >
 
         {/* Row 1: emoji + name (with dropdown) + month picker */}
         <div className="flex items-center justify-between gap-2 mb-3">
@@ -372,7 +375,7 @@ export function HabitCard({ habitId, onDeleteClick }: HabitCardProps) {
           </div>
         )}
 
-      </a>
+      </div>
     </div>
   );
 }

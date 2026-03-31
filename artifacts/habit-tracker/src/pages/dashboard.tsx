@@ -242,6 +242,11 @@ export default function Dashboard() {
     return map;
   }, [habits]);
 
+  // Force-invalidate all habit queries on every mount so data is always fresh
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ["/api/habits"] });
+  }, []);
+
   useEffect(() => {
     if (!habits) return;
     (async () => {
