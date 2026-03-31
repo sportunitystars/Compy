@@ -81,7 +81,7 @@ export default function Landing() {
   const pct = Math.min((freeSlotsUsed / TOTAL_SLOTS) * 100, 100);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white [overflow-x:clip]">
 
       {/* ── NAV ── */}
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
