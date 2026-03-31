@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { CheckCircle2, ArrowRight, Lock, Bell, BarChart2, GripVertical } from "lucide-react";
+import { CheckCircle2, ArrowRight, Lock, Bell, BarChart2, GripVertical, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
@@ -63,7 +63,7 @@ const STEPS = [
 ];
 
 export default function Landing() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, logout } = useAuth();
   const [, setLocation] = useLocation();
   const { data: settingsData } = useQuery({
     queryKey: ["public-settings"],
@@ -77,17 +77,11 @@ export default function Landing() {
 
   const freeSlotsUsed = settingsData?.freeSlotsUsed ?? 10;
 
-  useEffect(() => {
-    if (!isLoading && user) {
-      setLocation("/dashboard");
-    }
-  }, [user, isLoading]);
-
   const remaining = TOTAL_SLOTS - freeSlotsUsed;
   const pct = Math.min((freeSlotsUsed / TOTAL_SLOTS) * 100, 100);
 
   return (
-    <div className="min-h-screen bg-white overflow-x-hidden">
+    <div className="min-h-screen bg-white">
 
       {/* ── NAV ── */}
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
@@ -102,13 +96,37 @@ export default function Landing() {
             </div>
             <span className="font-bold text-xl tracking-tight">Compy</span>
           </button>
-          <Button
-            size="sm"
-            className="rounded-full px-5 gap-1.5 cursor-pointer"
-            onClick={() => setLocation("/login")}
-          >
-            Entrar <ArrowRight className="w-3.5 h-3.5" />
-          </Button>
+          {!isLoading && user ? (
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-gray-700 hidden sm:block">
+                Hola, {user.name.split(" ")[0]}
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="rounded-full px-4 gap-1.5 cursor-pointer"
+                onClick={() => setLocation("/dashboard")}
+              >
+                Mi dashboard <ArrowRight className="w-3.5 h-3.5" />
+              </Button>
+              <button
+                type="button"
+                onClick={logout}
+                title="Cerrar sesión"
+                className="p-2 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <Button
+              size="sm"
+              className="rounded-full px-5 gap-1.5 cursor-pointer"
+              onClick={() => setLocation("/login")}
+            >
+              Entrar <ArrowRight className="w-3.5 h-3.5" />
+            </Button>
+          )}
         </div>
       </nav>
 

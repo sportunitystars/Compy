@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -34,13 +34,39 @@ import { PinModal } from "@/components/pin-modal";
 
 const ORDER_STORAGE_KEY = "compy_habit_order";
 
-function loadOrder(): string[] {
+function loadOrderFromStorage(): string[] {
   try { return JSON.parse(localStorage.getItem(ORDER_STORAGE_KEY) ?? "[]"); }
   catch { return []; }
 }
-function saveOrder(ids: string[]) {
+function saveOrderToStorage(ids: string[]) {
   localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(ids));
 }
+
+const BASE_URL = import.meta.env.BASE_URL ?? "/";
+function getApiUrl(path: string) {
+  const base = BASE_URL.endsWith("/") ? BASE_URL.slice(0, -1) : BASE_URL;
+  return `${base}/api${path}`;
+}
+
+async function fetchOrderFromServer(): Promise<string[]> {
+  try {
+    const res = await fetch(getApiUrl("/habits/order"));
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data.order) ? data.order : [];
+  } catch { return []; }
+}
+
+async function saveOrderToServer(ids: string[]): Promise<void> {
+  try {
+    await fetch(getApiUrl("/habits/order"), {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ order: ids }),
+    });
+  } catch { }
+}
+
 function applyOrder(habits: { id: string }[], order: string[]): { id: string }[] {
   if (!order.length) return habits;
   const map = new Map(habits.map(h => [h.id, h]));
@@ -181,6 +207,7 @@ function SortableCard({
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
+  const [, setLocation] = useLocation();
   const { isHabitUnlocked, unlockHabit, lockAll } = usePinContext();
   const { data: habits, isLoading } = useListHabits();
   const queryClient = useQueryClient();
@@ -216,11 +243,13 @@ export default function Dashboard() {
   }, [habits]);
 
   useEffect(() => {
-    if (habits) {
-      const saved = loadOrder();
-      const ordered = applyOrder(habits, saved);
+    if (!habits) return;
+    (async () => {
+      const serverOrder = await fetchOrderFromServer();
+      const order = serverOrder.length ? serverOrder : loadOrderFromStorage();
+      const ordered = applyOrder(habits, order);
       setOrderedIds(ordered.map(h => h.id));
-    }
+    })();
   }, [habits]);
 
   const sensors = useSensors(
@@ -240,7 +269,8 @@ export default function Dashboard() {
       const oldIdx = prev.indexOf(active.id as string);
       const newIdx = prev.indexOf(over.id as string);
       const next = arrayMove(prev, oldIdx, newIdx);
-      saveOrder(next);
+      saveOrderToStorage(next);
+      saveOrderToServer(next);
       return next;
     });
   }, []);
@@ -268,8 +298,19 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white sticky top-0 z-10 border-b border-border/50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-6 h-6 text-primary" />
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setLocation("/")}
+              className="flex items-center gap-1.5 cursor-pointer text-primary hover:opacity-75 transition-opacity"
+              title="Volver al inicio"
+            >
+              <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center shadow-sm">
+                <CheckCircle2 className="w-4 h-4 text-white" />
+              </div>
+              <span className="font-bold text-sm tracking-tight hidden sm:block">Compy</span>
+            </button>
+            <span className="text-border/50">|</span>
             <span className="font-display font-bold text-xl tracking-tight">Mis Hábitos</span>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
@@ -302,22 +343,22 @@ export default function Dashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        {/* Desktop: three-column row (title | bar | button). Mobile: title+bar row, then button */}
+        {/* Desktop: three-column grid (title | bar | button). Mobile: title+bar row, then button */}
         <div className="mb-8">
-          <div className="flex items-start justify-between gap-4 sm:gap-0 sm:flex-row sm:items-center">
+          {/* Mobile layout: flex row with title+bar, then full-width button below */}
+          <div className="flex items-start justify-between gap-4 sm:hidden">
             {/* Title + date */}
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground">Tu progreso</h1>
-              <p className="text-muted-foreground mt-1 text-base sm:text-lg">
+              <h1 className="text-2xl font-display font-bold text-foreground">Tu progreso</h1>
+              <p className="text-muted-foreground mt-1 text-base">
                 {(() => {
                   const raw = format(new Date(), "EEE, d 'de' MMMM", { locale: es });
                   return raw.replace(/\./g, "").replace(/^\w/, c => c.toUpperCase()).replace(/de (\w)/, (_, c) => `de ${c.toUpperCase()}`);
                 })()}
               </p>
             </div>
-
-            {/* Year progress bar */}
-            <div className="w-36 shrink-0 sm:flex-1 sm:w-auto sm:max-w-xs sm:mx-6">
+            {/* Year progress bar — mobile */}
+            <div className="w-36 shrink-0">
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-[11px] font-bold text-muted-foreground tracking-wider uppercase">{now.getFullYear()}</span>
                 <span className="text-[11px] font-bold text-primary">{yearProgress}%</span>
@@ -330,9 +371,36 @@ export default function Dashboard() {
               </div>
               <p className="text-[10px] text-muted-foreground mt-1 text-right">{daysElapsed} de {totalDaysInYear} días</p>
             </div>
+          </div>
 
-            {/* Nuevo Hábito — visible only on sm+ in the same row */}
-            <div className="hidden sm:block shrink-0">
+          {/* Desktop layout: 3-column grid so bar is perfectly centered */}
+          <div className="hidden sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-6">
+            {/* Title + date */}
+            <div>
+              <h1 className="text-3xl font-display font-bold text-foreground">Tu progreso</h1>
+              <p className="text-muted-foreground mt-1 text-lg">
+                {(() => {
+                  const raw = format(new Date(), "EEE, d 'de' MMMM", { locale: es });
+                  return raw.replace(/\./g, "").replace(/^\w/, c => c.toUpperCase()).replace(/de (\w)/, (_, c) => `de ${c.toUpperCase()}`);
+                })()}
+              </p>
+            </div>
+            {/* Year progress bar — desktop centered */}
+            <div className="w-64">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[11px] font-bold text-muted-foreground tracking-wider uppercase">{now.getFullYear()}</span>
+                <span className="text-[11px] font-bold text-primary">{yearProgress}%</span>
+              </div>
+              <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-primary to-purple-400 transition-all duration-700"
+                  style={{ width: `${yearProgress}%` }}
+                />
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1 text-right">{daysElapsed} de {totalDaysInYear} días</p>
+            </div>
+            {/* Nuevo Hábito — right column */}
+            <div className="flex justify-end">
               <Link href="/habits/new">
                 <Button className="rounded-xl h-12 px-6 shadow-md shadow-primary/20 hover:shadow-lg hover:-translate-y-0.5 transition-all text-base">
                   <Plus className="w-5 h-5 mr-2" />

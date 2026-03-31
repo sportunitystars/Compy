@@ -61,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     await supabase.auth.signOut();
     queryClient.clear();
-    setLocation("/login");
+    setLocation("/");
   }, [setLocation]);
 
   const isLoading = sessionLoading || (!!session && userLoading);

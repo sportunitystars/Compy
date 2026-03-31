@@ -48,6 +48,41 @@ function formatLog(l: any) {
   };
 }
 
+// ── Ensure habit_orders table exists ──────────────────────────────────────────
+pool.query(`
+  CREATE TABLE IF NOT EXISTS habit_orders (
+    user_id TEXT PRIMARY KEY,
+    order_ids TEXT[] NOT NULL DEFAULT '{}',
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )
+`).catch(() => {});
+
+// ── Get habit order ────────────────────────────────────────────────────────────
+router.get("/habits/order", requireActive, async (req, res): Promise<void> => {
+  const result = await pool.query(
+    `SELECT order_ids FROM habit_orders WHERE user_id = $1`,
+    [req.user!.id]
+  );
+  const orderIds: string[] = result.rows[0]?.order_ids ?? [];
+  res.json({ order: orderIds });
+});
+
+// ── Save habit order ───────────────────────────────────────────────────────────
+router.put("/habits/order", requireActive, async (req, res): Promise<void> => {
+  const { order } = req.body;
+  if (!Array.isArray(order)) {
+    res.status(400).json({ error: "order must be an array" });
+    return;
+  }
+  await pool.query(
+    `INSERT INTO habit_orders (user_id, order_ids, updated_at)
+     VALUES ($1, $2, NOW())
+     ON CONFLICT (user_id) DO UPDATE SET order_ids = $2, updated_at = NOW()`,
+    [req.user!.id, order]
+  );
+  res.json({ ok: true });
+});
+
 // ── List habits ───────────────────────────────────────────────────────────────
 router.get("/habits", requireActive, async (req, res): Promise<void> => {
   const { data, error } = await supabaseAdmin
