@@ -286,7 +286,7 @@ export default function HabitDetail() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
 
         {/* STICKY: RESUMEN + RACHA */}
-        <div className="sticky top-[57px] sm:top-[65px] z-10 bg-background pb-3 space-y-3">
+        <div className="sticky top-[57px] sm:top-[65px] z-10 bg-background pt-1 pb-6 space-y-3">
 
           {/* YEARLY SUMMARY TOGGLE */}
           <div className="bg-white rounded-2xl overflow-hidden border-2 border-gray-900" style={{ boxShadow: '4px 4px 0 0 #1e293b' }}>
