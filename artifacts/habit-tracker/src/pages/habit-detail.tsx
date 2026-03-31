@@ -324,8 +324,8 @@ export default function HabitDetail() {
                               <span className="text-sm font-semibold text-foreground">{opt.label}</span>
                               <span className="text-sm font-bold" style={{ color: opt.color }}>{pct}%</span>
                             </div>
-                            <div className="h-0.5 w-full bg-gray-200 overflow-hidden mb-1.5">
-                              <div className="h-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: opt.color }} />
+                            <div className="h-1.5 w-full rounded-full bg-gray-200 overflow-hidden mb-1.5">
+                              <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: opt.color }} />
                             </div>
                             <p className="text-[11px] text-muted-foreground">
                               {stat.totalCount} de {effectiveYearDays} días{exemptYearCount > 0 ? ` · ${exemptYearCount} excl.` : ''}
