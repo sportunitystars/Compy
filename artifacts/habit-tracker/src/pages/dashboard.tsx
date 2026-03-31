@@ -365,12 +365,12 @@ export default function Dashboard() {
             {/* Year progress bar — mobile */}
             <div className="w-36 shrink-0">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] font-bold text-muted-foreground tracking-wider uppercase">{now.getFullYear()}</span>
+                <span className="text-[11px] font-bold text-foreground tracking-wider">{now.getFullYear()}</span>
                 <span className="text-[11px] font-bold text-primary">{yearProgress}%</span>
               </div>
-              <div className="h-3.5 rounded-full bg-gray-200 overflow-hidden border border-gray-300">
+              <div className="h-1.5 rounded-full bg-gray-200 overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70 transition-all duration-700"
+                  className="h-full rounded-full bg-primary transition-all duration-700"
                   style={{ width: `${yearProgress}%` }}
                 />
               </div>
@@ -393,12 +393,12 @@ export default function Dashboard() {
             {/* Year progress bar — absolutely pinned to exact center */}
             <div className="absolute left-1/2 -translate-x-1/2 w-56 text-center">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] font-bold text-muted-foreground tracking-wider uppercase">{now.getFullYear()}</span>
+                <span className="text-[11px] font-bold text-foreground tracking-wider">{now.getFullYear()}</span>
                 <span className="text-[11px] font-bold text-primary">{yearProgress}%</span>
               </div>
-              <div className="h-3.5 rounded-full bg-gray-200 overflow-hidden border border-gray-300">
+              <div className="h-1.5 rounded-full bg-gray-200 overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70 transition-all duration-700"
+                  className="h-full rounded-full bg-primary transition-all duration-700"
                   style={{ width: `${yearProgress}%` }}
                 />
               </div>

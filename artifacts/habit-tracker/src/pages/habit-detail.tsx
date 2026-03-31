@@ -320,14 +320,14 @@ export default function HabitDetail() {
                         const streakLabel = opt.isNegative ? 'peor racha' : 'mejor racha';
                         return (
                           <div key={idx}>
-                            <div className="flex items-center justify-between mb-1.5">
-                              <span className="text-xs font-medium text-foreground">{opt.label}</span>
-                              <span className="text-xs font-semibold" style={{ color: opt.color }}>{pct}%</span>
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm font-semibold text-foreground">{opt.label}</span>
+                              <span className="text-sm font-bold" style={{ color: opt.color }}>{pct}%</span>
                             </div>
-                            <div className="h-1 rounded-full bg-black/6 overflow-hidden mb-1">
-                              <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: opt.color }} />
+                            <div className="h-0.5 w-full bg-gray-200 overflow-hidden mb-1.5">
+                              <div className="h-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: opt.color }} />
                             </div>
-                            <p className="text-[10px] text-muted-foreground">
+                            <p className="text-[11px] text-muted-foreground">
                               {stat.totalCount} de {effectiveYearDays} días{exemptYearCount > 0 ? ` · ${exemptYearCount} excl.` : ''}
                               {stat.maxStreak >= 2 && <span> · {streakLabel}: {stat.maxStreak}d</span>}
                             </p>
@@ -585,24 +585,20 @@ function MonthBlock({ month, year, habit, onLog, onClear, isSelectMode, selected
                 key={i}
                 title={dateStr}
                 onClick={() => onToggleDate(dateStr)}
-                className="aspect-square min-h-[2rem] rounded-full flex flex-col items-center justify-center text-xs font-medium transition-all active:scale-90 relative"
+                className="aspect-square min-h-[2rem] rounded-full flex flex-col items-center justify-center text-xs font-bold transition-all active:scale-90 relative"
                 style={isExemptDay ? {
                   backgroundColor: isSelected ? `${opt!.color}40` : `${opt!.color}18`,
                   color: opt!.color,
-                  border: isSelected ? `2px solid ${opt!.color}` : `1.5px dashed ${opt!.color}80`,
-                  outline: isSelected ? `2px solid ${opt!.color}60` : 'none',
-                  outlineOffset: '1px',
+                  border: `2px dashed ${opt!.color}80`,
+                  boxShadow: isSelected ? `2px 2px 0 0 ${opt!.color}60` : 'none',
                 } : {
                   backgroundColor: isSelected
-                    ? (opt ? opt.color : '#e0e7ff')
+                    ? (opt ? opt.color : '#7c3aed')
                     : (opt ? opt.color : '#f3f4f6'),
-                  color: isSelected ? '#fff' : (opt ? '#fff' : '#6b7280'),
-                  border: isSelected
-                    ? `2px solid #fff`
-                    : (opt ? `1px solid ${opt.color}` : '1px solid #e5e7eb'),
-                  outline: isSelected ? '2.5px solid #7c3aed' : 'none',
-                  outlineOffset: '1px',
-                  opacity: isSelected ? 1 : 0.75,
+                  color: opt ? '#fff' : (isSelected ? '#fff' : '#9ca3af'),
+                  border: '2px solid #1e293b',
+                  boxShadow: isSelected ? '2px 2px 0 0 #1e293b' : 'none',
+                  opacity: isSelected ? 1 : 0.7,
                 }}
               >
                 {i + 1}
@@ -635,11 +631,16 @@ function MonthBlock({ month, year, habit, onLog, onClear, isSelectMode, selected
               style={isExemptDay ? {
                 backgroundColor: `${opt!.color}18`,
                 color: opt!.color,
-                border: `1.5px dashed ${opt!.color}80`,
+                border: `2px dashed ${opt!.color}80`,
+              } : opt ? {
+                backgroundColor: opt.color,
+                color: '#fff',
+                border: '2px solid #1e293b',
+                boxShadow: '2px 2px 0 0 #1e293b',
               } : {
-                backgroundColor: opt ? opt.color : '#f3f4f6',
-                color: opt ? '#fff' : '#6b7280',
-                border: opt ? `1px solid ${opt.color}` : '1px solid #e5e7eb'
+                backgroundColor: '#f3f4f6',
+                color: '#9ca3af',
+                border: '2px solid #e5e7eb',
               }}
             >
               {i + 1}
