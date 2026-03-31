@@ -418,7 +418,7 @@ export default function Dashboard() {
           {/* Nuevo Hábito — full width below on mobile */}
           <div className="mt-4 sm:hidden">
             <Link href="/habits/new">
-              <Button className="rounded-xl h-12 px-6 shadow-md shadow-primary/20 hover:shadow-lg hover:-translate-y-0.5 transition-all text-base w-full">
+              <Button className="rounded-full h-14 text-base font-bold w-full border-2 border-gray-900" style={{ boxShadow: '4px 4px 0 0 #1e293b' }}>
                 <Plus className="w-5 h-5 mr-2" />
                 Nuevo Hábito
               </Button>

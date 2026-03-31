@@ -285,103 +285,108 @@ export default function HabitDetail() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
 
-        {/* YEARLY SUMMARY TOGGLE */}
-        <div className="bg-white rounded-2xl overflow-hidden border-2 border-gray-900" style={{ boxShadow: '4px 4px 0 0 #1e293b' }}>
-          <button
-            className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50/50 transition-colors"
-            onClick={() => setShowSummary(!showSummary)}
-          >
-            <div className="flex items-baseline gap-2">
-              <span className="font-bold text-foreground">Resumen</span>
-              <span className="text-sm text-muted-foreground font-medium">{currentYear}</span>
-            </div>
-            {showSummary ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-          </button>
+        {/* STICKY: RESUMEN + RACHA */}
+        <div className="sticky top-[57px] sm:top-[65px] z-10 bg-background pb-3 space-y-3">
 
-          <AnimatePresence>
-            {showSummary && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="border-t border-border/60"
-              >
-                <div className="p-5 space-y-5">
-                  <div>
-                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-3 leading-relaxed">
-                      Año {currentYear} · {totalYearDays} días transcurridos · {Math.round((totalYearDays / 365) * 100)}% del año
-                    </p>
-                    <div className="space-y-4">
-                      {habit.options.map((opt: any, idx: number) => {
-                        if (opt.isExempt) return null;
-                        const stat = streaks[idx];
-                        const effectiveYearDays = Math.max(totalYearDays - exemptYearCount, 1);
-                        const pct = Math.round((stat.totalCount / effectiveYearDays) * 100);
-                        const streakLabel = opt.isNegative ? 'peor racha' : 'mejor racha';
-                        return (
-                          <div key={idx}>
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm font-semibold text-foreground">{opt.label}</span>
-                              <span className="text-sm font-bold" style={{ color: opt.color }}>{pct}%</span>
+          {/* YEARLY SUMMARY TOGGLE */}
+          <div className="bg-white rounded-2xl overflow-hidden border-2 border-gray-900" style={{ boxShadow: '4px 4px 0 0 #1e293b' }}>
+            <button
+              className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50/50 transition-colors"
+              onClick={() => setShowSummary(!showSummary)}
+            >
+              <div className="flex items-baseline gap-2">
+                <span className="font-bold text-foreground">Resumen</span>
+                <span className="text-sm text-muted-foreground font-medium">{currentYear}</span>
+              </div>
+              {showSummary ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+            </button>
+
+            <AnimatePresence>
+              {showSummary && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="border-t border-border/60"
+                >
+                  <div className="p-5 space-y-5">
+                    <div>
+                      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-3 leading-relaxed">
+                        Año {currentYear} · {totalYearDays} días transcurridos · {Math.round((totalYearDays / 365) * 100)}% del año
+                      </p>
+                      <div className="space-y-4">
+                        {habit.options.map((opt: any, idx: number) => {
+                          if (opt.isExempt) return null;
+                          const stat = streaks[idx];
+                          const effectiveYearDays = Math.max(totalYearDays - exemptYearCount, 1);
+                          const pct = Math.round((stat.totalCount / effectiveYearDays) * 100);
+                          const streakLabel = opt.isNegative ? 'peor racha' : 'mejor racha';
+                          return (
+                            <div key={idx}>
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-semibold text-foreground">{opt.label}</span>
+                                <span className="text-sm font-bold" style={{ color: opt.color }}>{pct}%</span>
+                              </div>
+                              <div className="h-1.5 w-full rounded-full bg-gray-200 overflow-hidden mb-1.5">
+                                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: opt.color }} />
+                              </div>
+                              <p className="text-[11px] text-muted-foreground">
+                                {stat.totalCount} de {effectiveYearDays} días{exemptYearCount > 0 ? ` · ${exemptYearCount} excl.` : ''}
+                                {stat.maxStreak >= 2 && <span> · {streakLabel}: {stat.maxStreak}d</span>}
+                              </p>
                             </div>
-                            <div className="h-1.5 w-full rounded-full bg-gray-200 overflow-hidden mb-1.5">
-                              <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: opt.color }} />
-                            </div>
-                            <p className="text-[11px] text-muted-foreground">
-                              {stat.totalCount} de {effectiveYearDays} días{exemptYearCount > 0 ? ` · ${exemptYearCount} excl.` : ''}
-                              {stat.maxStreak >= 2 && <span> · {streakLabel}: {stat.maxStreak}d</span>}
-                            </p>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* STREAK MESSAGES */}
-        {streaks.some((s, i) => !habit.options[i]?.isExempt && s.currentStreak >= 2) && (
-          <div className="space-y-2">
-            {habit.options.map((opt: any, idx: number) => {
-              if (opt.isExempt) return null;
-              const n = streaks[idx].currentStreak;
-              if (n < 2) return null;
-
-              let title = '';
-              let sub = '';
-
-              if (opt.isPositive) {
-                if (n < 5)       { title = `¡${n} días de racha!`; sub = 'Buen comienzo. El hábito se construye día a día.'; }
-                else if (n < 10) { title = `¡${n} días de racha!`; sub = 'Casi una semana. Tu constancia está dando resultados.'; }
-                else if (n < 15) { title = `¡${n} días de racha!`; sub = 'Dos semanas seguidas. Esto ya está convirtiéndose en rutina.'; }
-                else if (n < 30) { title = `¡${n} días de racha!`; sub = 'Más de dos semanas. Tu disciplina está marcando la diferencia.'; }
-                else if (n < 60) { title = `¡${n} días de racha!`; sub = 'Un mes de racha. Eso ya es un hábito de verdad.'; }
-                else             { title = `¡${n} días de racha!`; sub = 'Más de dos meses sin fallar. Eres un ejemplo de constancia.'; }
-              } else if (opt.isNegative) {
-                if (n < 5)       { title = `${n} días de racha.`; sub = 'Aún puedes cambiar el rumbo. Hoy es un buen día para empezar.'; }
-                else if (n < 10) { title = `${n} días de racha.`; sub = 'Una semana así. Identifica qué lo está provocando y actúa hoy.'; }
-                else if (n < 15) { title = `${n} días de racha.`; sub = 'Casi dos semanas. Un pequeño cambio hoy puede romper este patrón.'; }
-                else if (n < 30) { title = `${n} días de racha.`; sub = 'Más de dos semanas. Busca apoyo o cambia algo en tu entorno ahora.'; }
-                else             { title = `${n} días de racha.`; sub = 'Llevas un mes. Recuerda: siempre puedes elegir diferente. Un día a la vez.'; }
-              } else {
-                title = `${n} días de racha.`;
-                sub = 'Llevas una racha activa.';
-              }
-
-              if (!title) return null;
-
-              return (
-                <div key={idx} className="rounded-2xl px-4 py-3" style={{ backgroundColor: `${opt.color}15`, border: `2px solid ${opt.color}60`, boxShadow: `3px 3px 0 0 ${opt.color}40` }}>
-                  <p className="font-bold text-sm leading-snug" style={{ color: opt.color }}>{title}</p>
-                  <p className="text-xs mt-0.5 text-muted-foreground">{sub}</p>
-                </div>
-              );
-            })}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-        )}
+
+          {/* STREAK MESSAGES */}
+          {streaks.some((s, i) => !habit.options[i]?.isExempt && s.currentStreak >= 2) && (
+            <div className="space-y-2">
+              {habit.options.map((opt: any, idx: number) => {
+                if (opt.isExempt) return null;
+                const n = streaks[idx].currentStreak;
+                if (n < 2) return null;
+
+                let title = '';
+                let sub = '';
+
+                if (opt.isPositive) {
+                  if (n < 5)       { title = `¡${n} días de racha!`; sub = 'Buen comienzo. El hábito se construye día a día.'; }
+                  else if (n < 10) { title = `¡${n} días de racha!`; sub = 'Casi una semana. Tu constancia está dando resultados.'; }
+                  else if (n < 15) { title = `¡${n} días de racha!`; sub = 'Dos semanas seguidas. Esto ya está convirtiéndose en rutina.'; }
+                  else if (n < 30) { title = `¡${n} días de racha!`; sub = 'Más de dos semanas. Tu disciplina está marcando la diferencia.'; }
+                  else if (n < 60) { title = `¡${n} días de racha!`; sub = 'Un mes de racha. Eso ya es un hábito de verdad.'; }
+                  else             { title = `¡${n} días de racha!`; sub = 'Más de dos meses sin fallar. Eres un ejemplo de constancia.'; }
+                } else if (opt.isNegative) {
+                  if (n < 5)       { title = `${n} días de racha.`; sub = 'Aún puedes cambiar el rumbo. Hoy es un buen día para empezar.'; }
+                  else if (n < 10) { title = `${n} días de racha.`; sub = 'Una semana así. Identifica qué lo está provocando y actúa hoy.'; }
+                  else if (n < 15) { title = `${n} días de racha.`; sub = 'Casi dos semanas. Un pequeño cambio hoy puede romper este patrón.'; }
+                  else if (n < 30) { title = `${n} días de racha.`; sub = 'Más de dos semanas. Busca apoyo o cambia algo en tu entorno ahora.'; }
+                  else             { title = `${n} días de racha.`; sub = 'Llevas un mes. Recuerda: siempre puedes elegir diferente. Un día a la vez.'; }
+                } else {
+                  title = `${n} días de racha.`;
+                  sub = 'Llevas una racha activa.';
+                }
+
+                if (!title) return null;
+
+                return (
+                  <div key={idx} className="rounded-2xl px-4 py-3" style={{ backgroundColor: `${opt.color}15`, border: `2px solid ${opt.color}60`, boxShadow: `3px 3px 0 0 ${opt.color}40` }}>
+                    <p className="font-bold text-sm leading-snug" style={{ color: opt.color }}>{title}</p>
+                    <p className="text-xs mt-0.5 text-muted-foreground">{sub}</p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+        </div>
 
         {/* CALENDAR GRID */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
