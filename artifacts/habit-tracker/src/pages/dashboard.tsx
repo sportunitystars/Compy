@@ -213,7 +213,7 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
   const deleteHabit = useDeleteHabit();
   const [confirmId, setConfirmId] = useState<string | null>(null);
-  const [orderedIds, setOrderedIds] = useState<string[]>([]);
+  const [orderedIds, setOrderedIds] = useState<string[]>(() => loadOrderFromStorage());
   const [activeId, setActiveId] = useState<string | null>(null);
   const [pinModalOpen, setPinModalOpen] = useState(false);
   const [pinTargetId, setPinTargetId] = useState<string | null>(null);
@@ -378,10 +378,10 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Desktop layout: 3-column grid so bar is perfectly centered */}
-          <div className="hidden sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-6">
-            {/* Title + date */}
-            <div>
+          {/* Desktop layout: flex with absolutely-centered bar */}
+          <div className="hidden sm:flex sm:items-center relative">
+            {/* Title + date — left */}
+            <div className="flex-1">
               <h1 className="text-3xl font-display font-bold text-foreground">Tu progreso</h1>
               <p className="text-muted-foreground mt-1 text-lg">
                 {(() => {
@@ -390,8 +390,8 @@ export default function Dashboard() {
                 })()}
               </p>
             </div>
-            {/* Year progress bar — desktop centered */}
-            <div className="w-64">
+            {/* Year progress bar — absolutely pinned to exact center */}
+            <div className="absolute left-1/2 -translate-x-1/2 w-56 text-center">
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-[11px] font-bold text-muted-foreground tracking-wider uppercase">{now.getFullYear()}</span>
                 <span className="text-[11px] font-bold text-primary">{yearProgress}%</span>
@@ -404,8 +404,8 @@ export default function Dashboard() {
               </div>
               <p className="text-[10px] text-muted-foreground mt-1 text-right">{daysElapsed} de {totalDaysInYear} días</p>
             </div>
-            {/* Nuevo Hábito — right column */}
-            <div className="flex justify-end">
+            {/* Nuevo Hábito — right */}
+            <div className="ml-auto">
               <Link href="/habits/new">
                 <Button className="rounded-xl h-12 px-6 shadow-md shadow-primary/20 hover:shadow-lg hover:-translate-y-0.5 transition-all text-base">
                   <Plus className="w-5 h-5 mr-2" />
