@@ -169,18 +169,6 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.99.3
         version: 2.99.3
-      '@types/pg':
-        specifier: ^8.18.0
-        version: 8.18.0
-      '@types/web-push':
-        specifier: ^3.6.4
-        version: 3.6.4
-      '@workspace/api-zod':
-        specifier: workspace:*
-        version: link:../../lib/api-zod
-      '@workspace/db':
-        specifier: workspace:*
-        version: link:../../lib/db
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
@@ -194,7 +182,7 @@ importers:
         specifier: ^3.6.0
         version: 3.6.0
       drizzle-orm:
-        specifier: 'catalog:'
+        specifier: ^0.45.1
         version: 0.45.1(@types/pg@8.18.0)(pg@8.20.0)
       express:
         specifier: ^5
@@ -223,6 +211,9 @@ importers:
       web-push:
         specifier: ^3.6.7
         version: 3.6.7
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
     devDependencies:
       '@types/bcryptjs':
         specifier: ^3.0.0
@@ -240,11 +231,17 @@ importers:
         specifier: ^9.0.10
         version: 9.0.10
       '@types/node':
-        specifier: 'catalog:'
+        specifier: ^25.3.3
         version: 25.3.5
       '@types/nodemailer':
         specifier: ^7.0.11
         version: 7.0.11
+      '@types/pg':
+        specifier: ^8.18.0
+        version: 8.18.0
+      '@types/web-push':
+        specifier: ^3.6.4
+        version: 3.6.4
       esbuild:
         specifier: 0.27.3
         version: 0.27.3
@@ -257,6 +254,9 @@ importers:
       thread-stream:
         specifier: 3.1.0
         version: 3.1.0
+      typescript:
+        specifier: ~5.9.2
+        version: 5.9.3
 
   artifacts/habit-tracker:
     dependencies:
