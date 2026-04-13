@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "./hooks/use-auth";
 import { PinProvider } from "@/contexts/pin-context";
 import { queryClient } from "@/lib/query-client";
-
+import { setBaseUrl } from "@workspace/api-client-react";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
@@ -20,6 +20,8 @@ import AdminDashboard from "@/pages/admin";
 import { PendingScreen, RejectedScreen } from "@/pages/pending";
 import { InstallPrompt } from "@/components/install-prompt";
 import { Loader2 } from "lucide-react";
+
+setBaseUrl(import.meta.env.VITE_API_URL ?? "");
 
 function ProtectedRoute({ component: Component, ...rest }: any) {
   const { user, isLoading } = useAuth();
