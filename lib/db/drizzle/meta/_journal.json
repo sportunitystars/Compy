@@ -15,6 +15,13 @@
       "when": 1776091088851,
       "tag": "0001_fantastic_absorbing_man",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776093083896,
+      "tag": "0002_jittery_sleeper",
+      "breakpoints": true
     }
   ]
 }
