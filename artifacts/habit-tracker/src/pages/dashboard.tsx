@@ -42,10 +42,9 @@ function saveOrderToStorage(ids: string[]) {
   localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(ids));
 }
 
-const BASE_URL = import.meta.env.BASE_URL ?? "/";
+const API_BASE = (import.meta.env.VITE_API_URL ?? import.meta.env.BASE_URL).replace(/\/+$/, "");
 function getApiUrl(path: string) {
-  const base = BASE_URL.endsWith("/") ? BASE_URL.slice(0, -1) : BASE_URL;
-  return `${base}/api${path}`;
+  return `${API_BASE}/api${path}`;
 }
 
 async function fetchOrderFromServer(): Promise<string[]> {

@@ -14,7 +14,7 @@ import { useCreateHabit, getListHabitsQueryKey } from "@workspace/api-client-rea
 import { useToast } from "@/hooks/use-toast";
 import { PinModal } from "@/components/pin-modal";
 
-const BASE_URL = import.meta.env.BASE_URL ?? "/";
+const API_BASE = (import.meta.env.VITE_API_URL ?? import.meta.env.BASE_URL).replace(/\/+$/, "");
 
 const PALETTE = [
   "#22c55e", "#ef4444", "#3b82f6", "#f59e0b", "#8b5cf6",
@@ -54,7 +54,7 @@ export default function CreateHabit() {
 
   async function checkPinStatus() {
     try {
-      const res = await fetch(`${BASE_URL}api/pin/status`);
+      const res = await fetch(`${API_BASE}/api/pin/status`);
       const data = await res.json();
       return data.hasPin as boolean;
     } catch { return false; }
