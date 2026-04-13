@@ -8,6 +8,13 @@
       "when": 1776090806376,
       "tag": "0000_omniscient_slyde",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1776091088851,
+      "tag": "0001_fantastic_absorbing_man",
+      "breakpoints": true
     }
   ]
 }
